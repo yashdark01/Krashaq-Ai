@@ -1,0 +1,388 @@
+{
+  "meta": {
+    "project": "Krashaq AI Agentic Farm Intelligence",
+    "version": "1.0.0",
+    "generated": "2026-04-18",
+    "note": "Pincodes are best-available from India Post data. Cross-verify via https://www.indiapost.gov.in for production use.",
+    "total_districts": 4,
+    "states_covered": ["Madhya Pradesh", "Rajasthan"]
+  },
+  "districts": [
+    {
+      "id": "D001",
+      "name": "Mandsaur",
+      "state": "Madhya Pradesh",
+      "state_code": "MP",
+      "district_code": "450",
+      "headquarters": "Mandsaur",
+      "total_tehsils": 8,
+      "tehsils": [
+        {
+          "id": "D001_T01",
+          "name": "Mandsaur",
+          "headquarters": "Mandsaur",
+          "primary_pincode": "458001",
+          "localities": [
+            { "name": "Mandsaur City",        "type": "city",    "pincode": "458001" },
+            { "name": "Dalauda",               "type": "town",    "pincode": "458002" },
+            { "name": "Rewas",                 "type": "village", "pincode": "458001" },
+            { "name": "Titrod",                "type": "village", "pincode": "458001" },
+            { "name": "Gordia Khurd",          "type": "village", "pincode": "458001" },
+            { "name": "Bhawgarh",              "type": "village", "pincode": "458001" },
+            { "name": "Chandwasa",             "type": "village", "pincode": "458001" },
+            { "name": "Pipliya Kumar",         "type": "village", "pincode": "458001" }
+          ]
+        },
+        {
+          "id": "D001_T02",
+          "name": "Malhargarh",
+          "headquarters": "Malhargarh",
+          "primary_pincode": "458339",
+          "localities": [
+            { "name": "Malhargarh",            "type": "town",    "pincode": "458339" },
+            { "name": "Kuchrod",               "type": "town",    "pincode": "458330" },
+            { "name": "Pachor",                "type": "village", "pincode": "458336" },
+            { "name": "Chiklana",              "type": "village", "pincode": "458339" },
+            { "name": "Lasudiya Rathore",      "type": "village", "pincode": "458339" },
+            { "name": "Ranayra",               "type": "village", "pincode": "458339" },
+            { "name": "Siyagaon",              "type": "village", "pincode": "458330" }
+          ]
+        },
+        {
+          "id": "D001_T03",
+          "name": "Garoth",
+          "headquarters": "Garoth",
+          "primary_pincode": "458880",
+          "localities": [
+            { "name": "Garoth",                "type": "town",    "pincode": "458880" },
+            { "name": "Hingoria",              "type": "village", "pincode": "458880" },
+            { "name": "Bardiya",               "type": "village", "pincode": "458880" },
+            { "name": "Lohari Mandi",          "type": "village", "pincode": "458880" },
+            { "name": "Takrawad",              "type": "village", "pincode": "458880" },
+            { "name": "Shampur",               "type": "village", "pincode": "458880" }
+          ]
+        },
+        {
+          "id": "D001_T04",
+          "name": "Sitamau",
+          "headquarters": "Sitamau",
+          "primary_pincode": "458990",
+          "localities": [
+            { "name": "Sitamau",               "type": "town",    "pincode": "458990" },
+            { "name": "Dhundhadka",            "type": "village", "pincode": "458990" },
+            { "name": "Multanpura",            "type": "village", "pincode": "458990" },
+            { "name": "Chaumahla",             "type": "village", "pincode": "458990" },
+            { "name": "Sunthi",                "type": "village", "pincode": "458990" }
+          ]
+        },
+        {
+          "id": "D001_T05",
+          "name": "Suwasra",
+          "headquarters": "Suwasra",
+          "primary_pincode": "458778",
+          "localities": [
+            { "name": "Suwasra",               "type": "town",    "pincode": "458778" },
+            { "name": "Raipur",                "type": "village", "pincode": "458778" },
+            { "name": "Barkheda Bujurg",       "type": "village", "pincode": "458778" },
+            { "name": "Kanad",                 "type": "village", "pincode": "458778" },
+            { "name": "Dalawada",              "type": "village", "pincode": "458778" }
+          ]
+        },
+        {
+          "id": "D001_T06",
+          "name": "Bhanpura",
+          "headquarters": "Bhanpura",
+          "primary_pincode": "458775",
+          "localities": [
+            { "name": "Bhanpura",              "type": "town",    "pincode": "458775" },
+            { "name": "Gandhi Sagar Colony",   "type": "town",    "pincode": "458775" },
+            { "name": "Garoth Road",           "type": "village", "pincode": "458775" },
+            { "name": "Dhaba",                 "type": "village", "pincode": "458775" },
+            { "name": "Kukdeshwar",            "type": "village", "pincode": "458775" }
+          ]
+        },
+        {
+          "id": "D001_T07",
+          "name": "Nahargarh",
+          "headquarters": "Nahargarh",
+          "primary_pincode": "458336",
+          "localities": [
+            { "name": "Nahargarh",             "type": "town",    "pincode": "458336" },
+            { "name": "Sardarpura",            "type": "village", "pincode": "458336" },
+            { "name": "Dhaturiya",             "type": "village", "pincode": "458336" },
+            { "name": "Rampura Chandramauli",  "type": "village", "pincode": "458336" }
+          ]
+        },
+        {
+          "id": "D001_T08",
+          "name": "Shamgarh",
+          "headquarters": "Shamgarh",
+          "primary_pincode": "458558",
+          "localities": [
+            { "name": "Shamgarh",              "type": "town",    "pincode": "458558" },
+            { "name": "Piplia Mandi",          "type": "town",    "pincode": "458556" },
+            { "name": "Barkheda Shiv",         "type": "village", "pincode": "458558" },
+            { "name": "Mau",                   "type": "village", "pincode": "458558" },
+            { "name": "Khejdi",                "type": "village", "pincode": "458558" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D002",
+      "name": "Neemuch",
+      "state": "Madhya Pradesh",
+      "state_code": "MP",
+      "district_code": "451",
+      "headquarters": "Neemuch",
+      "note": "Carved out of Mandsaur district in 1998",
+      "total_tehsils": 4,
+      "tehsils": [
+        {
+          "id": "D002_T01",
+          "name": "Neemuch",
+          "headquarters": "Neemuch",
+          "primary_pincode": "458441",
+          "localities": [
+            { "name": "Neemuch City",          "type": "city",    "pincode": "458441" },
+            { "name": "Neemuch Cantonment",    "type": "town",    "pincode": "458441" },
+            { "name": "Ratangarh",             "type": "town",    "pincode": "458441" },
+            { "name": "Morvan",                "type": "village", "pincode": "458441" },
+            { "name": "Dolriya",               "type": "village", "pincode": "458441" },
+            { "name": "Badayda",               "type": "village", "pincode": "458441" },
+            { "name": "Fatehabad",             "type": "village", "pincode": "458441" },
+            { "name": "Sarsod",                "type": "village", "pincode": "458441" }
+          ]
+        },
+        {
+          "id": "D002_T02",
+          "name": "Manasa",
+          "headquarters": "Manasa",
+          "primary_pincode": "458110",
+          "localities": [
+            { "name": "Manasa",                "type": "town",    "pincode": "458110" },
+            { "name": "Diken",                 "type": "village", "pincode": "458110" },
+            { "name": "Bamnia Kalan",          "type": "village", "pincode": "458110" },
+            { "name": "Kuchrod",               "type": "village", "pincode": "458110" },
+            { "name": "Rampura Mamleshwar",    "type": "village", "pincode": "458118" },
+            { "name": "Akya Khurd",            "type": "village", "pincode": "458110" },
+            { "name": "Balaguda",              "type": "village", "pincode": "458110" }
+          ]
+        },
+        {
+          "id": "D002_T03",
+          "name": "Jawad",
+          "headquarters": "Jawad",
+          "primary_pincode": "458226",
+          "localities": [
+            { "name": "Jawad",                 "type": "town",    "pincode": "458226" },
+            { "name": "Arniya Harsol",         "type": "village", "pincode": "458226" },
+            { "name": "Nandwel",               "type": "village", "pincode": "458226" },
+            { "name": "Parasoli",              "type": "village", "pincode": "458226" },
+            { "name": "Barkheda Jagir",        "type": "village", "pincode": "458226" },
+            { "name": "Thikriya",              "type": "village", "pincode": "458226" }
+          ]
+        },
+        {
+          "id": "D002_T04",
+          "name": "Singoli",
+          "headquarters": "Singoli",
+          "primary_pincode": "458553",
+          "localities": [
+            { "name": "Singoli",               "type": "town",    "pincode": "458553" },
+            { "name": "Rampur",                "type": "village", "pincode": "458553" },
+            { "name": "Bhilwada",              "type": "village", "pincode": "458553" },
+            { "name": "Kherkheda",             "type": "village", "pincode": "458553" },
+            { "name": "Dhavdi",                "type": "village", "pincode": "458553" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D003",
+      "name": "Ratlam",
+      "state": "Madhya Pradesh",
+      "state_code": "MP",
+      "district_code": "452",
+      "headquarters": "Ratlam",
+      "total_tehsils": 7,
+      "tehsils": [
+        {
+          "id": "D003_T01",
+          "name": "Ratlam",
+          "headquarters": "Ratlam",
+          "primary_pincode": "457001",
+          "localities": [
+            { "name": "Ratlam City",           "type": "city",    "pincode": "457001" },
+            { "name": "Ratlam Junction",       "type": "town",    "pincode": "457001" },
+            { "name": "Namli",                 "type": "town",    "pincode": "457001" },
+            { "name": "Bargaon",               "type": "village", "pincode": "457001" },
+            { "name": "Dhodhar",               "type": "village", "pincode": "457001" },
+            { "name": "Nayagaon",              "type": "village", "pincode": "457001" },
+            { "name": "Ankalia",               "type": "village", "pincode": "457001" }
+          ]
+        },
+        {
+          "id": "D003_T02",
+          "name": "Ratlam Rural",
+          "headquarters": "Ratlam",
+          "primary_pincode": "457001",
+          "localities": [
+            { "name": "Bilpank",               "type": "village", "pincode": "457001" },
+            { "name": "Sarsod",                "type": "village", "pincode": "457001" },
+            { "name": "Tal",                   "type": "village", "pincode": "457001" },
+            { "name": "Khatoda",               "type": "village", "pincode": "457001" },
+            { "name": "Ratlam Mandi",          "type": "village", "pincode": "457001" }
+          ]
+        },
+        {
+          "id": "D003_T03",
+          "name": "Jaora",
+          "headquarters": "Jaora",
+          "primary_pincode": "457226",
+          "localities": [
+            { "name": "Jaora",                 "type": "town",    "pincode": "457226" },
+            { "name": "Talen",                 "type": "village", "pincode": "457226" },
+            { "name": "Palasiya",              "type": "village", "pincode": "457226" },
+            { "name": "Kundaliya",             "type": "village", "pincode": "457226" },
+            { "name": "Saktali",               "type": "village", "pincode": "457226" },
+            { "name": "Katanghi",              "type": "village", "pincode": "457226" }
+          ]
+        },
+        {
+          "id": "D003_T04",
+          "name": "Sailana",
+          "headquarters": "Sailana",
+          "primary_pincode": "457550",
+          "localities": [
+            { "name": "Sailana",               "type": "town",    "pincode": "457550" },
+            { "name": "Khedi",                 "type": "village", "pincode": "457550" },
+            { "name": "Lunaheda",              "type": "village", "pincode": "457550" },
+            { "name": "Borkhedi",              "type": "village", "pincode": "457550" },
+            { "name": "Mundedi",               "type": "village", "pincode": "457550" }
+          ]
+        },
+        {
+          "id": "D003_T05",
+          "name": "Alot",
+          "headquarters": "Alot",
+          "primary_pincode": "457001",
+          "note": "Pincode approximate — verify with India Post for Alot sub-region",
+          "localities": [
+            { "name": "Alot",                  "type": "town",    "pincode": "457001" },
+            { "name": "Badawad",               "type": "village", "pincode": "457001" },
+            { "name": "Runija",                "type": "village", "pincode": "457001" },
+            { "name": "Khajuri",               "type": "village", "pincode": "457001" }
+          ]
+        },
+        {
+          "id": "D003_T06",
+          "name": "Bajna",
+          "headquarters": "Bajna",
+          "primary_pincode": "457770",
+          "localities": [
+            { "name": "Bajna",                 "type": "town",    "pincode": "457770" },
+            { "name": "Dhodhar Khurd",         "type": "village", "pincode": "457770" },
+            { "name": "Piplod",                "type": "village", "pincode": "457770" },
+            { "name": "Ranayra",               "type": "village", "pincode": "457770" }
+          ]
+        },
+        {
+          "id": "D003_T07",
+          "name": "Piploda",
+          "headquarters": "Piploda",
+          "primary_pincode": "457340",
+          "localities": [
+            { "name": "Piploda",               "type": "town",    "pincode": "457340" },
+            { "name": "Sanjit",                "type": "village", "pincode": "457340" },
+            { "name": "Lasudia",               "type": "village", "pincode": "457340" },
+            { "name": "Dhaturiya Khurd",       "type": "village", "pincode": "457340" },
+            { "name": "Borkhedi Khurd",        "type": "village", "pincode": "457340" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "D004",
+      "name": "Pratapgarh",
+      "state": "Rajasthan",
+      "state_code": "RJ",
+      "district_code": "332",
+      "headquarters": "Pratapgarh",
+      "note": "Carved out of Chittorgarh, Udaipur & Banswara districts in 2008",
+      "total_tehsils": 5,
+      "tehsils": [
+        {
+          "id": "D004_T01",
+          "name": "Pratapgarh",
+          "headquarters": "Pratapgarh",
+          "primary_pincode": "312605",
+          "localities": [
+            { "name": "Pratapgarh Town",       "type": "town",    "pincode": "312605" },
+            { "name": "Dhanpur",               "type": "village", "pincode": "312605" },
+            { "name": "Undri",                 "type": "village", "pincode": "312605" },
+            { "name": "Borwal",                "type": "village", "pincode": "312605" },
+            { "name": "Salpura",               "type": "village", "pincode": "312605" },
+            { "name": "Kanthariya",            "type": "village", "pincode": "312605" },
+            { "name": "Partabgarh",            "type": "town",    "pincode": "312605" }
+          ]
+        },
+        {
+          "id": "D004_T02",
+          "name": "Chhoti Sadri",
+          "headquarters": "Chhoti Sadri",
+          "primary_pincode": "312604",
+          "localities": [
+            { "name": "Chhoti Sadri",          "type": "town",    "pincode": "312604" },
+            { "name": "Begun",                 "type": "town",    "pincode": "312604" },
+            { "name": "Peepalkhunt Road",      "type": "village", "pincode": "312604" },
+            { "name": "Raipur",                "type": "village", "pincode": "312604" },
+            { "name": "Manpura",               "type": "village", "pincode": "312604" },
+            { "name": "Kunwariya",             "type": "village", "pincode": "312604" }
+          ]
+        },
+        {
+          "id": "D004_T03",
+          "name": "Arnod",
+          "headquarters": "Arnod",
+          "primary_pincode": "312619",
+          "localities": [
+            { "name": "Arnod",                 "type": "town",    "pincode": "312619" },
+            { "name": "Bhainsrorgarh Road",    "type": "village", "pincode": "312619" },
+            { "name": "Sundrel",               "type": "village", "pincode": "312619" },
+            { "name": "Kadari",                "type": "village", "pincode": "312619" },
+            { "name": "Bhagwanpura",           "type": "village", "pincode": "312619" }
+          ]
+        },
+        {
+          "id": "D004_T04",
+          "name": "Dhariyawad",
+          "headquarters": "Dhariyawad",
+          "primary_pincode": "312622",
+          "localities": [
+            { "name": "Dhariyawad",            "type": "town",    "pincode": "312622" },
+            { "name": "Kherwara",              "type": "town",    "pincode": "313804" },
+            { "name": "Bari Sadri",            "type": "town",    "pincode": "312025" },
+            { "name": "Rawatbhata Road",       "type": "village", "pincode": "312622" },
+            { "name": "Salumber",              "type": "village", "pincode": "313027" },
+            { "name": "Devla",                 "type": "village", "pincode": "312622" }
+          ]
+        },
+        {
+          "id": "D004_T05",
+          "name": "Peepalkhoont",
+          "headquarters": "Peepalkhoont",
+          "primary_pincode": "312616",
+          "localities": [
+            { "name": "Peepalkhoont",          "type": "town",    "pincode": "312616" },
+            { "name": "Simalwara",             "type": "town",    "pincode": "314804" },
+            { "name": "Aspur",                 "type": "town",    "pincode": "314022" },
+            { "name": "Sagwara",               "type": "village", "pincode": "314025" },
+            { "name": "Chorasi",               "type": "village", "pincode": "312616" },
+            { "name": "Chikhli",               "type": "village", "pincode": "312616" }
+          ]
+        }
+      ]
+    }
+  ]
+}
