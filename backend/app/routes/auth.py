@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
+import uuid
 
-from app.db import get_db
-from app.models import User, RefreshToken
+from app.db.mongodb import get_collection
 from app.services.auth.jwt_service import create_access_token, create_refresh_token, verify_token
 from app.services.auth.google_oauth import google_oauth_service
-from app.services.auth.two_factor import two_factor_service
 from app.config import get_settings
 from app.middleware.auth import get_current_user
 
@@ -108,12 +106,15 @@ async def google_login(request: GoogleLoginRequest):
 
 
 @router.post("/signup")
-async def signup(request: RegisterRequest, db: Session = Depends(get_db)):
+async def signup(request: RegisterRequest):
     """
     Sign up a new user with email and password.
     """
+    users_collection = get_collection("users")
+    refresh_tokens_collection = get_collection("refresh_tokens")
+    
     # Check if user already exists
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    existing_user = await users_collection.find_one({"email": request.email})
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,127 +124,149 @@ async def signup(request: RegisterRequest, db: Session = Depends(get_db)):
     # Hash password
     password_hash = pwd_context.hash(request.password)
     
-    # Create new user
-    user = User(
-        email=request.email,
-        name=request.name,
-        password_hash=password_hash,
-        default_location=request.default_location,
-        location_details=request.location_details,
-        phone=request.phone,
-        state=request.state,
-        district=request.district,
-        tehsil=request.tehsil,
-        locality=request.locality,
-        pincode=request.pincode,
-        is_active=True
-    )
+    # Generate user ID
+    user_id = str(uuid.uuid4())
     
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # Create new user
+    user = {
+        "_id": user_id,
+        "email": request.email,
+        "name": request.name,
+        "password_hash": password_hash,
+        "location": {
+            "state": request.state,
+            "district": request.district,
+            "tehsil": request.tehsil,
+            "locality": request.locality,
+            "pincode": request.pincode
+        },
+        "phone": request.phone,
+        "role": "farmer",
+        "language": "hi",
+        "is_active": True,
+        "two_factor_enabled": False,
+        "phone_verified": False,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    await users_collection.insert_one(user)
     
     # Generate tokens
     access_token = create_access_token({
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role
+        "sub": user_id,
+        "email": request.email,
+        "role": "farmer"
     })
     
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": user_id})
     
     # Store refresh token
-    db_refresh_token = RefreshToken(
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    )
-    db.add(db_refresh_token)
-    db.commit()
+    await refresh_tokens_collection.insert_one({
+        "user_id": user_id,
+        "token": refresh_token,
+        "expires_at": datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days),
+        "created_at": datetime.utcnow(),
+        "revoked": False
+    })
     
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "default_location": user.default_location,
-            "role": user.role
+            "id": user_id,
+            "email": request.email,
+            "name": request.name,
+            "role": "farmer",
+            "language": "hi"
         }
     }
 
 
 @router.post("/register")
-async def register(request: RegisterRequest, db: Session = Depends(get_db)):
+async def register(request: RegisterRequest):
     """
     Complete user registration with location details (for Google OAuth).
     """
+    users_collection = get_collection("users")
+    refresh_tokens_collection = get_collection("refresh_tokens")
+    
     # Check if user already exists
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    existing_user = await users_collection.find_one({"email": request.email})
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this email already exists"
         )
     
-    # Create new user (no password for Google OAuth users)
-    user = User(
-        email=request.email,
-        name=request.name,
-        default_location=request.default_location,
-        location_details=request.location_details,
-        phone=request.phone,
-        state=request.state,
-        district=request.district,
-        tehsil=request.tehsil,
-        locality=request.locality,
-        pincode=request.pincode,
-        is_active=True
-    )
+    # Generate user ID
+    user_id = str(uuid.uuid4())
     
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # Create new user (no password for Google OAuth users)
+    user = {
+        "_id": user_id,
+        "email": request.email,
+        "name": request.name,
+        "location": {
+            "state": request.state,
+            "district": request.district,
+            "tehsil": request.tehsil,
+            "locality": request.locality,
+            "pincode": request.pincode
+        },
+        "phone": request.phone,
+        "role": "farmer",
+        "language": "hi",
+        "is_active": True,
+        "two_factor_enabled": False,
+        "phone_verified": False,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    await users_collection.insert_one(user)
     
     # Generate tokens
     access_token = create_access_token({
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role
+        "sub": user_id,
+        "email": request.email,
+        "role": "farmer"
     })
     
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": user_id})
     
     # Store refresh token
-    db_refresh_token = RefreshToken(
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    )
-    db.add(db_refresh_token)
-    db.commit()
+    await refresh_tokens_collection.insert_one({
+        "user_id": user_id,
+        "token": refresh_token,
+        "expires_at": datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days),
+        "created_at": datetime.utcnow(),
+        "revoked": False
+    })
     
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "default_location": user.default_location,
-            "role": user.role
+            "id": user_id,
+            "email": request.email,
+            "name": request.name,
+            "role": "farmer",
+            "language": "hi"
         }
     }
 
 
 @router.post("/login/email")
-async def email_login(request: EmailLoginRequest, db: Session = Depends(get_db)):
+async def email_login(request: EmailLoginRequest):
     """
     Login with email and password.
     """
+    users_collection = get_collection("users")
+    refresh_tokens_collection = get_collection("refresh_tokens")
+    
     # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
+    user = await users_collection.find_one({"email": request.email})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -251,56 +274,61 @@ async def email_login(request: EmailLoginRequest, db: Session = Depends(get_db))
         )
     
     # Check if user has password (Google OAuth users might not)
-    if not user.password_hash:
+    if not user.get("password_hash"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Please sign in with Google"
+            detail="Please use Google OAuth to login"
         )
     
     # Verify password
-    if not pwd_context.verify(request.password, user.password_hash):
+    if not pwd_context.verify(request.password, user.get("password_hash")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
-    # Update last login
-    user.last_login = datetime.utcnow()
-    db.commit()
+    # Check if user is active
+    if not user.get("is_active", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+    
+    user_id = user.get("_id")
     
     # Generate tokens
     access_token = create_access_token({
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role
+        "sub": user_id,
+        "email": user.get("email"),
+        "role": user.get("role")
     })
     
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": user_id})
     
     # Store refresh token
-    db_refresh_token = RefreshToken(
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    )
-    db.add(db_refresh_token)
-    db.commit()
+    await refresh_tokens_collection.insert_one({
+        "user_id": user_id,
+        "token": refresh_token,
+        "expires_at": datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days),
+        "created_at": datetime.utcnow(),
+        "revoked": False
+    })
     
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "user": {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "default_location": user.default_location,
-            "role": user.role
+            "id": user_id,
+            "email": user.get("email"),
+            "name": user.get("name"),
+            "role": user.get("role"),
+            "language": user.get("language", "hi")
         }
     }
 
 
 @router.post("/verify-2fa")
-async def verify_2fa(request: TwoFactorVerifyRequest, db: Session = Depends(get_db)):
+async def verify_2fa(request: TwoFactorVerifyRequest):
     """
     Verify 2FA code and issue tokens.
     """
@@ -311,10 +339,13 @@ async def verify_2fa(request: TwoFactorVerifyRequest, db: Session = Depends(get_
 
 
 @router.post("/refresh")
-async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_db)):
+async def refresh_token(request: RefreshTokenRequest):
     """
     Refresh access token using refresh token.
     """
+    users_collection = get_collection("users")
+    refresh_tokens_collection = get_collection("refresh_tokens")
+    
     # Verify refresh token
     payload = verify_token(request.refresh_token)
     if not payload or payload.get("type") != "refresh":
@@ -326,10 +357,10 @@ async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_
     user_id = payload.get("sub")
     
     # Check if refresh token exists and is not revoked
-    db_token = db.query(RefreshToken).filter(
-        RefreshToken.token == request.refresh_token,
-        RefreshToken.revoked == False
-    ).first()
+    db_token = await refresh_tokens_collection.find_one({
+        "token": request.refresh_token,
+        "revoked": False
+    })
     
     if not db_token:
         raise HTTPException(
@@ -338,7 +369,7 @@ async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_
         )
     
     # Get user
-    user = db.query(User).filter(User.id == user_id).first()
+    user = await users_collection.find_one({"_id": user_id})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -346,26 +377,28 @@ async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_
         )
     
     # Revoke old refresh token
-    db_token.revoked = True
-    db.commit()
+    await refresh_tokens_collection.update_one(
+        {"_id": db_token["_id"]},
+        {"$set": {"revoked": True}}
+    )
     
     # Generate new tokens
     access_token = create_access_token({
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role
+        "sub": user_id,
+        "email": user.get("email"),
+        "role": user.get("role")
     })
     
-    new_refresh_token = create_refresh_token({"sub": str(user.id)})
+    new_refresh_token = create_refresh_token({"sub": user_id})
     
     # Store new refresh token
-    new_db_token = RefreshToken(
-        user_id=user.id,
-        token=new_refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    )
-    db.add(new_db_token)
-    db.commit()
+    await refresh_tokens_collection.insert_one({
+        "user_id": user_id,
+        "token": new_refresh_token,
+        "expires_at": datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days),
+        "created_at": datetime.utcnow(),
+        "revoked": False
+    })
     
     return {
         "access_token": access_token,
@@ -374,121 +407,124 @@ async def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_
 
 
 @router.post("/logout")
-async def logout(refresh_token: str, db: Session = Depends(get_db)):
+async def logout(refresh_token: str):
     """
     Logout by revoking refresh token.
     """
-    db_token = db.query(RefreshToken).filter(
-        RefreshToken.token == refresh_token
-    ).first()
+    refresh_tokens_collection = get_collection("refresh_tokens")
+    
+    db_token = await refresh_tokens_collection.find_one({"token": refresh_token})
     
     if db_token:
-        db_token.revoked = True
-        db.commit()
+        await refresh_tokens_collection.update_one(
+            {"_id": db_token["_id"]},
+            {"$set": {"revoked": True}}
+        )
     
     return {"message": "Logged out successfully"}
 
 
 @router.get("/me")
-async def get_current_user_endpoint(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_current_user_endpoint(current_user: Dict = Depends(get_current_user)):
     """
     Get current user information.
     """
     return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "name": current_user.name,
-        "default_location": current_user.default_location,
-        "location_details": current_user.location_details,
-        "phone": current_user.phone,
-        "role": current_user.role,
-        "two_factor_enabled": current_user.two_factor_enabled,
-        "phone_verified": current_user.phone_verified,
-        "state": current_user.state,
-        "district": current_user.district,
-        "tehsil": current_user.tehsil,
-        "locality": current_user.locality,
-        "pincode": current_user.pincode,
-        "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
-        "last_login": current_user.last_login.isoformat() if current_user.last_login else None
+        "id": current_user.get("_id"),
+        "email": current_user.get("email"),
+        "name": current_user.get("name"),
+        "phone": current_user.get("phone"),
+        "role": current_user.get("role"),
+        "language": current_user.get("language", "hi"),
+        "location": current_user.get("location"),
+        "two_factor_enabled": current_user.get("two_factor_enabled", False),
+        "phone_verified": current_user.get("phone_verified", False),
+        "is_active": current_user.get("is_active", True)
     }
 
 
 @router.put("/me")
 async def update_profile(
     request: UpdateProfileRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict = Depends(get_current_user)
 ):
     """
     Update user profile information.
     """
-    if request.name:
-        current_user.name = request.name
-    if request.phone:
-        current_user.phone = request.phone
-    if request.default_location:
-        current_user.default_location = request.default_location
-    if request.location_details:
-        current_user.location_details = request.location_details
-    if request.state:
-        current_user.state = request.state
-    if request.district:
-        current_user.district = request.district
-    if request.tehsil:
-        current_user.tehsil = request.tehsil
-    if request.locality:
-        current_user.locality = request.locality
-    if request.pincode:
-        current_user.pincode = request.pincode
+    users_collection = get_collection("users")
+    user_id = current_user.get("_id")
     
-    current_user.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(current_user)
+    # Build update data
+    update_data = {}
+    if request.name:
+        update_data["name"] = request.name
+    if request.phone:
+        update_data["phone"] = request.phone
+    
+    # Update location if provided
+    if any([request.state, request.district, request.tehsil, request.locality, request.pincode]):
+        location = current_user.get("location", {})
+        if request.state:
+            location["state"] = request.state
+        if request.district:
+            location["district"] = request.district
+        if request.tehsil:
+            location["tehsil"] = request.tehsil
+        if request.locality:
+            location["locality"] = request.locality
+        if request.pincode:
+            location["pincode"] = request.pincode
+        update_data["location"] = location
+    
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await users_collection.update_one(
+            {"_id": user_id},
+            {"$set": update_data}
+        )
+    
+    # Fetch updated user
+    updated_user = await users_collection.find_one({"_id": user_id})
     
     return {
-        "id": current_user.id,
-        "email": current_user.email,
-        "name": current_user.name,
-        "default_location": current_user.default_location,
-        "location_details": current_user.location_details,
-        "phone": current_user.phone,
-        "role": current_user.role,
-        "two_factor_enabled": current_user.two_factor_enabled,
-        "phone_verified": current_user.phone_verified,
-        "state": current_user.state,
-        "district": current_user.district,
-        "tehsil": current_user.tehsil,
-        "locality": current_user.locality,
-        "pincode": current_user.pincode
+        "id": updated_user.get("_id"),
+        "email": updated_user.get("email"),
+        "name": updated_user.get("name"),
+        "phone": updated_user.get("phone"),
+        "role": updated_user.get("role"),
+        "language": updated_user.get("language", "hi"),
+        "location": updated_user.get("location")
     }
 
 
 @router.put("/me/password")
 async def update_password(
     request: UpdatePasswordRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict = Depends(get_current_user)
 ):
     """
     Update user password.
     """
-    if not current_user.password_hash:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot update password for Google OAuth users"
-        )
+    users_collection = get_collection("users")
+    user_id = current_user.get("_id")
     
     # Verify current password
-    if not pwd_context.verify(request.current_password, current_user.password_hash):
+    if not pwd_context.verify(request.current_password, current_user.get("password_hash")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect"
         )
     
+    # Hash new password
+    new_password_hash = pwd_context.hash(request.new_password)
+    
     # Update password
-    current_user.password_hash = pwd_context.hash(request.new_password)
-    current_user.updated_at = datetime.utcnow()
-    db.commit()
+    await users_collection.update_one(
+        {"_id": user_id},
+        {"$set": {
+            "password_hash": new_password_hash,
+            "updated_at": datetime.utcnow()
+        }}
+    )
     
     return {"message": "Password updated successfully"}

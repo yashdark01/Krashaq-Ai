@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from typing import List, Optional
+import uuid
+from datetime import datetime
 
-from app.db import get_db
-from app.models import Farmer
+from app.db.mongodb import get_collection
 
 router = APIRouter()
 
@@ -26,94 +26,157 @@ class FarmerResponse(BaseModel):
 
 
 @router.post("/farmers", response_model=FarmerResponse)
-async def create_farmer(farmer: FarmerCreate, db: Session = Depends(get_db)):
+async def create_farmer(farmer: FarmerCreate):
     """
     Register a new farmer.
     """
+    users_collection = get_collection("users")
+    
     # Check if phone already exists
-    existing = db.query(Farmer).filter(Farmer.phone == farmer.phone).first()
+    existing = await users_collection.find_one({"phone": farmer.phone})
     if existing:
         raise HTTPException(status_code=400, detail="Phone number already registered")
     
-    # Create new farmer
-    db_farmer = Farmer(
-        name=farmer.name,
-        phone=farmer.phone,
-        location=farmer.location
-    )
-    db.add(db_farmer)
-    db.commit()
-    db.refresh(db_farmer)
+    # Generate user ID
+    user_id = str(uuid.uuid4())
     
-    return db_farmer
+    # Create new farmer (user with farmer role)
+    new_farmer = {
+        "_id": user_id,
+        "name": farmer.name,
+        "phone": farmer.phone,
+        "role": "farmer",
+        "language": "hi",
+        "location": {
+            "state": None,
+            "district": None,
+            "tehsil": None,
+            "locality": farmer.location,
+            "pincode": None
+        },
+        "is_active": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    await users_collection.insert_one(new_farmer)
+    
+    return {
+        "id": user_id,
+        "name": farmer.name,
+        "phone": farmer.phone,
+        "location": farmer.location
+    }
 
 
 @router.get("/farmers", response_model=List[FarmerResponse])
-async def get_farmers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+async def get_farmers(skip: int = 0, limit: int = 100):
     """
     Get list of all farmers.
     """
-    farmers = db.query(Farmer).offset(skip).limit(limit).all()
-    return farmers
+    users_collection = get_collection("users")
+    
+    farmers = await users_collection.find({"role": "farmer"}).skip(skip).limit(limit).to_list(length=None)
+    
+    return [
+        {
+            "id": f.get("_id"),
+            "name": f.get("name"),
+            "phone": f.get("phone"),
+            "location": f.get("location", {}).get("locality") if f.get("location") else None
+        }
+        for f in farmers
+    ]
 
 
 @router.get("/farmers/{farmer_id}", response_model=FarmerResponse)
-async def get_farmer(farmer_id: int, db: Session = Depends(get_db)):
+async def get_farmer(farmer_id: str):
     """
     Get a specific farmer by ID.
     """
-    farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
+    users_collection = get_collection("users")
+    
+    farmer = await users_collection.find_one({"_id": farmer_id, "role": "farmer"})
     if not farmer:
         raise HTTPException(status_code=404, detail="Farmer not found")
-    return farmer
+    
+    return {
+        "id": farmer.get("_id"),
+        "name": farmer.get("name"),
+        "phone": farmer.get("phone"),
+        "location": farmer.get("location", {}).get("locality") if farmer.get("location") else None
+    }
 
 
 @router.get("/farmers/phone/{phone}", response_model=FarmerResponse)
-async def get_farmer_by_phone(phone: str, db: Session = Depends(get_db)):
+async def get_farmer_by_phone(phone: str):
     """
     Get a farmer by phone number.
     """
-    farmer = db.query(Farmer).filter(Farmer.phone == phone).first()
+    users_collection = get_collection("users")
+    
+    farmer = await users_collection.find_one({"phone": phone, "role": "farmer"})
     if not farmer:
         raise HTTPException(status_code=404, detail="Farmer not found")
-    return farmer
+    
+    return {
+        "id": farmer.get("_id"),
+        "name": farmer.get("name"),
+        "phone": farmer.get("phone"),
+        "location": farmer.get("location", {}).get("locality") if farmer.get("location") else None
+    }
 
 
 @router.put("/farmers/{farmer_id}", response_model=FarmerResponse)
 async def update_farmer(
-    farmer_id: int,
+    farmer_id: str,
     name: Optional[str] = None,
-    location: Optional[str] = None,
-    db: Session = Depends(get_db)
+    location: Optional[str] = None
 ):
     """
-    Update farmer information.
+    Update a farmer's information.
     """
-    farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
+    users_collection = get_collection("users")
+    
+    farmer = await users_collection.find_one({"_id": farmer_id, "role": "farmer"})
     if not farmer:
         raise HTTPException(status_code=404, detail="Farmer not found")
     
+    update_data = {}
     if name:
-        farmer.name = name
+        update_data["name"] = name
     if location:
-        farmer.location = location
+        current_location = farmer.get("location", {})
+        current_location["locality"] = location
+        update_data["location"] = current_location
     
-    db.commit()
-    db.refresh(farmer)
+    if update_data:
+        update_data["updated_at"] = datetime.utcnow()
+        await users_collection.update_one(
+            {"_id": farmer_id},
+            {"$set": update_data}
+        )
     
-    return farmer
+    # Fetch updated farmer
+    updated_farmer = await users_collection.find_one({"_id": farmer_id})
+    
+    return {
+        "id": updated_farmer.get("_id"),
+        "name": updated_farmer.get("name"),
+        "phone": updated_farmer.get("phone"),
+        "location": updated_farmer.get("location", {}).get("locality") if updated_farmer.get("location") else None
+    }
 
 
 @router.delete("/farmers/{farmer_id}")
-async def delete_farmer(farmer_id: int, db: Session = Depends(get_db)):
+async def delete_farmer(farmer_id: str):
     """
     Delete a farmer.
     """
-    farmer = db.query(Farmer).filter(Farmer.id == farmer_id).first()
-    if not farmer:
-        raise HTTPException(status_code=404, detail="Farmer not found")
+    users_collection = get_collection("users")
     
-    db.delete(farmer)
-    db.commit()
+    result = await users_collection.delete_one({"_id": farmer_id, "role": "farmer"})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Farmer not found")
     
     return {"message": "Farmer deleted successfully"}

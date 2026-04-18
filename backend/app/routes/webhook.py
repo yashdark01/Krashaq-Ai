@@ -1,15 +1,16 @@
 from fastapi import APIRouter, Form, Request, Depends, HTTPException
 from fastapi.responses import PlainTextResponse
-from sqlalchemy.orm import Session
 from twilio.rest import Client
 from twilio.request_validator import RequestValidator
-from twilio.twiml.messaging_response import MessagingResponse
+from datetime import datetime
+import logging
 
-from app.db import get_db
-from app.models import Farmer, Message
+from app.db.mongodb import get_collection
 from app.config import get_settings
-from app.services.weather import get_weather, format_weather_for_farmer
-from app.services.irrigation import get_irrigation_advice
+from app.services.query_handler import handle_farmer_query
+from app.services.whatsapp_sender import send_whatsapp_message
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
@@ -32,93 +33,78 @@ def validate_twilio_request(request: Request) -> bool:
     return validator.validate(url, params, signature)
 
 
-def process_message(body: str, location: str = "Delhi") -> str:
-    """Process incoming message and generate response."""
-    body_lower = body.lower().strip()
-    
-    # Get weather data
-    weather = get_weather(location)
-    
-    # Check for keywords
-    if any(word in body_lower for word in ["weather", "mausam", "temperature", "temp"]):
-        weather_msg = format_weather_for_farmer(weather)
-        return f"{weather_msg}\n\nReply with 'irrigate' for watering advice."
-    
-    if any(word in body_lower for word in ["irrigate", "water", "paani", "seinch", "watering"]):
-        weather_msg = format_weather_for_farmer(weather)
-        irrigation_msg = get_irrigation_advice(weather)
-        return f"{weather_msg}\n\n{irrigation_msg}"
-    
-    if any(word in body_lower for word in ["help", "madad", "sahayata"]):
-        return (
-            "🌾 Krashaq - Your Farming Assistant\n\n"
-            "Send these keywords:\n"
-            "• 'weather' - Current weather\n"
-            "• 'irrigate' - Irrigation advice\n"
-            "• 'help' - This message\n\n"
-            "Stay connected for smart farming tips!"
-        )
-    
-    # Default response
-    weather_msg = format_weather_for_farmer(weather)
-    irrigation_msg = get_irrigation_advice(weather)
-    
-    return (
-        f"🌾 Krashaq says:\n\n"
-        f"{weather_msg}\n\n"
-        f"{irrigation_msg}\n\n"
-        f"Send 'help' for more options."
-    )
-
-
 @router.post("/webhook")
 async def whatsapp_webhook(
     request: Request,
     Body: str = Form(...),
-    From: str = Form(...),
-    db: Session = Depends(get_db)
+    From: str = Form(...)
 ):
     """
     Handle incoming WhatsApp messages from Twilio.
+    Uses query handler for intent detection and response generation.
     """
+    logger.info("=" * 80)
+    logger.info("WHATSAPP WEBHOOK RECEIVED")
+    logger.info("=" * 80)
+    logger.info(f"[WEBHOOK] From: {From}")
+    logger.info(f"[WEBHOOK] Message: {Body}")
+    
     # Validate request is from Twilio (skip in development if needed)
     # if not validate_twilio_request(request):
     #     raise HTTPException(status_code=403, detail="Invalid request signature")
     
-    # Get or create farmer
+    # Get phone number
     phone = From.replace("whatsapp:", "")
-    farmer = db.query(Farmer).filter(Farmer.phone == phone).first()
+    logger.info(f"[WEBHOOK] Extracted phone: {phone}")
     
-    # Default location - can be updated based on farmer's registered location
-    location = "Delhi"
-    if farmer and farmer.location:
-        location = farmer.location
+    # Get farmer from database
+    logger.info("[WEBHOOK] Looking up farmer in database...")
+    users_collection = get_collection("users")
+    farmer = await users_collection.find_one({"phone": phone, "role": "farmer"})
     
-    # Process message
-    reply_text = process_message(Body, location)
+    if farmer:
+        logger.info(f"[WEBHOOK] ✓ Farmer found: {farmer.get('name')} (ID: {farmer.get('_id')})")
+    else:
+        logger.warning(f"[WEBHOOK] ✗ Farmer not found for phone: {phone}")
+    
+    # Process message using query handler
+    logger.info("[WEBHOOK] Processing message with query handler...")
+    reply_text = await handle_farmer_query(Body, farmer)
+    logger.info(f"[WEBHOOK] Response generated: {reply_text[:100]}...")
     
     # Save message to database
-    message = Message(
-        farmer_id=farmer.id if farmer else None,
-        phone=phone,
-        message=Body,
-        response=reply_text
-    )
-    db.add(message)
-    db.commit()
+    logger.info("[WEBHOOK] Saving message to database...")
+    messages_collection = get_collection("messages")
+    await messages_collection.insert_one({
+        "farmer_id": farmer.get("_id") if farmer else None,
+        "phone": phone,
+        "message": Body,
+        "response": reply_text,
+        "language": farmer.get("language", "hi") if farmer else "hi",
+        "created_at": datetime.utcnow()
+    })
+    logger.info("[WEBHOOK] ✓ Message saved to database")
     
-    # Create Twilio response
-    response = MessagingResponse()
-    response.message(reply_text)
+    # Send response via WhatsApp API
+    logger.info("[WEBHOOK] Sending WhatsApp response...")
+    send_result = send_whatsapp_message(phone, reply_text)
     
-    return PlainTextResponse(str(response), media_type="application/xml")
+    if send_result.get("success"):
+        logger.info(f"[WEBHOOK] ✓ WhatsApp message sent successfully (SID: {send_result.get('message_sid')})")
+    else:
+        logger.error(f"[WEBHOOK] ✗ Failed to send WhatsApp message: {send_result.get('error')}")
+    
+    logger.info("=" * 80)
+    logger.info("WHATSAPP WEBHOOK COMPLETED")
+    logger.info("=" * 80)
+    
+    return PlainTextResponse("OK", status_code=200)
 
 
 @router.post("/send-whatsapp")
-async def send_whatsapp_message(
+async def send_whatsapp_message_endpoint(
     to: str,
-    message: str,
-    db: Session = Depends(get_db)
+    message: str
 ):
     """
     Send proactive WhatsApp message to a farmer.
@@ -136,7 +122,7 @@ async def send_whatsapp_message(
         
         to_number = f"whatsapp:{to}"
         
-        message = client.messages.create(
+        message_obj = client.messages.create(
             from_=from_number,
             body=message,
             to=to_number
@@ -144,8 +130,8 @@ async def send_whatsapp_message(
         
         return {
             "success": True,
-            "message_sid": message.sid,
-            "status": message.status
+            "message_sid": message_obj.sid,
+            "status": message_obj.status
         }
         
     except Exception as e:

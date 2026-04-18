@@ -7,13 +7,14 @@ Krashaq Backend is a FastAPI-based REST API that powers the smart farming assist
 ## Technology Stack
 
 - **Framework**: FastAPI
-- **Database**: SQLite (with support for PostgreSQL/MySQL)
-- **ORM**: SQLAlchemy
+- **Database**: MongoDB (with PyMongo)
+- **ORM**: PyMongo (direct MongoDB access)
 - **Authentication**: JWT + Google OAuth 2.0
-- **LLM Integration**: Ollama, Google Gemini, OpenAI, Claude, Grok
+- **LLM Integration**: Ollama (primary), Google Gemini (fallback), OpenAI, Claude, Grok
 - **Messaging**: Twilio WhatsApp API
 - **Caching**: Redis
-- **Weather API**: OpenWeatherMap
+- **Weather API**: WeatherAPI.com
+- **Scheduler**: APScheduler for background jobs
 
 ## Project Structure
 
@@ -21,13 +22,16 @@ Krashaq Backend is a FastAPI-based REST API that powers the smart farming assist
 backend/
 ├── app/
 │   ├── config/          # Configuration files
+│   ├── db/              # Database connection and models
 │   ├── middleware/      # Custom middleware
-│   ├── models.py        # Database models
 │   ├── routes/          # API endpoints
+│   ├── schemas/         # Pydantic schemas
 │   ├── services/        # Business logic
-│   ├── db.py            # Database configuration
 │   ├── config.py        # Application settings
-│   └── main.py          # Application entry point
+│   ├── db.py            # Legacy database (deprecated)
+│   ├── main.py          # Application entry point
+│   └── scheduler.py     # Background job scheduler
+├── scripts/            # Utility scripts
 ├── requirements.txt     # Python dependencies
 └── .env.example        # Environment variables template
 ```
@@ -54,39 +58,41 @@ backend/
 
 ---
 
-### 2. Database Models (`models.py`)
+### 2. Database Models (`db/`)
 
-**Purpose**: Define database schema
+**Purpose**: MongoDB database schemas and connection management
 
-**Models**:
+**Collections**:
 
-#### Farmer
-- Stores farmer information for WhatsApp integration
-- Fields: id, name, phone, location, created_at
-- Phone number is unique and indexed
-
-#### Message
-- Stores chat message history
-- Fields: id, farmer_id, phone, session_id, message, response, language, tools_used, llm_provider, created_at
-- Supports multi-language (en, hi, hinglish)
-- Tracks which LLM provider was used
-
-#### User
-- Stores web application users
-- Fields: id, email, name, password_hash, google_id, phone, location details, 2FA settings, role, created_at, updated_at, last_login
+#### Users
+- Stores web application users and farmers
+- Fields: _id, email, name, password_hash, google_id, phone, location (state, district, tehsil, locality, pincode), 2FA settings, role, language, created_at, updated_at, last_login
 - Supports both email/password and Google OAuth authentication
 - Cascading location hierarchy: state → district → tehsil → locality → pincode
 - Role-based access control (admin, farmer, viewer)
+- Language preference (hi, en, etc.)
 
-#### RefreshToken
+#### Messages
+- Stores chat message history from WhatsApp and web
+- Fields: _id, farmer_id, phone, message, response, language, created_at
+- Supports multi-language (en, hi, hinglish)
+- Tracks farmer association
+
+#### RefreshTokens
 - Stores JWT refresh tokens
-- Fields: id, user_id, token, expires_at, created_at, revoked
+- Fields: _id, user_id, token, expires_at, created_at, revoked
 - Supports token revocation for logout
 
-**Remaining Features**:
-- Add user preferences model
-- Add notification settings model
-- Add farm/crop data model
+#### AuditLog
+- Stores system audit logs
+- Fields: _id, user_id, action, entity_type, entity_id, changes, timestamp
+- Tracks all CRUD operations for security and compliance
+
+**Database Connection**:
+- MongoDB connection via PyMongo
+- Connection pooling
+- Automatic reconnection
+- Database: krashaq
 
 ---
 
@@ -95,20 +101,20 @@ backend/
 **Purpose**: Centralized configuration management
 
 **Settings**:
-- Weather API credentials
+- Weather API credentials (WeatherAPI.com)
 - Twilio WhatsApp credentials
-- Database connection string
+- MongoDB connection string
 - LLM provider configuration (Ollama, Gemini, OpenAI, Claude, Grok)
 - JWT authentication settings
 - Google OAuth credentials
 - Redis caching configuration
 
 **Environment Variables**:
-- `WEATHER_API_KEY` - OpenWeatherMap API key
+- `WEATHER_API_KEY` - WeatherAPI.com API key
 - `TWILIO_ACCOUNT_SID` - Twilio account SID
 - `TWILIO_AUTH_TOKEN` - Twilio auth token
 - `TWILIO_WHATSAPP_NUMBER` - Twilio WhatsApp number
-- `DATABASE_URL` - Database connection string
+- `MONGODB_URL` - MongoDB connection string
 - `LLM_PROVIDER` - Default LLM provider (ollama, gemini, openai, claude, grok)
 - `OLLAMA_BASE_URL` - Ollama server URL
 - `OLLAMA_MODEL` - Default Ollama model
@@ -273,16 +279,17 @@ def endpoint(db: Session = Depends(get_db)):
 
 #### 5.3 Webhook Routes (`routes/webhook.py`)
 
-**Purpose**: WhatsApp integration via Twilio
+**Purpose**: WhatsApp two-way communication via Twilio
 
 **Endpoints**:
 
 - `POST /webhook` - WhatsApp webhook
-  - Receives incoming WhatsApp messages
-  - Processes keywords (weather, irrigation, help)
-  - Returns AI-generated responses
+  - Receives incoming WhatsApp messages from farmers
+  - Uses query handler for intent detection and routing
+  - AI-powered responses via LLM (Ollama with Gemini fallback)
   - Saves messages to database
   - Supports farmer location lookup
+  - Language-aware responses (Hindi/English based on user preference)
 
 - `POST /send-whatsapp` - Send WhatsApp message
   - Sends proactive messages to farmers
@@ -290,24 +297,25 @@ def endpoint(db: Session = Depends(get_db)):
   - Returns message status
 
 **Features**:
-- Twilio webhook validation
-- Keyword-based responses
-- Farmer registration
+- Intent detection (irrigation, weather, general queries)
+- AI-powered general responses using LLM
+- Location context for accurate weather responses
+- Language-aware responses (Hindi Devanagari script, English, Hinglish)
+- Farmer registration and lookup
 - Message logging
 - Location-based responses
+- Single message delivery (no duplicates)
 
-**Keywords Supported**:
-- "weather", "mausam", "temperature", "temp" - Weather information
-- "irrigate", "water", "paani", "seinch", "watering" - Irrigation advice
-- "help", "madad", "sahayata" - Help message
+**Intents Supported**:
+- **Irrigation**: "paani", "sinchai", "water", "irrigation" - Irrigation advice
+- **Weather**: "mausam", "weather", "barish", "rain" - Weather information
+- **General**: Any other query - AI-powered response with location context
 
-**Remaining Features**:
-- Full AI integration (currently keyword-based)
-- Image recognition
-- Voice message support
-- Scheduled messages
-- Message templates
-- Analytics dashboard
+**LLM Integration**:
+- Primary: Ollama (local LLM)
+- Fallback: Gemini (if Ollama unavailable)
+- Language-specific prompts
+- Location context injection
 
 ---
 
@@ -373,6 +381,42 @@ def endpoint(db: Session = Depends(get_db)):
 - Crop tracking
 - Farm size data
 - Historical data
+
+---
+
+#### 5.6 Admin Routes (`routes/admin.py`)
+
+**Purpose**: Administrative operations (admin-only)
+
+**Endpoints**:
+
+- `GET /api/admin/users` - List all users
+- `DELETE /api/admin/users/{id}` - Delete user
+- `GET /api/admin/audit-logs` - Get audit logs
+- `POST /api/admin/config` - Update system configuration
+- `POST /api/admin/jobs/{job_id}/pause` - Pause scheduled job
+- `POST /api/admin/jobs/{job_id}/resume` - Resume scheduled job
+
+**Features**:
+- Role-based access control (admin only)
+- Audit logging
+- System configuration management
+- Job control
+
+---
+
+#### 5.7 Scheduler (`scheduler.py`)
+
+**Purpose**: Background job scheduling
+
+**Features**:
+- APScheduler integration
+- Daily irrigation alerts
+- Configurable job intervals
+- Job lifecycle management (start, pause, resume, shutdown)
+
+**Jobs**:
+- `daily_irrigation_alerts` - Sends irrigation advice to farmers every 6 hours
 
 ---
 
@@ -475,11 +519,31 @@ def endpoint(db: Session = Depends(get_db)):
 
 #### 6.4 Domain Services
 
+**Query Handler Service (`services/query_handler.py`)**
+- Intent detection for WhatsApp messages (irrigation, weather, general)
+- Routes queries to appropriate response handlers
+- AI-powered general responses using LLM
+- Location context injection for accurate responses
+- Language-aware response generation
+
+**WhatsApp Sender Service (`services/whatsapp_sender.py`)**
+- Sends WhatsApp messages via Twilio API
+- Phone number formatting
+- Error handling and logging
+- Message status tracking
+
+**Irrigation Decision Service (`services/irrigation_decision.py`)**
+- Rule-based irrigation decision logic
+- Weather-based irrigation recommendations
+- Soil moisture consideration
+- Decision reasoning generation
+
 **Weather Service (`services/weather.py`)**
 - Fetches weather data from OpenWeatherMap
 - Formats weather for farmers
 - Location-based queries
 - Weather forecasting
+- Redis caching for performance
 
 **Irrigation Service (`services/irrigation.py`)**
 - Provides irrigation advice based on weather

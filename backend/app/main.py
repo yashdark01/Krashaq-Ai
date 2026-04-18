@@ -1,12 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db import Base, engine
-from app.models import Farmer, Message, User, RefreshToken  # Import models to register them
-from app.routes import webhook, chat, user, auth, locations
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
+from app.db.mongodb import connect_to_mongodb, close_mongodb_connection
+from app.routes import webhook, chat, user, auth, locations, admin
+from app.scheduler import start_scheduler, stop_scheduler
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -30,6 +27,21 @@ app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(user.router, prefix="/api", tags=["Farmers"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(locations.router, prefix="/api/locations", tags=["Locations"])
+app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Connect to MongoDB and start the scheduler on application startup."""
+    await connect_to_mongodb()
+    await start_scheduler()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop the scheduler and close MongoDB connection on application shutdown."""
+    stop_scheduler()
+    await close_mongodb_connection()
 
 
 @app.get("/")

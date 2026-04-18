@@ -1,27 +1,24 @@
 """
 Chat memory management for Krashaq LLM agent.
-Stores conversation history in SQLite with session-based threading.
+Stores conversation history in MongoDB with session-based threading.
 """
 
 import json
 import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
 
-from app.db import get_db
-from app.models import Message
+from app.db.mongodb import get_collection
 
 
 class ChatMemory:
-    """Simple chat memory manager using existing SQLite database."""
+    """Simple chat memory manager using MongoDB."""
     
-    def __init__(self, session_id: str, db: Session):
+    def __init__(self, session_id: str):
         self.session_id = session_id
-        self.db = db
     
-    def add_message(self, role: str, content: str, tools_used: Optional[List[str]] = None,
-                   language: str = "en", llm_provider: str = "ollama") -> Message:
+    async def add_message(self, role: str, content: str, tools_used: Optional[List[str]] = None,
+                   language: str = "en", llm_provider: str = "ollama") -> Dict:
         """
         Add a message to the conversation history.
         
@@ -33,8 +30,10 @@ class ChatMemory:
             llm_provider: LLM provider used for the response
         
         Returns:
-            Created Message object
+            Created message dictionary
         """
+        messages_collection = get_collection("messages")
+        
         # Extract phone from session_id if embedded (format: phone_timestamp or uuid)
         phone = None
         if "_" in self.session_id:
@@ -42,21 +41,23 @@ class ChatMemory:
             if len(parts) == 2 and parts[0].isdigit():
                 phone = parts[0]
         
-        message = Message(
-            session_id=self.session_id,
-            phone=phone,
-            message=content if role == "user" else "",
-            response=content if role == "assistant" else "",
-            language=language,
-            tools_used=json.dumps(tools_used) if tools_used else None,
-            llm_provider=llm_provider
-        )
+        message = {
+            "session_id": self.session_id,
+            "phone": phone,
+            "message": content if role == "user" else "",
+            "response": content if role == "assistant" else "",
+            "language": language,
+            "tools_used": tools_used or [],
+            "llm_provider": llm_provider,
+            "created_at": datetime.utcnow()
+        }
         
-        self.db.add(message)
-        self.db.commit()
+        result = await messages_collection.insert_one(message)
+        message["_id"] = result.inserted_id
+        
         return message
     
-    def get_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get recent conversation history in LangChain message format.
         
@@ -66,29 +67,27 @@ class ChatMemory:
         Returns:
             List of messages as dicts with 'role' and 'content'
         """
-        messages = (
-            self.db.query(Message)
-            .filter(Message.session_id == self.session_id)
-            .order_by(Message.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        messages_collection = get_collection("messages")
+        
+        messages = await messages_collection.find(
+            {"session_id": self.session_id}
+        ).sort("created_at", -1).limit(limit).to_list(length=None)
         
         # Reverse to get chronological order
         messages.reverse()
         
         history = []
         for msg in messages:
-            if msg.message:
-                history.append({"role": "user", "content": msg.message})
-            if msg.response:
-                history.append({"role": "assistant", "content": msg.response})
+            if msg.get("message"):
+                history.append({"role": "user", "content": msg.get("message")})
+            if msg.get("response"):
+                history.append({"role": "assistant", "content": msg.get("response")})
         
         return history
     
-    def get_formatted_history(self, limit: int = 10) -> str:
+    async def get_formatted_history(self, limit: int = 10) -> str:
         """Get history formatted as a string for prompt context."""
-        history = self.get_history(limit)
+        history = await self.get_history(limit)
         if not history:
             return ""
         
@@ -99,10 +98,10 @@ class ChatMemory:
         
         return "\n".join(lines)
     
-    def clear_history(self):
+    async def clear_history(self):
         """Clear all messages for this session."""
-        self.db.query(Message).filter(Message.session_id == self.session_id).delete()
-        self.db.commit()
+        messages_collection = get_collection("messages")
+        await messages_collection.delete_many({"session_id": self.session_id})
 
 
 def create_session_id(phone: Optional[str] = None) -> str:
@@ -141,40 +140,41 @@ def get_or_create_session(phone: Optional[str] = None,
     return create_session_id(phone)
 
 
-def cleanup_old_sessions(db: Session, days: int = 30):
+async def cleanup_old_sessions(days: int = 30):
     """
     Remove messages from sessions older than specified days.
     
     Args:
-        db: Database session
         days: Number of days to keep (default 30)
     """
-    cutoff_date = datetime.now() - timedelta(days=days)
+    messages_collection = get_collection("messages")
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
     
-    deleted = (
-        db.query(Message)
-        .filter(Message.created_at < cutoff_date)
-        .delete()
-    )
+    result = await messages_collection.delete_many({
+        "created_at": {"$lt": cutoff_date}
+    })
     
-    db.commit()
-    return deleted
+    return result.deleted_count
 
 
-def get_session_stats(db: Session) -> Dict[str, Any]:
+async def get_session_stats() -> Dict[str, Any]:
     """Get statistics about stored sessions."""
-    total_messages = db.query(Message).count()
-    total_sessions = db.query(Message.session_id).distinct().count()
+    messages_collection = get_collection("messages")
+    
+    total_messages = await messages_collection.count_documents({})
+    
+    # Get unique session count
+    sessions = await messages_collection.distinct("session_id")
+    total_sessions = len(sessions)
     
     # Messages by provider
     provider_counts = {}
-    results = (
-        db.query(Message.llm_provider, db.func.count(Message.id))
-        .group_by(Message.llm_provider)
-        .all()
-    )
-    for provider, count in results:
-        provider_counts[provider or "unknown"] = count
+    pipeline = [
+        {"$group": {"_id": "$llm_provider", "count": {"$sum": 1}}}
+    ]
+    results = await messages_collection.aggregate(pipeline).to_list(length=None)
+    for result in results:
+        provider_counts[result.get("_id") or "unknown"] = result.get("count", 0)
     
     return {
         "total_messages": total_messages,

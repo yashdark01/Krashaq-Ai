@@ -1,6 +1,4 @@
 from typing import Dict, Any, List, Optional
-from sqlalchemy.orm import Session
-from app.models import Message
 import json
 
 class LangChainMemoryService:
@@ -76,35 +74,41 @@ class LangChainMemoryService:
         if session_id in self.memory_store:
             del self.memory_store[session_id]
     
-    def load_memory_from_database(self, session_id: str, db: Session):
+    async def load_memory_from_database(self, session_id: str):
         """
         Load conversation history from database into memory.
         
         Args:
             session_id: Session identifier
-            db: Database session
         """
-        messages = db.query(Message).filter(
-            Message.session_id == session_id
-        ).order_by(Message.created_at).all()
+        from app.db.mongodb import get_collection
+        from datetime import datetime
+        
+        messages_collection = get_collection("messages")
+        
+        messages = await messages_collection.find(
+            {"session_id": session_id}
+        ).sort("created_at", 1).to_list(length=None)
         
         memory = self.get_memory(session_id)
         
         for msg in messages:
-            if msg.message:
-                memory.append({"role": "user", "content": msg.message})
-            if msg.response:
-                memory.append({"role": "assistant", "content": msg.response})
+            if msg.get("message"):
+                memory.append({"role": "user", "content": msg.get("message")})
+            if msg.get("response"):
+                memory.append({"role": "assistant", "content": msg.get("response")})
     
-    def save_memory_to_database(self, session_id: str, db: Session, user_id: Optional[int] = None):
+    async def save_memory_to_database(self, session_id: str, user_id: Optional[str] = None):
         """
         Save current memory state to database (for persistence).
         
         Args:
             session_id: Session identifier
-            db: Database session
             user_id: User ID (optional)
         """
+        from app.db.mongodb import get_collection
+        from datetime import datetime
+        
         memory = self.get_memory(session_id)
         
         # This is a simplified version - in production, you'd want to track which messages
