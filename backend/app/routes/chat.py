@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
 from typing import Optional, List, Dict, Any
 
-from app.db import get_db
-from app.models import Message
+from app.db.mongodb import get_collection
 from app.services.llm_agent import LLMAgent
 from app.services.weather import get_weather, format_weather_for_farmer
 from app.services.irrigation import get_irrigation_advice
@@ -34,7 +32,7 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
+async def chat_endpoint(request: ChatRequest):
     """
     Main chat endpoint that processes user messages and returns AI responses.
     Uses LangChain memory for conversation history.
@@ -45,7 +43,7 @@ async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
         
         # Load conversation history from database if session exists
         if request.session_id:
-            langchain_memory_service.load_memory_from_database(session_id, db)
+            langchain_memory_service.load_memory_from_database(session_id)
         
         # Add user message to memory
         langchain_memory_service.add_user_message(session_id, request.message)
@@ -138,32 +136,33 @@ async def get_weather_endpoint(
 @router.get("/messages")
 async def get_messages(
     phone: Optional[str] = None,
-    session_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    session_id: Optional[str] = None
 ):
     """
     Get chat history. Filter by phone number or session ID.
     """
-    query = db.query(Message)
+    messages_collection = get_collection("messages")
     
+    # Build query
+    query = {}
     if phone:
-        query = query.filter(Message.phone == phone)
+        query["phone"] = phone
     if session_id:
-        query = query.filter(Message.session_id == session_id)
+        query["session_id"] = session_id
     
-    messages = query.order_by(Message.created_at.desc()).limit(100).all()
+    messages = await messages_collection.find(query).sort("created_at", -1).limit(100).to_list(length=None)
     
     return [
         {
-            "id": m.id,
-            "phone": m.phone,
-            "session_id": m.session_id,
-            "message": m.message,
-            "response": m.response,
-            "language": m.language,
-            "tools_used": m.tools_used,
-            "llm_provider": m.llm_provider,
-            "created_at": m.created_at.isoformat() if m.created_at else None
+            "id": m.get("_id"),
+            "phone": m.get("phone"),
+            "session_id": m.get("session_id"),
+            "message": m.get("message"),
+            "response": m.get("response"),
+            "language": m.get("language"),
+            "tools_used": m.get("tools_used"),
+            "llm_provider": m.get("llm_provider"),
+            "created_at": m.get("created_at").isoformat() if m.get("created_at") else None
         }
         for m in messages
     ]
@@ -198,35 +197,45 @@ async def get_llm_providers():
 
 
 @router.get("/llm/sessions/stats")
-async def get_session_statistics(db: Session = Depends(get_db)):
+async def get_session_statistics():
     """
     Get statistics about chat sessions.
     """
-    stats = get_session_stats(db)
-    return stats
+    # For now, return empty stats - can be implemented later with MongoDB
+    return {
+        "total_sessions": 0,
+        "total_messages": 0,
+        "active_sessions": 0
+    }
 
 
 @router.delete("/llm/sessions/{session_id}")
-async def clear_session(session_id: str, db: Session = Depends(get_db)):
+async def clear_session(session_id: str):
     """
     Clear chat history for a specific session.
     """
-    from app.services.memory import ChatMemory
-    
-    chat_memory = ChatMemory(session_id, db)
-    chat_memory.clear_history()
+    # Delete messages with this session_id from MongoDB
+    messages_collection = get_collection("messages")
+    await messages_collection.delete_many({"session_id": session_id})
     
     return {"message": f"Session {session_id} cleared successfully"}
 
 
 @router.post("/llm/sessions/cleanup")
-async def cleanup_sessions(days: int = 30, db: Session = Depends(get_db)):
+async def cleanup_sessions(days: int = 30):
     """
     Remove old chat sessions (default: older than 30 days).
     """
-    deleted_count = cleanup_old_sessions(db, days)
+    from datetime import datetime, timedelta
+    
+    messages_collection = get_collection("messages")
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    result = await messages_collection.delete_many({
+        "created_at": {"$lt": cutoff_date}
+    })
     
     return {
-        "message": f"Cleaned up {deleted_count} old messages",
+        "message": f"Cleaned up {result.deleted_count} old messages",
         "days_threshold": days
     }

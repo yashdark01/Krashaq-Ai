@@ -4,63 +4,66 @@
 
 Krashaq Backend follows a layered architecture pattern with clear separation of concerns. The system is built on FastAPI and follows RESTful API principles.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Client Layer                             │
-│         (Web App, WhatsApp, Mobile App)                      │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ HTTP/HTTPS
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                  API Gateway Layer                           │
-│                   (FastAPI Application)                       │
-│  - CORS Middleware                                          │
-│  - Request Validation                                       │
-│  - Error Handling                                           │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-┌───────▼──────┐ ┌───▼────┐ ┌──────▼──────┐
-│  Routes      │ │ Routes │ │   Routes    │
-│  - Auth      │ │ - Chat │ │ - Webhook   │
-│  - User      │ │ - Loc  │ │ - etc.      │
-└───────┬──────┘ └───┬────┘ └──────┬──────┘
-        │            │             │
-        └────────────┼─────────────┘
-                     │
-┌────────────────────▼───────────────────────────────────────┐
-│                  Service Layer                              │
-│  - Business Logic                                           │
-│  - LLM Integration                                          │
-│  - External API Calls                                        │
-│  - Data Processing                                          │
-└────────────────────┬───────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-┌───────▼──────┐ ┌──▼────┐ ┌─────▼──────┐
-│  Services    │ │Cache  │ │  External  │
-│  - Auth      │ │- Redis│ │  APIs      │
-│  - LLM       │ │       │ │- Weather   │
-│  - Weather   │ │       │ │- Twilio    │
-│  - etc.      │ │       │ │- Google    │
-└───────┬──────┘ └───────┘ └─────┬──────┘
-        │                       │
-        └───────────┬───────────┘
-                    │
-┌───────────────────▼───────────────────────────────────────┐
-│                  Data Access Layer                         │
-│  - ORM (SQLAlchemy)                                       │
-│  - Database Sessions                                       │
-│  - Query Building                                          │
-└───────────────────┬───────────────────────────────────────┘
-                    │
-┌───────────────────▼───────────────────────────────────────┐
-│                  Data Layer                                │
-│  - SQLite (Dev) / PostgreSQL (Prod)                       │
-│  - Redis (Cache)                                           │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        WebApp["Web App"]
+        WhatsApp["WhatsApp"]
+        MobileApp["Mobile App"]
+    end
+
+    subgraph APIGateway["API Gateway Layer (FastAPI)"]
+        CORS["CORS Middleware"]
+        Validation["Request Validation"]
+        ErrorHandling["Error Handling"]
+    end
+
+    subgraph Routes["Routes"]
+        AuthRoutes["Auth Routes"]
+        ChatRoutes["Chat Routes"]
+        WebhookRoutes["Webhook Routes"]
+        UserRoutes["User Routes"]
+        LocationRoutes["Location Routes"]
+        AdminRoutes["Admin Routes"]
+    end
+
+    subgraph Services["Service Layer"]
+        AuthServices["Auth Services"]
+        LLMServices["LLM Services"]
+        QueryHandler["Query Handler"]
+        WeatherService["Weather Service"]
+        IrrigationService["Irrigation Service"]
+    end
+
+    subgraph Infrastructure["Infrastructure"]
+        Cache["Redis Cache"]
+        ExternalAPIs["External APIs"]
+        WeatherAPI["WeatherAPI.com"]
+        TwilioAPI["Twilio WhatsApp"]
+        GoogleAPI["Google OAuth"]
+    end
+
+    subgraph DataAccess["Data Access Layer"]
+        PyMongo["PyMongo"]
+        Collections["Database Collections"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        MongoDB["MongoDB"]
+        Redis["Redis"]
+    end
+
+    Client -->|HTTP/HTTPS| APIGateway
+    APIGateway --> Routes
+    Routes --> Services
+    Services --> Cache
+    Services --> ExternalAPIs
+    ExternalAPIs --> WeatherAPI
+    ExternalAPIs --> TwilioAPI
+    ExternalAPIs --> GoogleAPI
+    Services --> DataAccess
+    DataAccess --> DataLayer
+    Cache --> Redis
 ```
 
 ## Architectural Patterns
@@ -83,9 +86,9 @@ The backend follows a strict layered architecture:
 
 **Data Access Layer (Models/DB)**
 - Database operations
-- ORM mapping
+- PyMongo for MongoDB access
 - Query execution
-- Transaction management
+- Connection management
 
 ### 2. Dependency Injection
 
@@ -106,10 +109,10 @@ settings = get_settings()
 
 ### 3. Repository Pattern (Partial)
 
-Database operations are abstracted through SQLAlchemy ORM:
-- Models define schema
-- Sessions manage connections
-- Queries built through ORM
+Database operations are abstracted through PyMongo:
+- Collections define schema
+- Connection management
+- Queries built through MongoDB query language
 
 ### 4. Service Pattern
 
@@ -157,36 +160,37 @@ Multiple LLM providers supported through strategy pattern:
 - Environment-based configuration
 - Default values for development
 
-### 3. Database Module (`db.py`)
+### 3. Database Module (`db/`)
 
-**Pattern**: Factory pattern for sessions
+**Pattern**: Factory pattern for connections
 
 **Responsibilities**:
-- Create database engine
-- Manage session lifecycle
+- Create MongoDB connection
+- Manage connection lifecycle
 - Provide dependency injection
 - Handle connection pooling
 
 **Design Decisions**:
-- SQLite for development, PostgreSQL for production
-- Autocommit disabled for transaction control
-- Session per request pattern
+- MongoDB for all environments
+- Connection pooling
+- Automatic reconnection
+- Database: krashaq
 
-### 4. Models Module (`models.py`)
+### 4. Models Module (`db/`)
 
-**Pattern**: Active Record (via SQLAlchemy)
+**Pattern**: Collection-based schema (MongoDB)
 
 **Responsibilities**:
 - Define database schema
-- Map tables to Python classes
+- Map collections to Python classes
 - Define relationships
-- Provide ORM interface
+- Provide PyMongo interface
 
-**Models**:
-- `Farmer` - WhatsApp users
-- `Message` - Chat history
-- `User` - Web application users
-- `RefreshToken` - JWT refresh tokens
+**Collections**:
+- `users` - Web application users and farmers
+- `messages` - Chat history from WhatsApp and web
+- `refresh_tokens` - JWT refresh tokens
+- `audit_logs` - System audit logs
 
 ### 5. Routes Module
 
@@ -224,20 +228,26 @@ Multiple LLM providers supported through strategy pattern:
 - `two_factor.py` - 2FA logic
 
 **LLM Services**:
-- `llm_provider.py` - Provider abstraction
+- `llm_provider.py` - Multi-provider LLM factory (Ollama, Gemini, OpenAI, Claude, Grok)
 - `llm_agent.py` - AI orchestration
-- `agent_router.py` - Tool routing
+- `agent_router.py` - LangGraph agent routing
 - `langchain_memory.py` - Conversation memory
 - `memory.py` - Session management
 - `prompts.py` - Prompt templates
 
+**Query Handler Services**:
+- `query_handler.py` - Intent detection and routing for WhatsApp
+- `whatsapp_sender.py` - WhatsApp message sender
+- `irrigation_decision.py` - Rule-based irrigation logic
+
 **Domain Services**:
-- `weather.py` - Weather data
+- `weather.py` - Weather data (WeatherAPI.com)
 - `irrigation.py` - Irrigation advice
 - `fertilizer.py` - Fertilizer recommendations
 
 **Infrastructure Services**:
 - `cache/redis_service.py` - Caching
+- `config_service.py` - System configuration management
 
 ### 7. Middleware Module
 
@@ -257,112 +267,110 @@ Multiple LLM providers supported through strategy pattern:
 
 ### Authentication Flow
 
-```
-Client Request
-    │
-    ▼
-Auth Middleware
-    │
-    ├─ Validate JWT Token
-    │   ├─ Extract token from header
-    │   ├─ Verify signature
-    │   ├─ Check expiration
-    │   └─ Extract user info
-    │
-    ├─ Load User from DB
-    │   └─ Query User model
-    │
-    └─ Inject User into Route
-        │
-        ▼
-Route Handler
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant M as Auth Middleware
+    participant DB as Database
+    participant R as Route Handler
+
+    C->>M: HTTP Request with JWT Token
+    M->>M: Extract token from header
+    M->>M: Verify signature
+    M->>M: Check expiration
+    M->>M: Extract user info
+    M->>DB: Query User model
+    DB-->>M: User data
+    M->>R: Inject User into Route
+    R-->>C: Response
 ```
 
 ### Chat Request Flow
 
-```
-Client POST /api/chat
-    │
-    ▼
-Chat Route Handler
-    │
-    ├─ Validate Request
-    │   └─ Pydantic model validation
-    │
-    ├─ Load Session History
-    │   └─ LangChain Memory Service
-    │       └─ Query Message model
-    │
-    ├─ Add User Message to Memory
-    │   └─ LangChain Memory Service
-    │
-    ├─ Initialize LLM Agent
-    │   └─ LLMAgent Service
-    │
-    ├─ Process Message
-    │   ├─ Agent Router
-    │   │   ├─ Detect Intent
-    │   │   ├─ Select Tools
-    │   │   └─ Execute Tools
-    │   │       ├─ Weather Service
-    │   │       ├─ Irrigation Service
-    │   │       └─ Other Services
-    │   │
-    │   ├─ LLM Provider
-    │   │   ├─ Select Provider
-    │   │   ├─ Call LLM API
-    │   │   └─ Process Response
-    │   │
-    │   └─ Format Response
-    │
-    ├─ Add Response to Memory
-    │   └─ LangChain Memory Service
-    │
-    ├─ Save to Database
-    │   └─ Message model
-    │
-    └─ Return Response
-        │
-        ▼
-Client
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as Chat Route Handler
+    participant M as LangChain Memory
+    participant DB as Database
+    participant A as LLM Agent
+    participant AR as Agent Router
+    participant WS as Weather Service
+    participant IS as Irrigation Service
+    participant LLM as LLM Provider
+
+    C->>R: POST /api/chat
+    R->>R: Validate Request
+    R->>M: Load Session History
+    M->>DB: Query Message model
+    DB-->>M: Session data
+    M-->>R: Session history
+    R->>M: Add User Message to Memory
+    R->>A: Initialize LLM Agent
+    A->>AR: Process Message
+    AR->>AR: Detect Intent
+    AR->>AR: Select Tools
+    AR->>WS: Execute Weather Tool
+    WS-->>AR: Weather Data
+    AR->>IS: Execute Irrigation Tool
+    IS-->>AR: Irrigation Data
+    AR->>LLM: Call LLM API
+    LLM-->>AR: LLM Response
+    AR->>A: Format Response
+    A-->>R: AI Response
+    R->>M: Add Response to Memory
+    R->>DB: Save to Database
+    DB-->>R: Confirmation
+    R-->>C: Response
 ```
 
 ### WhatsApp Webhook Flow
 
-```
-Twilio Webhook POST /webhook
-    │
-    ▼
-Webhook Route Handler
-    │
-    ├─ Validate Request (optional)
-    │   └─ Twilio signature validation
-    │
-    ├─ Extract Message Data
-    │   ├─ Phone number
-    │   ├─ Message body
-    │   └─ Metadata
-    │
-    ├─ Get/Create Farmer
-    │   └─ Query Farmer model
-    │
-    ├─ Process Message
-    │   ├─ Keyword detection
-    │   ├─ Service calls
-    │   │   ├─ Weather Service
-    │   │   └─ Irrigation Service
-    │   └─ Generate Response
-    │
-    ├─ Save to Database
-    │   └─ Message model
-    │
-    ├─ Create Twilio Response
-    │   └─ TwiML generation
-    │
-    └─ Return XML Response
-        │
-        ▼
-Twilio
+```mermaid
+sequenceDiagram
+    participant T as Twilio
+    participant W as Webhook Handler
+    participant DB as Database
+    participant Q as Query Handler
+    participant L as LLM Service
+    participant O as Ollama
+    participant G as Gemini
+    participant WA as WhatsApp API
+
+    T->>W: POST /webhook
+    W->>W: Validate Request (optional)
+    W->>W: Extract Message Data
+    W->>DB: Get Farmer from Database
+    DB-->>W: Farmer Data
+    W->>Q: Process with Query Handler
+    Q->>Q: Intent Detection
+    alt Irrigation Intent
+        Q->>Q: irrigation_response()
+    else Weather Intent
+        Q->>Q: weather_response()
+    else General Intent
+        Q->>Q: general_response()
+        Q->>Q: Get user's language preference
+        Q->>Q: Get user's location
+        Q->>L: Initialize LLM
+        L->>O: Try Ollama (primary)
+        alt Ollama Available
+            O-->>L: LLM Response
+        else Ollama Unavailable
+            L->>G: Try Gemini (fallback)
+            G-->>L: LLM Response
+        end
+        Q->>Q: Build prompt with location context
+        Q->>L: Call LLM
+        L-->>Q: AI Response
+        Q->>Q: Generate response in user's language
+    end
+    Q-->>W: Response
+    W->>DB: Save to Message collection
+    DB-->>W: Confirmation
+    W->>WA: Send WhatsApp Message via API
+    WA-->>W: Message SID
+    W-->>T: OK Response
 ```
 
 ## Security Architecture
@@ -456,17 +464,17 @@ Twilio
 
 ### External Integrations
 
-**Weather API (OpenWeatherMap)**:
+**Weather API (WeatherAPI.com)**:
 - REST API
 - API key authentication
 - Location-based queries
-- Caching support
+- Redis caching support
 
 **Twilio WhatsApp**:
 - Webhook-based
 - Signature validation
-- Two-way messaging
-- Template messages (planned)
+- Two-way AI-powered messaging
+- API-based message sending
 
 **Google OAuth**:
 - OAuth 2.0 flow
@@ -475,10 +483,12 @@ Twilio
 - Token refresh
 
 **LLM Providers**:
-- REST APIs
-- API key authentication
-- Streaming support (planned)
-- Fallback support
+- Ollama (primary) - Local LLM via HTTP
+- Gemini (fallback) - Google Cloud LLM
+- OpenAI (optional) - OpenAI API
+- Claude (optional) - Anthropic API
+- Grok (optional) - X.AI API
+- Multi-provider fallback mechanism
 
 ### Internal Integrations
 
@@ -621,23 +631,17 @@ Twilio
 - Async support
 - High performance
 
-### SQLAlchemy
-- Mature ORM
-- Database agnostic
-- Relationship management
-- Migration support
+### PyMongo
+- Official MongoDB driver
+- Async support
+- Connection pooling
+- Simple API
 
-### SQLite (Dev)
-- Zero configuration
-- File-based
-- Fast for development
-- Easy to test
-
-### PostgreSQL (Prod)
-- Robust and reliable
-- Advanced features
-- Better performance
-- Scalability
+### MongoDB
+- NoSQL database
+- Flexible schema
+- Horizontal scaling
+- Document-based storage
 
 ### Redis
 - Fast in-memory cache
@@ -661,11 +665,11 @@ Twilio
 - Improve caching strategy
 
 ### Medium Term
-- Migrate to PostgreSQL
 - Implement API gateway
 - Add monitoring
 - Improve testing coverage
 - Implement CI/CD
+- Add Redis cluster for distributed caching
 
 ### Long Term
 - Microservices architecture
@@ -673,6 +677,7 @@ Twilio
 - GraphQL API
 - Real-time features (WebSockets)
 - Advanced analytics
+- RAG implementation with vector database
 
 ## Documentation Standards
 

@@ -4,56 +4,70 @@
 
 Krashaq Frontend is built on Next.js 16 with the App Router, following modern React patterns and best practices. The application uses a component-based architecture with client-side state management and server-side rendering capabilities.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Browser                                  │
-│  - React Components                                          │
-│  - State Management                                          │
-│  - Client-side Logic                                         │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                  Next.js App Router                          │
-│  - File-based Routing                                        │
-│  - Server Components                                         │
-│  - Client Components                                         │
-│  - API Routes                                                 │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-        ┌─────────────┼─────────────┐
-        │             │             │
-┌───────▼──────┐ ┌───▼────┐ ┌──────▼──────┐
-│   Pages      │ │ API    │ │   Layouts   │
-│  - Auth      │ │ Routes │ │  - Root     │
-│  - Dashboard │ │- Chat  │ │  - Main     │
-│  - Profile   │ │- Weather│ │             │
-└───────┬──────┘ └───┬────┘ └──────┬──────┘
-        │            │             │
-        └────────────┼─────────────┘
-                     │
-┌────────────────────▼───────────────────────────────────────┐
-│                  Components Layer                           │
-│  - Reusable Components                                      │
-│  - UI Components (shadcn/ui)                                │
-│  - Feature Components                                       │
-└────────────────────┬───────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        │            │            │
-┌───────▼──────┐ ┌──▼────┐ ┌─────▼──────┐
-│  Contexts    │ │ Lib   │ │  Hooks     │
-│  - Auth      │ │- API  │ │- Custom    │
-│  - Theme     │ │- Utils│ │            │
-└───────┬──────┘ └───────┘ └─────┬──────┘
-        │                       │
-        └───────────┬───────────┘
-                    │
-┌───────────────────▼───────────────────────────────────────┐
-│                  External Services                          │
-│  - Backend API                                             │
-│  - Google OAuth                                            │
-│  - Third-party APIs                                        │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Browser["Browser Layer"]
+        React["React Components"]
+        State["State Management"]
+        Logic["Client-side Logic"]
+    end
+
+    subgraph NextJS["Next.js App Router"]
+        Routing["File-based Routing"]
+        ServerComp["Server Components"]
+        ClientComp["Client Components"]
+        APIRoutes["API Routes"]
+    end
+
+    subgraph Pages["Pages"]
+        AuthPages["Auth Pages"]
+        Dashboard["Dashboard"]
+        Profile["Profile"]
+        Admin["Admin"]
+    end
+
+    subgraph Layouts["Layouts"]
+        RootLayout["Root Layout"]
+        MainLayout["Main Layout"]
+    end
+
+    subgraph Components["Components Layer"]
+        Reusable["Reusable Components"]
+        UI["UI Components (shadcn/ui)"]
+        Feature["Feature Components"]
+    end
+
+    subgraph Contexts["Contexts"]
+        AuthContext["Auth Context"]
+        ThemeProvider["Theme Provider"]
+    end
+
+    subgraph Lib["Lib"]
+        API["API Client"]
+        Utils["Utility Functions"]
+    end
+
+    subgraph Hooks["Hooks"]
+        Custom["Custom Hooks"]
+    end
+
+    subgraph External["External Services"]
+        BackendAPI["Backend API"]
+        GoogleOAuth["Google OAuth"]
+        ThirdParty["Third-party APIs"]
+    end
+
+    Browser --> NextJS
+    NextJS --> Pages
+    NextJS --> APIRoutes
+    NextJS --> Layouts
+    Pages --> Components
+    Layouts --> Components
+    Components --> Contexts
+    Components --> Lib
+    Components --> Hooks
+    Contexts --> External
+    APIRoutes --> BackendAPI
 ```
 
 ## Architectural Patterns
@@ -325,85 +339,63 @@ const city = searchParams.get('city')
 
 ### Authentication Flow
 
-```
-User Action (Login)
-    │
-    ▼
-AuthContext.login()
-    │
-    ├─ Call Backend API
-    │   └─ POST /api/auth/login/email
-    │       └─ Receive tokens
-    │
-    ├─ Store tokens in localStorage
-    │
-    ├─ Fetch user profile
-    │   └─ GET /api/auth/me
-    │
-    ├─ Update AuthContext state
-    │   └─ Set user, authenticated
-    │
-    └─ Redirect to dashboard
-        │
-        ▼
-Dashboard Page
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant AC as AuthContext
+    participant API as Backend API
+    participant LS as localStorage
+    participant D as Dashboard
+
+    U->>AC: Login Action
+    AC->>API: POST /api/auth/login/email
+    API-->>AC: Access & Refresh Tokens
+    AC->>LS: Store tokens
+    AC->>API: GET /api/auth/me
+    API-->>AC: User Profile
+    AC->>AC: Update State (user, authenticated)
+    AC->>D: Redirect to Dashboard
+    D-->>U: Dashboard Page
 ```
 
 ### Chat Flow
 
-```
-User sends message
-    │
-    ▼
-ChatInput Component
-    │
-    ├─ Add to local state
-    │
-    ├─ Call Backend API
-    │   └─ POST /api/chat
-    │       ├─ Send message
-    │       ├─ Send session_id
-    │       └─ Send location
-    │
-    ├─ Receive response
-    │   ├─ AI reply
-    │   ├─ Session ID
-    │   └─ Metadata
-    │
-    ├─ Update chat state
-    │
-    └─ Display response
-        │
-        ▼
-ChatInterface
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CI as ChatInput
+    participant CS as Chat State
+    participant API as Backend API
+    participant CH as ChatInterface
+
+    U->>CI: Send Message
+    CI->>CS: Add to local state
+    CI->>API: POST /api/chat
+    API-->>CI: AI Response
+    CI->>CS: Update chat state
+    CI->>CH: Display response
+    CH-->>U: Updated Chat
 ```
 
 ### Weather Data Flow
 
-```
-Page Mount / Location Change
-    │
-    ▼
-useEffect hook
-    │
-    ├─ Build location hierarchy
-    │   ├─ locality (highest priority)
-    │   ├─ tehsil
-    │   ├─ district
-    │   └─ state
-    │
-    ├─ Call API Route
-    │   └─ GET /api/weather?city=...&locality=...
-    │
-    ├─ API Route proxies to Backend
-    │   └─ GET backend/api/weather
-    │
-    ├─ Receive weather data
-    │
-    └─ Update state
-        │
-        ▼
-WeatherCard displays data
+```mermaid
+sequenceDiagram
+    participant P as Page
+    participant UE as useEffect
+    participant API as API Route
+    participant Backend as Backend API
+    participant WC as WeatherCard
+
+    P->>UE: Mount / Location Change
+    UE->>UE: Build location hierarchy
+    UE->>API: GET /api/weather?city=...&locality=...
+    API->>Backend: GET backend/api/weather
+    Backend-->>API: Weather Data
+    API-->>UE: Weather Data
+    UE->>P: Update state
+    P->>WC: Display data
+    WC-->>U: Weather Information
 ```
 
 ## Routing Architecture

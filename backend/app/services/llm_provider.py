@@ -33,7 +33,7 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
     },
     "gemini": {
         "class_fn": _import_gemini,
-        "default_model": "gemini-1.5-flash",
+        "default_model": "gemini-1.0-pro",
         "required_key": "google_api_key",
     },
     "openai": {

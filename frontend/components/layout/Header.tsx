@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Sprout, Settings, LogOut, User } from "lucide-react"
+import { Sprout, Settings, LogOut, User, Shield, Clock } from "lucide-react"
 import { ThemeToggle } from "@/components/theme/ThemeToggle"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -14,9 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link"
 
 export function Header() {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const getInitials = (name: string) => {
@@ -65,6 +66,23 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {isAdmin() && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <Shield className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/scheduler">
+                        <Clock className="mr-2 h-4 w-4" />
+                        <span>Scheduler Config</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => window.location.href = "/profile"}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>

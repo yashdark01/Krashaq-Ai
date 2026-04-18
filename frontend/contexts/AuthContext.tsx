@@ -19,6 +19,8 @@ interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  isAdmin: () => boolean
+  isPestisidesSupplier: () => boolean
   login: (code: string) => Promise<void>
   emailLogin: (email: string, password: string) => Promise<void>
   signup: (data: SignupData) => Promise<void>
@@ -324,12 +326,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const isAdmin = () => {
+    return user?.role === "admin"
+  }
+
+  const isPestisidesSupplier = () => {
+    return user?.role === "pestisides-supplier"
+  }
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: !!user,
+        isAdmin,
+        isPestisidesSupplier,
         login,
         emailLogin,
         signup,
