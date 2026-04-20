@@ -238,6 +238,8 @@ Multiple LLM providers supported through strategy pattern:
 **Query Handler Services**:
 - `query_handler.py` - Intent detection and routing for WhatsApp
 - `whatsapp_sender.py` - WhatsApp message sender
+- `audio_utils.py` - Audio download, conversion, and cleanup
+- `stt.py` - Speech-to-text transcription using faster-whisper
 - `irrigation_decision.py` - Rule-based irrigation logic
 
 **Domain Services**:
@@ -332,6 +334,8 @@ sequenceDiagram
     participant W as Webhook Handler
     participant DB as Database
     participant Q as Query Handler
+    participant AU as Audio Utils
+    participant STT as STT Service
     participant L as LLM Service
     participant O as Ollama
     participant G as Gemini
@@ -340,6 +344,19 @@ sequenceDiagram
     T->>W: POST /webhook
     W->>W: Validate Request (optional)
     W->>W: Extract Message Data
+    W->>W: Detect Message Type (Text/Audio)
+    
+    alt Audio Message
+        W->>AU: Download Audio (with auth)
+        AU-->>W: Audio File
+        W->>AU: Convert to WAV (mono 16kHz)
+        AU-->>W: Converted Audio
+        W->>AU: Check Duration (max 30s)
+        AU-->>W: Duration OK
+        W->>STT: Transcribe Audio
+        STT-->>W: Transcribed Text
+    end
+    
     W->>DB: Get Farmer from Database
     DB-->>W: Farmer Data
     W->>Q: Process with Query Handler
@@ -366,8 +383,9 @@ sequenceDiagram
         Q->>Q: Generate response in user's language
     end
     Q-->>W: Response
-    W->>DB: Save to Message collection
+    W->>DB: Save to Message collection (with transcribed text)
     DB-->>W: Confirmation
+    W->>AU: Cleanup Temp Files
     W->>WA: Send WhatsApp Message via API
     WA-->>W: Message SID
     W-->>T: OK Response
@@ -489,6 +507,11 @@ sequenceDiagram
 - Claude (optional) - Anthropic API
 - Grok (optional) - X.AI API
 - Multi-provider fallback mechanism
+
+**Audio Processing**:
+- faster-whisper - Local STT transcription (base model, int8 compute type)
+- ffmpeg - Audio format conversion (mono 16kHz WAV)
+- Twilio authentication for media download
 
 ### Internal Integrations
 
