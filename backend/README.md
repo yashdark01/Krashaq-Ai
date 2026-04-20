@@ -12,6 +12,8 @@ Krashaq Backend is a FastAPI-based REST API that powers the smart farming assist
 - **Authentication**: JWT + Google OAuth 2.0
 - **LLM Integration**: Ollama (primary), Google Gemini (fallback), OpenAI, Claude, Grok
 - **Messaging**: Twilio WhatsApp API
+- **Speech-to-Text**: faster-whisper (local STT)
+- **Audio Processing**: ffmpeg (format conversion)
 - **Caching**: Redis
 - **Weather API**: WeatherAPI.com
 - **Scheduler**: APScheduler for background jobs
@@ -271,7 +273,6 @@ def endpoint(db: Session = Depends(get_db)):
 **Remaining Features**:
 - Streaming responses
 - File/image upload support
-- Voice message support
 - Export chat history
 - Conversation analytics
 
@@ -284,10 +285,12 @@ def endpoint(db: Session = Depends(get_db)):
 **Endpoints**:
 
 - `POST /webhook` - WhatsApp webhook
-  - Receives incoming WhatsApp messages from farmers
+  - Receives incoming WhatsApp messages (text and voice) from farmers
   - Uses query handler for intent detection and routing
   - AI-powered responses via LLM (Ollama with Gemini fallback)
-  - Saves messages to database
+  - Voice message transcription using faster-whisper
+  - Audio format conversion using ffmpeg
+  - Saves messages to database with message type (text/audio)
   - Supports farmer location lookup
   - Language-aware responses (Hindi/English based on user preference)
 
@@ -299,10 +302,14 @@ def endpoint(db: Session = Depends(get_db)):
 **Features**:
 - Intent detection (irrigation, weather, general queries)
 - AI-powered general responses using LLM
+- Voice message support with STT transcription
+- Audio download with Twilio authentication
+- Audio format conversion (mono 16kHz WAV)
+- Duration check (max 30 seconds)
 - Location context for accurate weather responses
 - Language-aware responses (Hindi Devanagari script, English, Hinglish)
 - Farmer registration and lookup
-- Message logging
+- Message logging with transcribed text
 - Location-based responses
 - Single message delivery (no duplicates)
 
@@ -310,6 +317,16 @@ def endpoint(db: Session = Depends(get_db)):
 - **Irrigation**: "paani", "sinchai", "water", "irrigation" - Irrigation advice
 - **Weather**: "mausam", "weather", "barish", "rain" - Weather information
 - **General**: Any other query - AI-powered response with location context
+
+**Audio Processing Flow**:
+1. Detect audio via NumMedia and MediaContentType0
+2. Download audio from Twilio MediaUrl with authentication
+3. Convert to mono 16kHz WAV using ffmpeg
+4. Check duration (max 30 seconds)
+5. Transcribe using faster-whisper (Hindi language)
+6. Pass transcribed text to query handler
+7. Send response via WhatsApp
+8. Auto-cleanup temp files
 
 **LLM Integration**:
 - Primary: Ollama (local LLM)
@@ -532,6 +549,18 @@ def endpoint(db: Session = Depends(get_db)):
 - Error handling and logging
 - Message status tracking
 
+**Audio Utils Service (`services/audio_utils.py`)**
+- Downloads audio from Twilio Media URLs with authentication
+- Converts audio to mono 16kHz WAV format using ffmpeg
+- Checks audio duration (max 30 seconds)
+- Automatic temp file cleanup
+
+**STT Service (`services/stt.py`)**
+- Transcribes audio using faster-whisper (local STT)
+- Hindi language support
+- Combines transcription segments into text
+- Global model loading for efficiency (base model, int8 compute type)
+
 **Irrigation Decision Service (`services/irrigation_decision.py`)**
 - Rule-based irrigation decision logic
 - Weather-based irrigation recommendations
@@ -749,7 +778,6 @@ Consider using PostgreSQL for production instead of SQLite.
 ### Medium Term
 - Add file upload support
 - Implement streaming responses
-- Add voice message support
 - Create admin dashboard
 - Add analytics and reporting
 
