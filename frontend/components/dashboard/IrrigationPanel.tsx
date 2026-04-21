@@ -1,27 +1,27 @@
-"use client"
+'use client';
 
-import { Droplets, Clock, AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Droplets, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface IrrigationPanelProps {
-  lastIrrigation?: string
-  nextIrrigation?: string
-  urgency?: "low" | "medium" | "high"
+  lastIrrigation?: string;
+  nextIrrigation?: string;
+  urgency?: 'low' | 'medium' | 'high';
 }
 
-export function IrrigationPanel({ 
-  lastIrrigation = "2 days ago", 
-  nextIrrigation = "Tomorrow morning",
-  urgency = "medium"
+export function IrrigationPanel({
+  lastIrrigation = '2 days ago',
+  nextIrrigation = 'Tomorrow morning',
+  urgency = 'medium',
 }: IrrigationPanelProps) {
   const urgencyConfig = {
-    low: { color: "bg-green-500", text: "Low Priority" },
-    medium: { color: "bg-yellow-500", text: "Medium Priority" },
-    high: { color: "bg-red-500", text: "High Priority" }
-  }
+    low: { color: 'bg-green-500', text: 'Low Priority' },
+    medium: { color: 'bg-yellow-500', text: 'Medium Priority' },
+    high: { color: 'bg-red-500', text: 'High Priority' },
+  };
 
-  const config = urgencyConfig[urgency]
+  const config = urgencyConfig[urgency];
 
   return (
     <Card className="border-l-4 border-l-blue-500">
@@ -42,7 +42,7 @@ export function IrrigationPanel({
             <span className="text-sm font-medium">{nextIrrigation}</span>
           </div>
           <div className="flex items-center gap-2 pt-2">
-            <Badge variant={urgency === "high" ? "destructive" : "secondary"}>
+            <Badge variant={urgency === 'high' ? 'destructive' : 'secondary'}>
               <AlertTriangle className="h-3 w-3 mr-1" />
               {config.text}
             </Badge>
@@ -50,5 +50,5 @@ export function IrrigationPanel({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

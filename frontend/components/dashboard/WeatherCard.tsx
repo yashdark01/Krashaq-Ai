@@ -1,28 +1,33 @@
-"use client"
+'use client';
 
-import { CloudSun, Droplets, Wind, MapPin } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
+import { CloudSun, Droplets, Wind, MapPin } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface WeatherData {
-  city: string
-  temp: number
-  feels_like: number
-  condition: string
-  humidity: number
-  wind_speed: number
-  rain: number
+  city: string;
+  temp: number;
+  feels_like: number;
+  condition: string;
+  humidity: number;
+  wind_speed: number;
+  rain: number;
 }
 
 interface WeatherCardProps {
-  weather: WeatherData | null
-  onLocationChange: (location: string) => void
-  location: string
-  fullLocation?: string
+  weather: WeatherData | null;
+  onLocationChange: (location: string) => void;
+  location: string;
+  fullLocation?: string;
 }
 
-export function WeatherCard({ weather, onLocationChange, location, fullLocation }: WeatherCardProps) {
+export function WeatherCard({
+  weather,
+  onLocationChange,
+  location,
+  fullLocation,
+}: WeatherCardProps) {
   return (
     <Card className="border-l-4 border-l-primary">
       <CardHeader className="pb-3">
@@ -73,11 +78,9 @@ export function WeatherCard({ weather, onLocationChange, location, fullLocation 
             </div>
           </div>
         ) : (
-          <div className="text-center py-4 text-muted-foreground">
-            Loading weather data...
-          </div>
+          <div className="text-center py-4 text-muted-foreground">Loading weather data...</div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

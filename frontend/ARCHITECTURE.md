@@ -77,6 +77,7 @@ graph TB
 The application follows a component-based architecture where the UI is broken down into small, reusable components:
 
 **Atomic Design Principles**:
+
 - Atoms: Basic UI elements (Button, Input)
 - Molecules: Combinations of atoms (FormField, Card)
 - Organisms: Complex components (ChatInterface, WeatherCard)
@@ -84,6 +85,7 @@ The application follows a component-based architecture where the UI is broken do
 - Pages: Complete routes
 
 **Component Hierarchy**:
+
 ```
 App (Root)
 ├── Layouts
@@ -105,18 +107,21 @@ App (Root)
 Next.js 16 App Router distinguishes between:
 
 **Server Components** (Default):
+
 - Render on the server
 - No client-side JavaScript
 - Direct database access
 - Better SEO
 
 **Client Components** (use client directive):
+
 - Render on the client
 - Interactive features
 - State management
 - Event handlers
 
 **Usage Strategy**:
+
 - Server components for static content
 - Client components for interactive features
 - Server actions for mutations
@@ -126,12 +131,14 @@ Next.js 16 App Router distinguishes between:
 Global state is managed using React Context:
 
 **AuthContext**:
+
 - User authentication state
 - Token management
 - Login/logout functions
 - Protected route logic
 
 **ThemeProvider**:
+
 - Theme state (light/dark/system)
 - Theme persistence
 - Theme toggle functionality
@@ -166,6 +173,7 @@ app/api/
 ```
 
 **Benefits**:
+
 - Hide backend URL
 - Add authentication
 - Implement caching
@@ -178,16 +186,19 @@ app/api/
 **Purpose**: Application root wrapper
 
 **Responsibilities**:
+
 - Global providers setup
 - Theme configuration
 - HTML structure
 - Metadata configuration
 
 **Providers**:
+
 - `ThemeProvider`: Theme management
 - `AuthProvider`: Authentication state
 
 **Design Decisions**:
+
 - Server component by default
 - Providers wrap children
 - Hydration warning suppression
@@ -197,12 +208,14 @@ app/api/
 **Purpose**: Main application layout wrapper
 
 **Responsibilities**:
+
 - Header/navigation
 - Sidebar (if applicable)
 - Main content area
 - Responsive design
 
 **Components Used**:
+
 - Header
 - Sidebar (future)
 - Main content area
@@ -210,44 +223,52 @@ app/api/
 ### 3. Page Components
 
 #### Home Page (`app/page.tsx`)
+
 - Client component
 - Dashboard view
 - Weather + Chat integration
 - Location-based features
 
 #### Auth Pages
+
 - Login page
 - Signup page
 - Register page
 - Callback page
 
 #### Farmers Page
+
 - Farmer management
 - CRUD operations
 - List view
 
 #### Profile Pages
+
 - User profile
 - Settings
 
 ### 4. Feature Components
 
 #### Chat Components
+
 - `ChatInterface`: Main chat UI
 - `ChatMessage`: Individual message
 - `ChatInput`: Input field
 
 #### Dashboard Components
+
 - `WeatherCard`: Weather display
 - `IrrigationPanel`: Irrigation advice
 
 #### Auth Components
+
 - `ProtectedRoute`: Authentication wrapper
 - `AuthForm`: Generic auth form
 
 ### 5. UI Components (shadcn/ui)
 
 Reusable UI components based on shadcn/ui:
+
 - Button
 - Input
 - Card
@@ -259,6 +280,7 @@ Reusable UI components based on shadcn/ui:
 - And more...
 
 **Design System**:
+
 - Consistent styling
 - Accessible
 - Customizable
@@ -269,12 +291,14 @@ Reusable UI components based on shadcn/ui:
 ### 1. Local State (useState)
 
 Used for component-specific state:
+
 ```typescript
-const [weather, setWeather] = useState(null)
-const [location, setLocation] = useState("Delhi")
+const [weather, setWeather] = useState(null);
+const [location, setLocation] = useState('Delhi');
 ```
 
 **Use Cases**:
+
 - Form inputs
 - UI toggles
 - Temporary data
@@ -285,16 +309,19 @@ const [location, setLocation] = useState("Delhi")
 Used for global application state:
 
 **AuthContext**:
+
 ```typescript
-const { user, login, logout, loading } = useAuth()
+const { user, login, logout, loading } = useAuth();
 ```
 
 **ThemeProvider**:
+
 ```typescript
-const { theme, setTheme } = useTheme()
+const { theme, setTheme } = useTheme();
 ```
 
 **Use Cases**:
+
 - User authentication
 - Theme management
 - Global preferences
@@ -302,12 +329,14 @@ const { theme, setTheme } = useTheme()
 ### 3. Server State (API Calls)
 
 Data fetched from backend API:
+
 ```typescript
-const response = await fetch('/api/weather')
-const data = await response.json()
+const response = await fetch('/api/weather');
+const data = await response.json();
 ```
 
 **Use Cases**:
+
 - Weather data
 - User profile
 - Chat messages
@@ -316,12 +345,14 @@ const data = await response.json()
 ### 4. URL State (useSearchParams)
 
 State stored in URL parameters:
+
 ```typescript
-const searchParams = useSearchParams()
-const city = searchParams.get('city')
+const searchParams = useSearchParams();
+const city = searchParams.get('city');
 ```
 
 **Use Cases**:
+
 - Search queries
 - Filters
 - Pagination
@@ -330,6 +361,7 @@ const city = searchParams.get('city')
 ### 5. Future State Management
 
 **Planned**:
+
 - Zustand for complex state
 - React Query for server state
 - SWR for data fetching
@@ -403,12 +435,14 @@ sequenceDiagram
 ### App Router Structure
 
 **File-based Routing**:
+
 - Automatic route generation
 - Dynamic routes with `[param]`
 - Route groups with `(group)`
 - Parallel routes with `@`
 
 **Route Hierarchy**:
+
 ```
 /                          → app/page.tsx
 /auth/login                → app/auth/login/page.tsx
@@ -422,6 +456,7 @@ sequenceDiagram
 ### Protected Routes
 
 **ProtectedRoute Component**:
+
 ```typescript
 <ProtectedRoute>
   <Dashboard />
@@ -429,6 +464,7 @@ sequenceDiagram
 ```
 
 **Logic**:
+
 - Check authentication status
 - Redirect to login if not authenticated
 - Show loading state while checking
@@ -437,14 +473,16 @@ sequenceDiagram
 ### Navigation
 
 **Programmatic Navigation**:
-```typescript
-import { useRouter } from 'next/navigation'
 
-const router = useRouter()
-router.push('/dashboard')
+```typescript
+import { useRouter } from 'next/navigation';
+
+const router = useRouter();
+router.push('/dashboard');
 ```
 
 **Link Navigation**:
+
 ```typescript
 import Link from 'next/link'
 
@@ -456,20 +494,22 @@ import Link from 'next/link'
 ### API Client
 
 **Current Approach**:
+
 - Native fetch API
 - Manual token injection
 - Manual error handling
 
 **Example**:
+
 ```typescript
 const response = await fetch('/api/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   },
-  body: JSON.stringify({ message })
-})
+  body: JSON.stringify({ message }),
+});
 ```
 
 ### API Routes
@@ -477,6 +517,7 @@ const response = await fetch('/api/chat', {
 **Purpose**: Server-side proxy to backend
 
 **Benefits**:
+
 - Hide backend URL
 - Add authentication
 - Implement caching
@@ -484,25 +525,27 @@ const response = await fetch('/api/chat', {
 - CORS handling
 
 **Structure**:
+
 ```typescript
 // app/api/chat/route.ts
 export async function POST(request: Request) {
-  const body = await request.json()
+  const body = await request.json();
   const response = await fetch(`${BACKEND_URL}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(body)
-  })
-  return response.json()
+    body: JSON.stringify(body),
+  });
+  return response.json();
 }
 ```
 
 ### Future Improvements
 
 **Planned**:
+
 - Axios or ky for HTTP client
 - Request/response interceptors
 - Automatic retry logic
@@ -514,12 +557,14 @@ export async function POST(request: Request) {
 ### TailwindCSS
 
 **Utility-First CSS**:
+
 - Responsive design
 - Dark mode support
 - Custom theme configuration
 - JIT compilation
 
 **Theme Configuration**:
+
 ```javascript
 // tailwind.config.ts
 module.exports = {
@@ -537,12 +582,14 @@ module.exports = {
 ### shadcn/ui
 
 **Component Library**:
+
 - Copy-paste components
 - Fully customizable
 - Radix UI primitives
 - TailwindCSS styling
 
 **Benefits**:
+
 - No runtime overhead
 - Full control
 - Type-safe
@@ -551,6 +598,7 @@ module.exports = {
 ### Global Styles
 
 **globals.css**:
+
 - CSS variables
 - Tailwind directives
 - Custom styles
@@ -559,12 +607,14 @@ module.exports = {
 ### Styling Strategy
 
 **Component Styling**:
+
 - Tailwind utility classes
 - shadcn/ui components
 - Custom CSS for specific needs
 - Responsive design
 
 **Theme Support**:
+
 - Light mode (default)
 - Dark mode
 - System preference
@@ -575,6 +625,7 @@ module.exports = {
 ### Next.js Optimizations
 
 **Automatic Optimizations**:
+
 - Code splitting (automatic)
 - Tree shaking
 - Image optimization (next/image)
@@ -582,6 +633,7 @@ module.exports = {
 - Static generation
 
 **Performance Features**:
+
 - Server components (reduce JS bundle)
 - Streaming (progressive rendering)
 - Edge runtime (future)
@@ -590,10 +642,12 @@ module.exports = {
 ### Caching Strategy
 
 **Current**:
+
 - Browser cache (static assets)
 - CDN cache (Vercel)
 
 **Planned**:
+
 - API response caching
 - Service worker caching
 - LocalStorage for user data
@@ -602,11 +656,13 @@ module.exports = {
 ### Bundle Optimization
 
 **Current**:
+
 - Automatic code splitting
 - Tree shaking
 - Dynamic imports
 
 **Planned**:
+
 - Bundle analysis
 - Route-based splitting
 - Component lazy loading
@@ -617,12 +673,14 @@ module.exports = {
 ### Client-Side Security
 
 **Current Measures**:
+
 - JWT token storage (localStorage)
 - Protected routes
 - Token validation
 - HTTPS enforcement (production)
 
 **Security Considerations**:
+
 - XSS prevention (React escapes by default)
 - CSRF protection (planned)
 - Content Security Policy (planned)
@@ -631,12 +689,14 @@ module.exports = {
 ### Authentication Security
 
 **JWT Implementation**:
+
 - Access token (short-lived)
 - Refresh token (long-lived)
 - Token rotation
 - Automatic refresh
 
 **OAuth Security**:
+
 - PKCE (planned)
 - State parameter (planned)
 - Token validation
@@ -644,6 +704,7 @@ module.exports = {
 ### Future Security
 
 **Planned**:
+
 - HTTP-only cookies for tokens
 - CSRF tokens
 - Security headers
@@ -654,39 +715,67 @@ module.exports = {
 
 ### Test Types
 
-**Unit Tests** (Planned):
+**Unit Tests** (Implemented):
+
 - Component testing
 - Hook testing
 - Utility function testing
 
 **Integration Tests** (Planned):
+
 - API route testing
 - Context testing
 - Component integration
 
 **E2E Tests** (Planned):
+
 - User flows
 - Authentication flows
 - Critical paths
 
 ### Testing Tools
 
-**Planned**:
-- Jest / Vitest
+**Implemented**:
+
+- Jest
 - React Testing Library
+- jest-environment-jsdom
+- @types/jest
+
+**Planned**:
+
 - Playwright / Cypress
 - MSW (Mock Service Worker)
+
+### Test Configuration
+
+**Jest Setup**:
+
+- Configured with Next.js integration
+- jsdom environment for component testing
+- @testing-library/jest-dom for custom matchers
+- Coverage collection enabled
+- Test files in `__tests__/` directory
+
+**Running Tests**:
+
+```bash
+npm run test          # Run tests in watch mode
+npm run test:ci      # Run tests in CI mode
+```
 
 ## Accessibility Architecture
 
 ### Current Features
 
 **Semantic HTML**:
+
 - Proper heading hierarchy
 - Semantic elements
 - ARIA labels (partial)
 
 **Keyboard Navigation**:
+
 - Tab order
 - Focus management
 - Keyboard shortcuts (future)
@@ -694,6 +783,7 @@ module.exports = {
 ### Future Improvements
 
 **Planned**:
+
 - WCAG 2.1 AA compliance
 - Screen reader testing
 - Color contrast validation
@@ -706,6 +796,7 @@ module.exports = {
 ### Breakpoints
 
 **TailwindCSS Breakpoints**:
+
 - `sm`: 640px (mobile landscape)
 - `md`: 768px (tablet)
 - `lg`: 1024px (desktop)
@@ -714,6 +805,7 @@ module.exports = {
 ### Mobile-First Approach
 
 **Strategy**:
+
 - Design for mobile first
 - Progressive enhancement
 - Touch-friendly UI
@@ -722,6 +814,7 @@ module.exports = {
 ### Responsive Components
 
 **Patterns**:
+
 - Grid layouts
 - Flexbox
 - Conditional rendering
@@ -734,6 +827,7 @@ module.exports = {
 **Current**: Basic error handling
 
 **Planned**:
+
 - React Error Boundaries
 - Global error handler
 - Error logging
@@ -742,20 +836,118 @@ module.exports = {
 ### API Error Handling
 
 **Current**:
+
 - Try-catch blocks
 - Basic error display
 
 **Planned**:
+
 - Centralized error handling
 - Error toast notifications
 - Error retry logic
 - Error reporting
+
+## Code Quality Architecture
+
+### Linting
+
+**ESLint Configuration**:
+
+- ESLint v9 with flat config
+- TypeScript support with @typescript-eslint
+- React rules with eslint-plugin-react
+- React Hooks rules with eslint-plugin-react-hooks
+- Next.js specific rules with @next/eslint-plugin-next
+- Prettier integration for formatting checks
+
+**ESLint Rules**:
+
+- `@typescript-eslint/no-explicit-any`: Error (strict type safety)
+- `@typescript-eslint/no-unused-vars`: Warn (with underscore pattern)
+- `react-hooks/rules-of-hooks`: Error
+- `react-hooks/exhaustive-deps`: Warn
+- Prettier/prettier: Error
+
+**Running ESLint**:
+
+```bash
+npm run lint       # Check for linting errors
+npm run lint:fix   # Auto-fix linting errors
+```
+
+### Formatting
+
+**Prettier Configuration**:
+
+- Semi-colons enabled
+- Single quotes
+- Trailing commas (ES5)
+- Print width: 100
+- Tab width: 2
+- Spaces (no tabs)
+
+**Prettier Ignore**:
+
+- node_modules
+- .next
+- out
+- dist
+- build
+- coverage
+- .turbo
+- .vercel
+
+**Running Prettier**:
+
+```bash
+npm run format      # Check formatting
+npm run format:fix  # Fix formatting issues
+```
+
+### Type Checking
+
+**TypeScript Configuration**:
+
+- Strict mode enabled
+- No implicit any
+- Strict null checks
+- Strict function types
+- Path aliases (@/*)
+
+**Type Safety Improvements**:
+
+- All `any` types replaced with proper interfaces
+- Error handling uses `unknown` with type guards
+- Proper type definitions for API responses
+- Component props fully typed
+
+**Running Type Check**:
+
+```bash
+npx tsc --noEmit    # Type check without emitting files
+```
+
+### Code Quality Pipeline
+
+**Pre-commit Checks**:
+
+- ESLint (linting)
+- Prettier (formatting)
+- TypeScript (type checking)
+- Jest (testing)
+
+**CI/CD Checks**:
+
+- All pre-commit checks run in CI
+- Pipeline fails on any check failure
+- Build runs only after all checks pass
 
 ## Deployment Architecture
 
 ### Development
 
 **Environment**:
+
 - Local development server
 - Hot reload
 - Fast refresh
@@ -764,26 +956,46 @@ module.exports = {
 ### Production
 
 **Deployment Platforms**:
+
 - Vercel (recommended)
 - Netlify
 - AWS
 - Docker
 
 **Build Process**:
+
 - Next.js build
 - Static generation
 - API compilation
 - Asset optimization
 
 **Environment Variables**:
+
 - `NEXT_PUBLIC_API_URL`: Backend URL
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: OAuth client ID
 
 ### CI/CD
 
+**Implemented**:
+
+- Automated linting with ESLint
+- Automated type checking with TypeScript
+- Automated formatting checks with Prettier
+- Automated testing with Jest
+- Automated builds with Next.js
+- Pipeline failure on any check failure
+
+**CI/CD Pipeline Steps**:
+
+1. Install dependencies
+2. Run ESLint
+3. Run TypeScript type checking
+4. Run Prettier formatting check
+5. Run Jest tests
+6. Build Next.js application
+
 **Planned**:
-- Automated testing
-- Automated builds
+
 - Automated deployments
 - Rollback capability
 
@@ -792,6 +1004,7 @@ module.exports = {
 ### Current State
 
 **Basic Monitoring**:
+
 - Console logs
 - Error messages
 - Performance metrics (basic)
@@ -799,12 +1012,14 @@ module.exports = {
 ### Planned Monitoring
 
 **Application Monitoring**:
+
 - Error tracking (Sentry)
 - Performance monitoring
 - User analytics
 - A/B testing
 
 **Logging**:
+
 - Structured logging
 - Log aggregation
 - Error logging
@@ -815,6 +1030,7 @@ module.exports = {
 ### Next.js 16 (App Router)
 
 **Reasons**:
+
 - Modern React framework
 - Server components
 - Built-in optimization
@@ -825,6 +1041,7 @@ module.exports = {
 ### TypeScript
 
 **Reasons**:
+
 - Type safety
 - Better IDE support
 - Catch errors early
@@ -834,6 +1051,7 @@ module.exports = {
 ### TailwindCSS
 
 **Reasons**:
+
 - Utility-first approach
 - Small bundle size
 - Customizable
@@ -843,6 +1061,7 @@ module.exports = {
 ### shadcn/ui
 
 **Reasons**:
+
 - No runtime overhead
 - Full control
 - Type-safe
@@ -853,6 +1072,7 @@ module.exports = {
 ### React Context API
 
 **Reasons**:
+
 - Built into React
 - No extra dependencies
 - Simple API
@@ -861,6 +1081,7 @@ module.exports = {
 ### Native Fetch
 
 **Reasons**:
+
 - Built into browser
 - No extra dependencies
 - Modern API
@@ -871,6 +1092,7 @@ module.exports = {
 ### Short Term
 
 **Immediate**:
+
 - Complete error boundaries
 - Add loading states
 - Improve error handling
@@ -878,6 +1100,7 @@ module.exports = {
 - Implement toast notifications
 
 **Near Future**:
+
 - Add React Query for server state
 - Implement Zustand for complex state
 - Add React Hook Form for forms
@@ -887,6 +1110,7 @@ module.exports = {
 ### Medium Term
 
 **Planned**:
+
 - Implement PWA features
 - Add service worker
 - Offline support
@@ -897,6 +1121,7 @@ module.exports = {
 ### Long Term
 
 **Future**:
+
 - Micro-frontends (if needed)
 - GraphQL integration
 - Real-time features (WebSockets)
@@ -908,6 +1133,7 @@ module.exports = {
 ### Code Documentation
 
 **Component Documentation**:
+
 - JSDoc comments
 - Prop types (TypeScript)
 - Usage examples
@@ -916,6 +1142,7 @@ module.exports = {
 ### API Documentation
 
 **API Route Documentation**:
+
 - Endpoint descriptions
 - Request/response formats
 - Error codes
@@ -924,6 +1151,7 @@ module.exports = {
 ### Architecture Documentation
 
 **System Documentation**:
+
 - Architecture diagrams
 - Component relationships
 - Data flow diagrams
@@ -934,6 +1162,7 @@ module.exports = {
 ### Component Design
 
 **Guidelines**:
+
 - Single responsibility
 - Reusability
 - Composition over inheritance
@@ -943,6 +1172,7 @@ module.exports = {
 ### State Management
 
 **Guidelines**:
+
 - Local state first
 - Context for global state
 - Server state with React Query
@@ -952,6 +1182,7 @@ module.exports = {
 ### Performance
 
 **Guidelines**:
+
 - Use server components when possible
 - Lazy load heavy components
 - Optimize images
@@ -961,6 +1192,7 @@ module.exports = {
 ### Security
 
 **Guidelines**:
+
 - Validate inputs
 - Sanitize outputs
 - Use HTTPS
@@ -970,6 +1202,7 @@ module.exports = {
 ### Accessibility
 
 **Guidelines**:
+
 - Semantic HTML
 - ARIA labels
 - Keyboard navigation

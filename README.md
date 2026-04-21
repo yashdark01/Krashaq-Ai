@@ -8,7 +8,8 @@ A full-stack agricultural assistant that provides AI-powered farming advice, wea
 - 🌦️ **WeatherAPI.com integration** for accurate weather forecasts
 - 💧 **Smart irrigation recommendations** based on temperature, humidity, and rainfall
 - 📱 **WhatsApp two-way communication** via Twilio with intent detection
-- 🌐 **Web chat interface** for easy access
+- �️ **Voice message support** with faster-whisper STT for audio transcription
+- � **Web chat interface** for easy access
 - 👨‍🌾 **Farmer management** with registration and location tracking
 - 🗣️ **Multi-language support** (Hindi Devanagari script, English, Hinglish)
 - 📍 **Location-aware responses** using farmer's location context
@@ -23,6 +24,8 @@ A full-stack agricultural assistant that provides AI-powered farming advice, wea
 - **Google Gemini** - Cloud LLM fallback
 - **WeatherAPI.com** - Real weather data
 - **Twilio** - WhatsApp messaging
+- **faster-whisper** - Speech-to-text transcription
+- **ffmpeg** - Audio format conversion
 - **APScheduler** - Background job scheduling
 - **Redis** - Caching layer
 
@@ -124,12 +127,15 @@ Frontend will be available at `http://localhost:3000`
 
 ### WhatsApp
 Send these to your Twilio number:
-- **Irrigation queries**: "paani", "sinchai", "water", "irrigation"
-- **Weather queries**: "mausam", "weather", "barish", "rain"
-- **General queries**: Any question about farming, crops, prices, etc. (AI-powered response)
+- **Text messages**: 
+  - Irrigation queries: "paani", "sinchai", "water", "irrigation"
+  - Weather queries: "mausam", "weather", "barish", "rain"
+  - General queries: Any question about farming, crops, prices, etc. (AI-powered response)
+- **Voice messages**: Send voice notes in Hindi or English (will be transcribed using STT)
 
 The system will:
 - Detect intent (irrigation/weather/general)
+- Transcribe voice messages using faster-whisper
 - Use farmer's location for accurate responses
 - Respond in farmer's preferred language (Hindi/English)
 - Use AI (Ollama) for general queries
@@ -260,7 +266,6 @@ The app provides context-aware irrigation advice based on:
 - [ ] Push notifications for weather alerts
 - [ ] Admin dashboard with analytics
 - [ ] Image recognition for pest/disease detection
-- [ ] Voice message support in WhatsApp
 - [ ] File upload for crop photos
 - [ ] Market price integration
 - [ ] RAG implementation with vector database

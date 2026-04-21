@@ -1,168 +1,181 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface LocationItem {
+  id: string;
+  name: string;
+  type?: string;
+  pincode?: string;
+}
 
 export default function SignupPage() {
-  const { signup } = useAuth()
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
-    email: "",
-    name: "",
-    password: "",
-    confirmPassword: "",
-    state: "",
-    district: "",
-    tehsil: "",
-    locality: "",
-    pincode: "",
-    phone: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+    email: '',
+    name: '',
+    password: '',
+    confirmPassword: '',
+    state: '',
+    district: '',
+    tehsil: '',
+    locality: '',
+    pincode: '',
+    phone: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Location data
-  const [states, setStates] = useState<string[]>([])
-  const [districts, setDistricts] = useState<any[]>([])
-  const [tehsils, setTehsils] = useState<any[]>([])
-  const [localities, setLocalities] = useState<any[]>([])
+  const [states, setStates] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<LocationItem[]>([]);
+  const [tehsils, setTehsils] = useState<LocationItem[]>([]);
+  const [localities, setLocalities] = useState<LocationItem[]>([]);
 
   // Loading states
-  const [isLoadingStates, setIsLoadingStates] = useState(true)
-  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false)
-  const [isLoadingTehsils, setIsLoadingTehsils] = useState(false)
-  const [isLoadingLocalities, setIsLoadingLocalities] = useState(false)
+  const [isLoadingStates, setIsLoadingStates] = useState(true);
+  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
+  const [isLoadingTehsils, setIsLoadingTehsils] = useState(false);
+  const [isLoadingLocalities, setIsLoadingLocalities] = useState(false);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
   useEffect(() => {
-    fetchStates()
-  }, [])
+    fetchStates();
+  }, []);
 
   const fetchStates = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/locations/states`)
+      const response = await fetch(`${apiUrl}/api/locations/states`);
       if (response.ok) {
-        const data = await response.json()
-        setStates(data.states)
+        const data = await response.json();
+        setStates(data.states);
       }
     } catch (error) {
-      console.error("Failed to fetch states:", error)
+      console.error('Failed to fetch states:', error);
     } finally {
-      setIsLoadingStates(false)
+      setIsLoadingStates(false);
     }
-  }
+  };
 
   const fetchDistricts = async (state: string) => {
     if (!state) {
-      setDistricts([])
-      return
+      setDistricts([]);
+      return;
     }
-    setIsLoadingDistricts(true)
+    setIsLoadingDistricts(true);
     try {
-      const response = await fetch(`${apiUrl}/api/locations/districts?state=${encodeURIComponent(state)}`)
+      const response = await fetch(
+        `${apiUrl}/api/locations/districts?state=${encodeURIComponent(state)}`
+      );
       if (response.ok) {
-        const data = await response.json()
-        setDistricts(data.districts)
+        const data = await response.json();
+        setDistricts(data.districts);
       }
     } catch (error) {
-      console.error("Failed to fetch districts:", error)
+      console.error('Failed to fetch districts:', error);
     } finally {
-      setIsLoadingDistricts(false)
+      setIsLoadingDistricts(false);
     }
-  }
+  };
 
   const fetchTehsils = async (state: string, district: string) => {
     if (!state || !district) {
-      setTehsils([])
-      return
+      setTehsils([]);
+      return;
     }
-    setIsLoadingTehsils(true)
+    setIsLoadingTehsils(true);
     try {
-      const response = await fetch(`${apiUrl}/api/locations/tehsils?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}`)
+      const response = await fetch(
+        `${apiUrl}/api/locations/tehsils?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}`
+      );
       if (response.ok) {
-        const data = await response.json()
-        setTehsils(data.tehsils)
+        const data = await response.json();
+        setTehsils(data.tehsils);
       }
     } catch (error) {
-      console.error("Failed to fetch tehsils:", error)
+      console.error('Failed to fetch tehsils:', error);
     } finally {
-      setIsLoadingTehsils(false)
+      setIsLoadingTehsils(false);
     }
-  }
+  };
 
   const fetchLocalities = async (state: string, district: string, tehsil: string) => {
     if (!state || !district || !tehsil) {
-      setLocalities([])
-      return
+      setLocalities([]);
+      return;
     }
-    setIsLoadingLocalities(true)
+    setIsLoadingLocalities(true);
     try {
-      const response = await fetch(`${apiUrl}/api/locations/localities?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&tehsil=${encodeURIComponent(tehsil)}`)
+      const response = await fetch(
+        `${apiUrl}/api/locations/localities?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&tehsil=${encodeURIComponent(tehsil)}`
+      );
       if (response.ok) {
-        const data = await response.json()
-        setLocalities(data.localities)
+        const data = await response.json();
+        setLocalities(data.localities);
       }
     } catch (error) {
-      console.error("Failed to fetch localities:", error)
+      console.error('Failed to fetch localities:', error);
     } finally {
-      setIsLoadingLocalities(false)
+      setIsLoadingLocalities(false);
     }
-  }
+  };
 
   const handleStateChange = (state: string) => {
-    setFormData({ ...formData, state, district: "", tehsil: "", locality: "", pincode: "" })
-    setDistricts([])
-    setTehsils([])
-    setLocalities([])
-    if (state) fetchDistricts(state)
-  }
+    setFormData({ ...formData, state, district: '', tehsil: '', locality: '', pincode: '' });
+    setDistricts([]);
+    setTehsils([]);
+    setLocalities([]);
+    if (state) fetchDistricts(state);
+  };
 
   const handleDistrictChange = (district: string) => {
-    setFormData({ ...formData, district, tehsil: "", locality: "", pincode: "" })
-    setTehsils([])
-    setLocalities([])
-    if (district) fetchTehsils(formData.state, district)
-  }
+    setFormData({ ...formData, district, tehsil: '', locality: '', pincode: '' });
+    setTehsils([]);
+    setLocalities([]);
+    if (district) fetchTehsils(formData.state, district);
+  };
 
   const handleTehsilChange = (tehsil: string) => {
-    setFormData({ ...formData, tehsil, locality: "", pincode: "" })
-    setLocalities([])
-    if (tehsil) fetchLocalities(formData.state, formData.district, tehsil)
-  }
+    setFormData({ ...formData, tehsil, locality: '', pincode: '' });
+    setLocalities([]);
+    if (tehsil) fetchLocalities(formData.state, formData.district, tehsil);
+  };
 
   const handleLocalityChange = (locality: string) => {
-    const selectedLocality = localities.find(l => l.name === locality)
-    const pincode = selectedLocality?.pincode || ""
-    setFormData({ ...formData, locality, pincode })
-  }
+    const selectedLocality = localities.find((l) => l.name === locality);
+    const pincode = selectedLocality?.pincode || '';
+    setFormData({ ...formData, locality, pincode });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
+      setError('Passwords do not match');
+      return;
     }
 
     // Validate password length
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
+      setError('Password must be at least 6 characters');
+      return;
     }
 
     // Validate location hierarchy
     if (!formData.state || !formData.district || !formData.tehsil || !formData.locality) {
-      setError("Please select all location fields (state, district, tehsil, locality)")
-      return
+      setError('Please select all location fields (state, district, tehsil, locality)');
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       await signup({
@@ -175,20 +188,21 @@ export default function SignupPage() {
         locality: formData.locality,
         pincode: formData.pincode,
         phone: formData.phone,
-      })
-    } catch (err: any) {
-      setError(err.message || "Signup failed. Please try again.")
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Signup failed. Please try again.';
+      setError(message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-    }))
-  }
+    }));
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -196,9 +210,7 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <div className="text-6xl mb-4">🌾</div>
           <CardTitle className="text-2xl">Create Your Account</CardTitle>
-          <CardDescription>
-            Join Krashaq for AI-powered farming insights
-          </CardDescription>
+          <CardDescription>Join Krashaq for AI-powered farming insights</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -356,9 +368,7 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="+91 XXXXX XXXXX"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Required for SMS-based 2FA
-                </p>
+                <p className="text-xs text-muted-foreground">Required for SMS-based 2FA</p>
               </div>
             </div>
 
@@ -369,14 +379,14 @@ export default function SignupPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Sign Up"}
+              {isLoading ? 'Creating Account...' : 'Sign Up'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
               <p>Already have an account?</p>
               <button
                 type="button"
-                onClick={() => window.location.href = "/auth/login"}
+                onClick={() => (window.location.href = '/auth/login')}
                 className="text-blue-600 hover:underline"
               >
                 Sign in with Google or Email
@@ -386,5 +396,5 @@ export default function SignupPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 interface Farmer {
   id: number;
@@ -14,23 +14,23 @@ interface FarmerFormProps {
 }
 
 export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
 
     try {
-      const res = await fetch("/api/farmers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/farmers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
@@ -40,17 +40,18 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || "Failed to register farmer");
+        throw new Error(data.detail || 'Failed to register farmer');
       }
 
       const farmer = await res.json();
       setSuccess(`✅ ${farmer.name} registered successfully!`);
-      setName("");
-      setPhone("");
-      setLocation("");
+      setName('');
+      setPhone('');
+      setLocation('');
       onFarmerAdded(farmer);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -58,21 +59,13 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
+      {error && <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
       {success && (
-        <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-          {success}
-        </div>
+        <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">{success}</div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Full Name *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
         <input
           type="text"
           value={name}
@@ -84,9 +77,7 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Phone Number *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
         <input
           type="tel"
           value={phone}
@@ -101,9 +92,7 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Location / City
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Location / City</label>
         <input
           type="text"
           value={location}
@@ -111,9 +100,7 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="e.g., Delhi, Mumbai, etc."
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Used for weather and irrigation advice
-        </p>
+        <p className="text-xs text-gray-500 mt-1">Used for weather and irrigation advice</p>
       </div>
 
       <button
@@ -121,7 +108,7 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
         disabled={isSubmitting}
         className="w-full py-2 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
       >
-        {isSubmitting ? "Registering..." : "Register Farmer"}
+        {isSubmitting ? 'Registering...' : 'Register Farmer'}
       </button>
     </form>
   );

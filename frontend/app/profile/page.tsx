@@ -1,43 +1,57 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+
+interface ProfileData {
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  default_location?: string;
+  location_details?: string;
+  created_at?: string;
+  last_login?: string;
+  two_factor_enabled?: boolean;
+  phone_verified?: boolean;
+  [key: string]: unknown;
+}
 
 export default function ProfilePage() {
-  const { user, refreshAccessToken } = useAuth()
-  const [profileData, setProfileData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { user: _user, refreshAccessToken: _refreshAccessToken } = useAuth();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchProfile()
-  }, [])
+    fetchProfile();
+  }, []);
 
   const fetchProfile = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const token = localStorage.getItem("access_token")
-      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const token = localStorage.getItem('access_token');
+
       const response = await fetch(`${apiUrl}/api/auth/me`, {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json()
-        setProfileData(data)
+        const data = await response.json();
+        setProfileData(data);
       }
     } catch (error) {
-      console.error("Failed to fetch profile:", error)
+      console.error('Failed to fetch profile:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -47,7 +61,7 @@ export default function ProfilePage() {
           <p className="mt-4 text-muted-foreground">Loading profile...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!profileData) {
@@ -57,33 +71,33 @@ export default function ProfilePage() {
           <p className="text-muted-foreground">Failed to load profile</p>
         </div>
       </div>
-    )
+    );
   }
 
   const getInitials = (name: string) => {
     return name
-      .split(" ")
+      .split(' ')
       .map((n) => n[0])
-      .join("")
+      .join('')
       .toUpperCase()
-      .slice(0, 2)
-  }
+      .slice(0, 2);
+  };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A"
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">My Profile</h1>
-          
+
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center space-x-4">
@@ -120,15 +134,15 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{profileData.phone || "Not provided"}</p>
+                  <p className="font-medium">{profileData.phone || 'Not provided'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Default Location</p>
-                  <p className="font-medium">{profileData.default_location || "Not set"}</p>
+                  <p className="font-medium">{profileData.default_location || 'Not set'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Location Details</p>
-                  <p className="font-medium">{profileData.location_details || "Not provided"}</p>
+                  <p className="font-medium">{profileData.location_details || 'Not provided'}</p>
                 </div>
               </CardContent>
             </Card>
@@ -141,22 +155,22 @@ export default function ProfilePage() {
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Account Created</p>
-                  <p className="font-medium">{formatDate(profileData.created_at)}</p>
+                  <p className="font-medium">{formatDate(profileData.created_at || '')}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Last Login</p>
-                  <p className="font-medium">{formatDate(profileData.last_login)}</p>
+                  <p className="font-medium">{formatDate(profileData.last_login || '')}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Two-Factor Authentication</p>
-                  <Badge variant={profileData.two_factor_enabled ? "default" : "secondary"}>
-                    {profileData.two_factor_enabled ? "Enabled" : "Disabled"}
+                  <Badge variant={profileData.two_factor_enabled ? 'default' : 'secondary'}>
+                    {profileData.two_factor_enabled ? 'Enabled' : 'Disabled'}
                   </Badge>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone Verified</p>
-                  <Badge variant={profileData.phone_verified ? "default" : "secondary"}>
-                    {profileData.phone_verified ? "Verified" : "Not Verified"}
+                  <Badge variant={profileData.phone_verified ? 'default' : 'secondary'}>
+                    {profileData.phone_verified ? 'Verified' : 'Not Verified'}
                   </Badge>
                 </div>
               </CardContent>
@@ -164,15 +178,12 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-6 flex justify-end space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = "/profile/settings"}
-            >
+            <Button variant="outline" onClick={() => (window.location.href = '/profile/settings')}>
               Edit Profile
             </Button>
           </div>
         </div>
       </div>
     </ProtectedRoute>
-  )
+  );
 }

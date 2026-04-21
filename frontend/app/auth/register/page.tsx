@@ -1,63 +1,69 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface GoogleUserInfo {
+  email: string;
+  name: string;
+  [key: string]: unknown;
+}
 
 export default function RegisterPage() {
-  const { register } = useAuth()
-  const [googleUser, setGoogleUser] = useState<any>(null)
+  const { register } = useAuth();
+  const [_googleUser, setGoogleUser] = useState<GoogleUserInfo | null>(null);
   const [formData, setFormData] = useState({
-    email: "",
-    name: "",
-    default_location: "",
-    location_details: "",
-    phone: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+    email: '',
+    name: '',
+    default_location: '',
+    location_details: '',
+    phone: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Get Google user info from localStorage
-    const storedGoogleUser = localStorage.getItem("google_user_info")
+    const storedGoogleUser = localStorage.getItem('google_user_info');
     if (storedGoogleUser) {
-      const user = JSON.parse(storedGoogleUser)
-      setGoogleUser(user)
+      const user = JSON.parse(storedGoogleUser);
+      setGoogleUser(user);
       setFormData((prev) => ({
         ...prev,
         email: user.email,
         name: user.name,
-      }))
+      }));
     } else {
       // No Google user info, redirect to login
-      window.location.href = "/auth/login"
+      window.location.href = '/auth/login';
     }
-  }, [])
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     try {
-      await register(formData)
+      await register(formData);
     } catch (err) {
-      setError("Registration failed. Please try again.")
-      console.error(err)
+      setError('Registration failed. Please try again.');
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-    }))
-  }
+    }));
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -135,9 +141,7 @@ export default function RegisterPage() {
                 onChange={handleInputChange}
                 placeholder="+91 XXXXX XXXXX"
               />
-              <p className="text-xs text-muted-foreground">
-                Required for SMS-based 2FA
-              </p>
+              <p className="text-xs text-muted-foreground">Required for SMS-based 2FA</p>
             </div>
 
             {error && (
@@ -147,16 +151,16 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Complete Registration"}
+              {isLoading ? 'Creating Account...' : 'Complete Registration'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
               <button
                 type="button"
                 onClick={() => {
-                  localStorage.removeItem("google_user_info")
-                  localStorage.removeItem("google_tokens")
-                  window.location.href = "/auth/login"
+                  localStorage.removeItem('google_user_info');
+                  localStorage.removeItem('google_tokens');
+                  window.location.href = '/auth/login';
                 }}
                 className="text-blue-600 hover:underline"
               >
@@ -167,5 +171,5 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,56 +1,58 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
-  const { login, emailLogin } = useAuth()
-  const [error, setError] = useState<string | null>(null)
-  const [loginMethod, setLoginMethod] = useState<"google" | "email">("google")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { login, emailLogin } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [loginMethod, setLoginMethod] = useState<'google' | 'email'>('google');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Check if we have a Google OAuth code in the URL
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get("code")
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
 
     if (code) {
       login(code).catch((err) => {
-        setError("Login failed. Please try again.")
-        console.error(err)
-      })
+        setError('Login failed. Please try again.');
+        console.error(err);
+      });
     }
-  }, [login])
+  }, [login]);
 
   const handleGoogleLogin = () => {
     // Redirect to Google OAuth consent screen
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""
-    const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || "http://localhost:3000/auth/callback"
-    const scope = "openid email profile"
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`
-    
-    window.location.href = authUrl
-  }
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+    const redirectUri =
+      process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+    const scope = 'openid email profile';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+
+    window.location.href = authUrl;
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
     try {
-      await emailLogin(email, password)
-    } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.")
+      await emailLogin(email, password);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -58,41 +60,35 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="text-6xl mb-4">🌾</div>
           <CardTitle className="text-2xl">Welcome to Krashaq</CardTitle>
-          <CardDescription>
-            Smart farming assistant with AI-powered insights
-          </CardDescription>
+          <CardDescription>Smart farming assistant with AI-powered insights</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Login Method Toggle */}
           <div className="flex rounded-md bg-muted p-1">
             <button
-              onClick={() => setLoginMethod("google")}
+              onClick={() => setLoginMethod('google')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginMethod === "google"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                loginMethod === 'google'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Google
             </button>
             <button
-              onClick={() => setLoginMethod("email")}
+              onClick={() => setLoginMethod('email')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                loginMethod === "email"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                loginMethod === 'email'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               Email
             </button>
           </div>
 
-          {loginMethod === "google" ? (
-            <Button
-              onClick={handleGoogleLogin}
-              className="w-full"
-              variant="outline"
-            >
+          {loginMethod === 'google' ? (
+            <Button onClick={handleGoogleLogin} className="w-full" variant="outline">
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -138,7 +134,7 @@ export default function LoginPage() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign in with Email"}
+                {isLoading ? 'Signing in...' : 'Sign in with Email'}
               </Button>
             </form>
           )}
@@ -150,12 +146,12 @@ export default function LoginPage() {
           )}
 
           <div className="text-center text-sm space-y-2">
-            {loginMethod === "email" && (
+            {loginMethod === 'email' && (
               <>
                 <p>Don't have an account?</p>
                 <button
                   type="button"
-                  onClick={() => window.location.href = "/auth/signup"}
+                  onClick={() => (window.location.href = '/auth/signup')}
                   className="text-blue-600 hover:underline"
                 >
                   Sign up with Email
@@ -169,5 +165,5 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
