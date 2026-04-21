@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from 'react';
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
@@ -19,21 +19,21 @@ interface WeatherData {
 export default function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: "welcome",
-      role: "assistant",
+      id: 'welcome',
+      role: 'assistant',
       content:
-        "🌾 Welcome to Krashaq!\n\nI can help you with:\n• Weather updates\n• Irrigation advice\n• Farming tips\n\nWhat would you like to know?",
+        '🌾 Welcome to Krashaq!\n\nI can help you with:\n• Weather updates\n• Irrigation advice\n• Farming tips\n\nWhat would you like to know?',
       timestamp: new Date(),
     },
   ]);
-  const [input, setInput] = useState("");
-  const [location, setLocation] = useState("Delhi");
+  const [input, setInput] = useState('');
+  const [location, setLocation] = useState('Delhi');
   const [isLoading, setIsLoading] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function ChatBox() {
         setWeather(data);
       }
     } catch (error) {
-      console.error("Failed to fetch weather:", error);
+      console.error('Failed to fetch weather:', error);
     }
   };
 
@@ -62,32 +62,32 @@ export default function ChatBox() {
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: "user",
+      role: 'user',
       content: input.trim(),
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setInput('');
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
           location: location,
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to get response");
+      if (!res.ok) throw new Error('Failed to get response');
 
       const data = await res.json();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
+        role: 'assistant',
         content: data.reply,
         timestamp: new Date(),
       };
@@ -98,10 +98,10 @@ export default function ChatBox() {
       if (data.weather) {
         setWeather(data.weather);
       }
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
+        role: 'assistant',
         content: "❌ Sorry, I couldn't process your request. Please try again.",
         timestamp: new Date(),
       };
@@ -112,7 +112,7 @@ export default function ChatBox() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -120,8 +120,8 @@ export default function ChatBox() {
 
   const formatTime = (date: Date) => {
     // Use consistent 24-hour format to avoid hydration mismatch
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   };
 
@@ -167,21 +167,19 @@ export default function ChatBox() {
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex ${
-              message.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 whitespace-pre-wrap ${
-                message.role === "user"
-                  ? "bg-primary-500 text-white rounded-br-none"
-                  : "bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm"
+                message.role === 'user'
+                  ? 'bg-primary-500 text-white rounded-br-none'
+                  : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'
               }`}
             >
               <p className="text-sm leading-relaxed">{message.content}</p>
               <span
                 className={`text-xs mt-1 block ${
-                  message.role === "user" ? "text-primary-100" : "text-gray-400"
+                  message.role === 'user' ? 'text-primary-100' : 'text-gray-400'
                 }`}
               >
                 {formatTime(message.timestamp)}
@@ -205,7 +203,7 @@ export default function ChatBox() {
 
       {/* Quick Actions */}
       <div className="px-4 py-2 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto">
-        {["Weather", "Irrigate", "Help"].map((action) => (
+        {['Weather', 'Irrigate', 'Help'].map((action) => (
           <button
             key={action}
             onClick={() => {

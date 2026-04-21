@@ -1,10 +1,9 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Sprout, Settings, LogOut, User, Shield, Clock } from "lucide-react"
-import { ThemeToggle } from "@/components/theme/ThemeToggle"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState } from 'react';
+import { Sprout, Settings, LogOut, User, Shield, Clock } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,26 +11,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/contexts/AuthContext"
-import Link from "next/link"
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 
 export function Header() {
-  const { user, logout, isAdmin } = useAuth()
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const { user, logout, isAdmin } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const getInitials = (name: string) => {
     return name
-      .split(" ")
+      .split(' ')
       .map((n) => n[0])
-      .join("")
+      .join('')
       .toUpperCase()
-      .slice(0, 2)
-  }
+      .slice(0, 2);
+  };
 
   const handleLogout = async () => {
-    await logout()
-  }
+    await logout();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -48,7 +47,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          
+
           {user && (
             <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
               <DropdownMenuTrigger asChild>
@@ -83,11 +82,11 @@ export function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem onClick={() => window.location.href = "/profile"}>
+                <DropdownMenuItem onClick={() => (window.location.href = '/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.location.href = "/profile/settings"}>
+                <DropdownMenuItem onClick={() => (window.location.href = '/profile/settings')}>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
@@ -102,5 +101,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

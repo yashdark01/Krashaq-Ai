@@ -1,45 +1,43 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Users, Settings, FileText, Shield, Clock } from "lucide-react"
-import Link from "next/link"
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, Settings, FileText, Shield, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   const stats = [
     {
-      title: "Total Users",
-      value: "0",
-      description: "Registered users",
+      title: 'Total Users',
+      value: '0',
+      description: 'Registered users',
       icon: Users,
-      href: "/admin/users"
+      href: '/admin/users',
     },
     {
-      title: "System Config",
-      value: "Active",
-      description: "Configuration status",
+      title: 'System Config',
+      value: 'Active',
+      description: 'Configuration status',
       icon: Settings,
-      href: "/admin/config"
+      href: '/admin/config',
     },
     {
-      title: "Scheduler",
-      value: "Configure",
-      description: "Message scheduling",
+      title: 'Scheduler',
+      value: 'Configure',
+      description: 'Message scheduling',
       icon: Clock,
-      href: "/admin/scheduler"
+      href: '/admin/scheduler',
     },
     {
-      title: "Audit Logs",
-      value: "View",
-      description: "Admin activity logs",
+      title: 'Audit Logs',
+      value: 'View',
+      description: 'Admin activity logs',
       icon: FileText,
-      href: "/admin/audit"
-    }
-  ]
+      href: '/admin/audit',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -84,5 +82,5 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

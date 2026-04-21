@@ -1,24 +1,24 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Plus, MessageSquare, Settings, Cpu, User } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@/lib/utils"
+import { useState } from 'react';
+import { Plus, MessageSquare, Settings, Cpu, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
-  className?: string
+  className?: string;
 }
 
 export function Sidebar({ className }: SidebarProps) {
   const [conversations] = useState([
-    { id: "1", title: "Weather in Delhi", date: "Today" },
-    { id: "2", title: "Wheat irrigation advice", date: "Yesterday" },
-    { id: "3", title: "Fertilizer for rice", date: "2 days ago" },
-  ])
+    { id: '1', title: 'Weather in Delhi', date: 'Today' },
+    { id: '2', title: 'Wheat irrigation advice', date: 'Yesterday' },
+    { id: '3', title: 'Fertilizer for rice', date: '2 days ago' },
+  ]);
 
   return (
-    <div className={cn("flex h-full w-64 flex-col border-r bg-muted/40", className)}>
+    <div className={cn('flex h-full w-64 flex-col border-r bg-muted/40', className)}>
       <div className="p-4">
         <Button className="w-full justify-start gap-2" variant="default">
           <Plus className="h-4 w-4" />
@@ -28,9 +28,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       <ScrollArea className="flex-1 px-2">
         <div className="space-y-2 p-2">
-          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-            Today
-          </div>
+          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Today</div>
           {conversations.slice(0, 2).map((conv) => (
             <button
               key={conv.id}
@@ -58,18 +56,18 @@ export function Sidebar({ className }: SidebarProps) {
 
       <div className="border-t p-4">
         <div className="space-y-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start gap-2"
-            onClick={() => window.location.href = "/profile"}
+            onClick={() => (window.location.href = '/profile')}
           >
             <User className="h-4 w-4" />
             Profile
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start gap-2"
-            onClick={() => window.location.href = "/profile/settings"}
+            onClick={() => (window.location.href = '/profile/settings')}
           >
             <Settings className="h-4 w-4" />
             Settings
@@ -81,5 +79,5 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

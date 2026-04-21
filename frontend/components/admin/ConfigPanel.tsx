@@ -1,87 +1,87 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Settings } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Settings } from 'lucide-react';
 
 interface Config {
-  llm_provider: string
-  ollama_base_url: string
-  ollama_model: string
-  weather_api_key: string
-  twilio_account_sid: string
-  twilio_whatsapp_number: string
+  llm_provider: string;
+  ollama_base_url: string;
+  ollama_model: string;
+  weather_api_key: string;
+  twilio_account_sid: string;
+  twilio_whatsapp_number: string;
 }
 
 export default function ConfigPanel() {
   const [config, setConfig] = useState<Config>({
-    llm_provider: "",
-    ollama_base_url: "",
-    ollama_model: "",
-    weather_api_key: "",
-    twilio_account_sid: "",
-    twilio_whatsapp_number: ""
-  })
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+    llm_provider: '',
+    ollama_base_url: '',
+    ollama_model: '',
+    weather_api_key: '',
+    twilio_account_sid: '',
+    twilio_whatsapp_number: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchConfig()
-  }, [])
+    fetchConfig();
+  }, []);
 
   const fetchConfig = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const token = localStorage.getItem("access_token")
-      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const token = localStorage.getItem('access_token');
+
       const response = await fetch(`${apiUrl}/api/admin/config`, {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json()
-        setConfig(data)
+        const data = await response.json();
+        setConfig(data);
       }
     } catch (error) {
-      console.error("Failed to fetch config:", error)
+      console.error('Failed to fetch config:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const updateConfig = async () => {
-    setSaving(true)
+    setSaving(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
-      const token = localStorage.getItem("access_token")
-      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const token = localStorage.getItem('access_token');
+
       const response = await fetch(`${apiUrl}/api/admin/config`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(config),
-      })
+      });
 
       if (response.ok) {
-        alert("Configuration updated successfully")
+        alert('Configuration updated successfully');
       }
     } catch (error) {
-      console.error("Failed to update config:", error)
-      alert("Failed to update configuration")
+      console.error('Failed to update config:', error);
+      alert('Failed to update configuration');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
-    return <div className="flex justify-center py-8">Loading configuration...</div>
+    return <div className="flex justify-center py-8">Loading configuration...</div>;
   }
 
   return (
@@ -158,8 +158,8 @@ export default function ConfigPanel() {
       </Card>
 
       <Button onClick={updateConfig} disabled={saving}>
-        {saving ? "Saving..." : "Save Configuration"}
+        {saving ? 'Saving...' : 'Save Configuration'}
       </Button>
     </div>
-  )
+  );
 }

@@ -7,13 +7,16 @@ Krashaq Frontend is a Next.js 16 web application that provides a modern, respons
 ## Technology Stack
 
 - **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
+- **Language**: TypeScript (strict mode)
 - **Styling**: TailwindCSS
 - **UI Components**: shadcn/ui
 - **State Management**: React Context API
 - **Authentication**: JWT + Google OAuth 2.0
 - **Icons**: Lucide React
 - **HTTP Client**: Native Fetch API
+- **Linting**: ESLint v9 with TypeScript, React, and Next.js plugins
+- **Formatting**: Prettier with ESLint integration
+- **Testing**: Jest with React Testing Library
 
 ## Project Structure
 
@@ -49,12 +52,14 @@ frontend/
 **Purpose**: Root layout wrapper for the entire application
 
 **Features**:
+
 - ThemeProvider for dark/light mode support
 - AuthProvider for authentication state management
 - Global metadata configuration
 - HTML structure with hydration warning suppression
 
 **Providers**:
+
 - `ThemeProvider`: Manages theme (light/dark/system)
 - `AuthProvider`: Manages user authentication state
 
@@ -65,6 +70,7 @@ frontend/
 **Purpose**: Main dashboard page
 
 **Features**:
+
 - Auto-loads user's location from hierarchy (locality > tehsil > district > state)
 - Fetches weather data with location hierarchy parameters
 - Displays weather card and irrigation panel
@@ -72,6 +78,7 @@ frontend/
 - Protected route (requires authentication)
 
 **Components Used**:
+
 - `MainLayout`: Main application layout
 - `WeatherCard`: Weather information display
 - `IrrigationPanel`: Irrigation advice panel
@@ -79,11 +86,13 @@ frontend/
 - `ProtectedRoute`: Authentication wrapper
 
 **State Management**:
+
 - `location`: Current location for weather queries
 - `fullLocation`: Full location string with hierarchy
 - `weather`: Weather data from API
 
 **API Calls**:
+
 - `GET /api/weather`: Fetches weather with location parameters
 
 ---
@@ -95,6 +104,7 @@ frontend/
 **Purpose**: User login page
 
 **Features**:
+
 - Email/password login
 - Google OAuth login
 - Form validation
@@ -102,10 +112,12 @@ frontend/
 - Redirect to dashboard on success
 
 **API Calls**:
+
 - `POST /api/auth/login/email`: Email/password authentication
 - Google OAuth flow (redirects to Google)
 
 **Remaining Features**:
+
 - Remember me functionality
 - Forgot password link
 - Social login buttons (other than Google)
@@ -117,6 +129,7 @@ frontend/
 **Purpose**: User registration page
 
 **Features**:
+
 - Email/password registration
 - Location hierarchy selection (state, district, tehsil, locality, pincode)
 - Form validation
@@ -124,9 +137,11 @@ frontend/
 - Error handling
 
 **API Calls**:
+
 - `POST /api/auth/signup`: Create new user
 
 **Form Fields**:
+
 - Email
 - Name
 - Password
@@ -144,12 +159,14 @@ frontend/
 **Purpose**: Complete registration after Google OAuth
 
 **Features**:
+
 - Completes user registration after Google OAuth
 - Location hierarchy selection
 - Profile information
 - Phone number input
 
 **API Calls**:
+
 - `POST /api/auth/register`: Complete registration
 
 ---
@@ -159,12 +176,14 @@ frontend/
 **Purpose**: Google OAuth callback handler
 
 **Features**:
+
 - Handles Google OAuth redirect
 - Exchanges authorization code for tokens
 - Redirects to registration or dashboard
 - Error handling
 
 **API Calls**:
+
 - `POST /api/auth/google/login`: Exchange code for tokens
 
 ---
@@ -176,14 +195,17 @@ frontend/
 **Purpose**: Server-side proxy for chat API
 
 **Features**:
+
 - Proxies chat requests to backend
 - Handles authentication
 - Error handling
 
 **API Calls**:
+
 - `POST /api/chat`: Backend chat endpoint
 
 **Remaining Features**:
+
 - Request/response logging
 - Rate limiting
 - Caching
@@ -195,14 +217,17 @@ frontend/
 **Purpose**: Server-side proxy for weather API
 
 **Features**:
+
 - Proxies weather requests to backend
 - Supports location hierarchy parameters
 - Error handling
 
 **API Calls**:
+
 - `GET /api/weather`: Backend weather endpoint
 
 **Parameters**:
+
 - `city`: City name (fallback)
 - `locality`: Locality name (highest priority)
 - `tehsil`: Tehsil name
@@ -216,6 +241,7 @@ frontend/
 **Purpose**: Farmers management page
 
 **Features**:
+
 - List all farmers
 - Add new farmer
 - Edit farmer details
@@ -223,16 +249,19 @@ frontend/
 - Search/filter functionality
 
 **API Calls**:
+
 - `GET /api/farmers`: Get all farmers
 - `POST /api/farmers`: Create farmer
 - `PUT /api/farmers/{id}`: Update farmer
 - `DELETE /api/farmers/{id}`: Delete farmer
 
 **Components Used**:
+
 - `FarmerForm`: Farmer form component
 - Table component for listing
 
 **Remaining Features**:
+
 - Farmer analytics dashboard
 - Export to CSV
 - Bulk operations
@@ -247,6 +276,7 @@ frontend/
 **Purpose**: User profile page
 
 **Features**:
+
 - Display user information
 - Edit profile
 - Update location hierarchy
@@ -254,11 +284,13 @@ frontend/
 - 2FA settings (UI only, not functional)
 
 **API Calls**:
+
 - `GET /api/auth/me`: Get current user
 - `PUT /api/auth/me`: Update profile
 - `PUT /api/auth/me/password`: Update password
 
 **Sections**:
+
 - Personal information
 - Location details
 - Account settings
@@ -271,12 +303,14 @@ frontend/
 **Purpose**: User settings page
 
 **Features**:
+
 - Theme selection
 - Language preference
 - Notification settings
 - Privacy settings
 
 **Remaining Features**:
+
 - Save preferences to backend
 - Email notification settings
 - SMS notification settings
@@ -290,11 +324,13 @@ frontend/
 #### 6.1 Authentication Components (`components/auth/`)
 
 **ProtectedRoute Component**
+
 - Wraps routes that require authentication
 - Redirects to login if not authenticated
 - Loading state handling
 
 **AuthForm Component**
+
 - Generic authentication form
 - Handles login/signup forms
 - Validation
@@ -305,6 +341,7 @@ frontend/
 #### 6.2 Chat Components (`components/chat/`)
 
 **ChatInterface Component**
+
 - Main chat interface
 - Message display
 - Input field
@@ -313,18 +350,21 @@ frontend/
 - Loading state
 
 **ChatMessage Component**
+
 - Individual message display
 - User vs assistant styling
 - Timestamp
 - Tools used indicator
 
 **ChatInput Component**
+
 - Message input field
 - Send button
 - Enter key support
 - Character count
 
 **Remaining Features**:
+
 - Message reactions
 - Message editing
 - Message deletion
@@ -337,6 +377,7 @@ frontend/
 #### 6.3 Dashboard Components (`components/dashboard/`)
 
 **WeatherCard Component**
+
 - Displays current weather
 - Temperature, humidity, wind speed
 - Weather icon
@@ -345,12 +386,14 @@ frontend/
 - Location change input
 
 **IrrigationPanel Component**
+
 - Displays irrigation advice
 - Based on weather data
 - Water requirement calculation
 - Crop-specific recommendations
 
 **Remaining Features**:
+
 - Weather forecast (multi-day)
 - Historical weather data
 - Weather alerts
@@ -362,6 +405,7 @@ frontend/
 #### 6.4 Layout Components (`components/layout/`)
 
 **MainLayout Component**
+
 - Main application layout
 - Header with navigation
 - Sidebar (if applicable)
@@ -369,6 +413,7 @@ frontend/
 - Responsive design
 
 **Header Component**
+
 - Logo
 - Navigation links
 - User menu
@@ -376,6 +421,7 @@ frontend/
 - Logout button
 
 **Sidebar Component**
+
 - Navigation menu
 - Collapsible
 - Active state indication
@@ -385,12 +431,14 @@ frontend/
 #### 6.5 Theme Components (`components/theme/`)
 
 **ThemeProvider Component**
+
 - Manages theme state
 - Persists to localStorage
 - System theme detection
 - Theme toggle button
 
 **ThemeToggle Component**
+
 - Toggle between light/dark mode
 - Icon display
 - Smooth transitions
@@ -424,6 +472,7 @@ All components are customizable and follow the shadcn/ui pattern.
 **Purpose**: Global authentication state management
 
 **Features**:
+
 - User state management
 - Login/logout functions
 - Token management
@@ -432,20 +481,24 @@ All components are customizable and follow the shadcn/ui pattern.
 - Protected route checking
 
 **API Calls**:
+
 - `GET /api/auth/me`: Fetch user data
 - `POST /api/auth/refresh`: Refresh access token
 
 **State**:
+
 - `user`: Current user object
 - `loading`: Loading state
 - `authenticated`: Authentication status
 
 **Functions**:
+
 - `login(email, password)`: Login with credentials
 - `logout()`: Logout user
 - `refreshToken()`: Refresh access token
 
 **Remaining Features**:
+
 - Session timeout handling
 - Concurrent login detection
 - Token revocation
@@ -455,22 +508,26 @@ All components are customizable and follow the shadcn/ui pattern.
 ### 8. Utility Functions (`lib/`)
 
 **API Client**
+
 - Base API configuration
 - Request/response interceptors
 - Error handling
 - Token injection
 
 **Formatters**
+
 - Date formatting
 - Number formatting
 - Currency formatting
 
 **Validators**
+
 - Email validation
 - Phone validation
 - Form validation helpers
 
 **Remaining Features**:
+
 - Comprehensive error handling
 - Request retry logic
 - Offline support
@@ -481,12 +538,14 @@ All components are customizable and follow the shadcn/ui pattern.
 ## Pages and Routes
 
 ### Public Routes
+
 - `/` - Redirect to login if not authenticated
 - `/auth/login` - Login page
 - `/auth/signup` - Signup page
 - `/auth/callback` - OAuth callback
 
 ### Protected Routes
+
 - `/` - Dashboard (home)
 - `/farmers` - Farmers management
 - `/profile` - User profile
@@ -497,11 +556,14 @@ All components are customizable and follow the shadcn/ui pattern.
 ## API Integration
 
 ### Backend API Base URL
+
 - Development: `http://localhost:8000`
 - Configured via environment variable
 
 ### Authentication
+
 All protected API calls include the JWT access token:
+
 ```typescript
 headers: {
   'Authorization': `Bearer ${accessToken}`
@@ -511,6 +573,7 @@ headers: {
 ### Key API Endpoints Used
 
 **Authentication**
+
 - `POST /api/auth/login/email` - Login
 - `POST /api/auth/signup` - Signup
 - `POST /api/auth/register` - Register
@@ -519,12 +582,15 @@ headers: {
 - `POST /api/auth/refresh` - Refresh token
 
 **Chat**
+
 - `POST /api/chat` - Send message
 
 **Weather**
+
 - `GET /api/weather` - Get weather
 
 **Farmers**
+
 - `GET /api/farmers` - Get farmers
 - `POST /api/farmers` - Create farmer
 - `PUT /api/farmers/{id}` - Update farmer
@@ -535,19 +601,24 @@ headers: {
 ## State Management
 
 ### Authentication State
+
 Managed by `AuthContext`:
+
 - User object
 - Authentication status
 - Token management
 - Auto-refresh
 
 ### Component State
+
 Managed by React hooks:
+
 - `useState`: Local component state
 - `useEffect`: Side effects and API calls
 - `useContext`: Access to AuthContext
 
 ### Remaining Features
+
 - Global state management (Zustand/Redux)
 - Optimistic updates
 - State persistence
@@ -558,18 +629,21 @@ Managed by React hooks:
 ## Styling
 
 ### TailwindCSS
+
 - Utility-first CSS framework
 - Responsive design
 - Dark mode support
 - Custom theme configuration
 
 ### Theme Configuration
+
 - Colors: Custom color palette
 - Spacing: Consistent spacing scale
 - Typography: Custom font families
 - Components: shadcn/ui theme
 
 ### Global Styles (`globals.css`)
+
 - Base styles
 - Tailwind directives
 - Custom CSS variables
@@ -580,11 +654,13 @@ Managed by React hooks:
 ## Responsive Design
 
 ### Breakpoints
+
 - Mobile: < 640px
 - Tablet: 640px - 1024px
 - Desktop: > 1024px
 
 ### Mobile Features
+
 - Touch-friendly UI
 - Responsive navigation
 - Mobile-optimized forms
@@ -595,6 +671,7 @@ Managed by React hooks:
 ## Accessibility
 
 ### Features
+
 - Semantic HTML
 - ARIA labels
 - Keyboard navigation
@@ -602,6 +679,7 @@ Managed by React hooks:
 - Focus management
 
 ### Remaining Features
+
 - WCAG 2.1 AA compliance
 - Color contrast validation
 - Accessibility testing
@@ -612,6 +690,7 @@ Managed by React hooks:
 ## Performance
 
 ### Optimizations
+
 - Code splitting (automatic with Next.js)
 - Image optimization (next/image)
 - Lazy loading
@@ -619,10 +698,59 @@ Managed by React hooks:
 - API route caching
 
 ### Remaining Features
+
 - Service worker for offline support
 - Asset caching strategy
 - Performance monitoring
 - Bundle size optimization
+
+---
+
+## Code Quality
+
+### Linting
+
+ESLint v9 with strict configuration for:
+- TypeScript support
+- React best practices
+- Next.js specific rules
+- Prettier integration
+
+```bash
+npm run lint       # Check for linting errors
+npm run lint:fix   # Auto-fix linting errors
+```
+
+### Formatting
+
+Prettier ensures consistent code style:
+- Semi-colons enabled
+- Single quotes
+- Trailing commas (ES5)
+- Print width: 100
+
+```bash
+npm run format      # Check formatting
+npm run format:fix  # Fix formatting issues
+```
+
+### Type Checking
+
+TypeScript in strict mode:
+- No implicit any
+- Strict null checks
+- All components fully typed
+
+```bash
+npx tsc --noEmit    # Type check without emitting files
+```
+
+### Type Safety Improvements
+
+- All `any` types replaced with proper interfaces
+- Error handling uses `unknown` with type guards
+- Proper type definitions for API responses
+- Component props fully typed
 
 ---
 
@@ -631,27 +759,32 @@ Managed by React hooks:
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Configure environment:
+
 ```bash
 cp .env.example .env.local
 # Edit .env.local with your configuration
 ```
 
 3. Run development server:
+
 ```bash
 npm run dev
 ```
 
 4. Build for production:
+
 ```bash
 npm run build
 ```
 
 5. Start production server:
+
 ```bash
 npm start
 ```
@@ -682,36 +815,82 @@ npm start
 ## Testing
 
 ### Unit Tests
+
 ```bash
-npm run test
+npm run test          # Run tests in watch mode
+npm run test:ci       # Run tests in CI mode
 ```
+
+**Test Framework**: Jest with React Testing Library
+- Configured with Next.js integration
+- jsdom environment for component testing
+- @testing-library/jest-dom for custom matchers
+- Coverage collection enabled
+- Test files in `__tests__/` directory
 
 ### E2E Tests
+
 ```bash
-npm run test:e2e
+npm run test:e2e      # Planned
 ```
 
+### Implemented Features
+
+- Component testing setup
+- Jest configuration
+- Sample test for FarmerForm component
+- TypeScript support in tests
+
 ### Remaining Features
+
 - Comprehensive test coverage
-- Component testing
 - Integration testing
 - Visual regression testing
+- E2E testing setup
+
+---
+
+## CI/CD
+
+### Automated Pipeline
+
+The frontend includes a comprehensive CI/CD pipeline that ensures code quality:
+
+**Pipeline Steps**:
+1. Install dependencies
+2. Run ESLint (linting checks)
+3. Run TypeScript type checking
+4. Run Prettier formatting check
+5. Run Jest tests
+6. Build Next.js application
+
+**Quality Gates**:
+- Pipeline fails on any check failure
+- Build runs only after all checks pass
+- Ensures consistent code quality across all commits
+
+**Configuration**:
+- `.github/workflows/ci.yml` - CI/CD pipeline definition
+- Runs on push/PR to main and develop branches
 
 ---
 
 ## Deployment
 
 ### Environment Variables
+
 - `NEXT_PUBLIC_API_URL`: Backend API URL
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`: Google OAuth client ID
 
 ### Deployment Platforms
+
 - Vercel (recommended)
 - Netlify
 - AWS
 - Docker
 
 ### Build Process
+
 - Next.js build optimization
 - Static page generation
 - API route compilation
@@ -722,6 +901,7 @@ npm run test:e2e
 ## Future Enhancements
 
 ### Short Term
+
 - Complete 2FA UI
 - Add password reset flow
 - Implement email verification
@@ -729,6 +909,7 @@ npm run test:e2e
 - Improve error handling
 
 ### Medium Term
+
 - Add file upload support
 - Implement voice messages
 - Create admin dashboard
@@ -736,6 +917,7 @@ npm run test:e2e
 - Implement notifications
 
 ### Long Term
+
 - PWA support
 - Offline mode
 - Multi-language support
@@ -747,12 +929,14 @@ npm run test:e2e
 ## Browser Support
 
 ### Supported Browsers
+
 - Chrome (latest)
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
 
 ### Minimum Requirements
+
 - ES6 support
 - CSS Grid support
 - Flexbox support
@@ -763,6 +947,7 @@ npm run test:e2e
 ## Security
 
 ### Features
+
 - JWT authentication
 - Secure HTTP-only cookies (future)
 - XSS protection
@@ -770,6 +955,7 @@ npm run test:e2e
 - Content Security Policy (future)
 
 ### Remaining Features
+
 - Security headers
 - Input sanitization
 - Output encoding
