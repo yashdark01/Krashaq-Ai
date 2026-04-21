@@ -29,6 +29,15 @@ backend/
 │   ├── routes/          # API endpoints
 │   ├── schemas/         # Pydantic schemas
 │   ├── services/        # Business logic
+│   │   ├── base_agent.py         # Base agent class for multi-agent system
+│   │   ├── agent_config.py       # Agent configuration management
+│   │   ├── orchestrator_agent.py # Orchestrator for multi-agent coordination
+│   │   ├── weather_agent.py      # Weather specialist agent
+│   │   ├── crop_agent.py         # Crop specialist agent
+│   │   ├── irrigation_agent.py   # Irrigation specialist agent
+│   │   ├── fertilizer_agent.py   # Fertilizer specialist agent
+│   │   ├── synthesis_agent.py    # Response synthesis agent
+│   │   └── agent_router.py       # Multi-agent routing logic
 │   ├── config.py        # Application settings
 │   ├── db.py            # Legacy database (deprecated)
 │   ├── main.py          # Application entry point
@@ -501,12 +510,120 @@ def endpoint(db: Session = Depends(get_db)):
 - Message processing
 - Tool invocation
 - Response generation
+- Multi-agent system integration (default routing to orchestrator)
 
 **Agent Router (`services/agent_router.py`)**
-- Routes queries to appropriate tools
+- Routes queries to appropriate tools or agents
 - Intent detection
 - Tool selection
 - Response aggregation
+- Multi-agent vs single-agent routing
+- Agent-specific metrics tracking
+
+---
+
+#### 6.4 Multi-Agent System
+
+**Overview**
+The multi-agent system enables specialized domain expertise through dedicated agents for weather, crop, irrigation, and fertilizer queries. An orchestrator agent coordinates the system by detecting intents and routing queries to appropriate specialists.
+
+**Architecture Components**
+
+**Base Agent (`services/base_agent.py`)**
+- Abstract base class for all specialist agents
+- Common LLM access methods
+- Redis caching with configurable TTL
+- Prompt generation utilities
+- Response formatting
+- Error handling and retry logic
+
+**Agent Configuration (`services/agent_config.py`)**
+- Centralized configuration for all agents
+- Per-agent settings: model, temperature, max_tokens, reflection
+- Tool configuration per agent
+- Cache TTL configuration (e.g., weather: 300s, crop: 1800s)
+- Agent enable/disable flags
+- Dynamic configuration updates
+
+**Orchestrator Agent (`services/orchestrator_agent.py`)**
+- Multi-label intent classification using LLM with JSON output
+- Fallback keyword-based classification for robustness
+- Parallel or sequential invocation of specialist agents
+- Coordinates multiple specialist responses
+- Integrates with synthesis agent for response aggregation
+- Metrics tracking for specialist invocations and synthesis operations
+
+**Specialist Agents**
+
+**Weather Agent (`services/weather_agent.py`)**
+- Handles weather-related queries
+- Integrates with WeatherAPI.com
+- Caches weather data (300s TTL)
+- Provides location-specific weather information
+- Supports multi-language responses
+
+**Crop Agent (`services/crop_agent.py`)**
+- Handles crop-related queries
+- Crop selection and variety recommendations
+- Planting season guidance
+- Crop-specific advice
+- Caches crop data (1800s TTL)
+
+**Irrigation Agent (`services/irrigation_agent.py`)**
+- Handles irrigation-related queries
+- Water requirement calculations
+- Irrigation scheduling advice
+- Soil moisture analysis
+- Integrates with weather data for context
+- Caches irrigation data (600s TTL)
+
+**Fertilizer Agent (`services/fertilizer_agent.py`)**
+- Handles fertilizer-related queries
+- Nutrient management recommendations
+- Fertilizer type selection
+- Application timing guidance
+- Soil analysis integration
+- Caches fertilizer data (1800s TTL)
+
+**Synthesis Agent (`services/synthesis_agent.py`)**
+- Aggregates multiple specialist responses
+- Generates cohesive, unified responses
+- Handles conflicting information from specialists
+- Maintains conversation context
+- Uses LLM for intelligent synthesis
+
+**Agent Router Integration**
+The agent router (`services/agent_router.py`) provides:
+- `process_with_multi_agent()` - Routes to orchestrator for multi-agent processing
+- `process_with_single_agent()` - Fallback to single-agent system
+- Automatic routing based on query complexity and enabled agents
+- Graceful fallback if multi-agent system fails
+
+**Metrics Tracking**
+The metrics service (`services/metrics.py`) tracks:
+- Multi-agent vs single-agent usage
+- Specialist agent invocation counts
+- Synthesis operation counts
+- Per-agent performance metrics
+- Error rates per agent
+
+**Configuration**
+Enable/disable agents in `agent_config.py`:
+```python
+get_agent_config("weather").get("enabled", True)
+get_agent_config("crop").get("enabled", True)
+get_agent_config("irrigation").get("enabled", True)
+get_agent_config("fertilizer").get("enabled", True)
+```
+
+**Fallback Mechanism**
+If the multi-agent system fails or no agents are enabled, the system automatically falls back to the single-agent LLM system for robustness.
+
+**Performance Optimizations**
+- Redis caching with agent-specific TTLs
+- Parallel agent invocation where applicable
+- Lazy loading of agent configurations
+- Connection pooling for external APIs
 
 **Memory Service (`services/memory.py`)**
 - Session-based memory

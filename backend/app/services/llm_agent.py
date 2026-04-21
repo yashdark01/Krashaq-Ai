@@ -13,8 +13,14 @@ from app.services.weather import get_weather
 class LLMAgent:
     """Main agent interface for Krashaq chat functionality."""
     
-    def __init__(self):
-        pass
+    def __init__(self, use_multi_agent: bool = True):
+        """
+        Initialize LLM Agent.
+        
+        Args:
+            use_multi_agent: Whether to use multi-agent system (default: True)
+        """
+        self.use_multi_agent = use_multi_agent
     
     async def chat(
         self,
@@ -48,7 +54,8 @@ class LLMAgent:
             message=message,
             session_id=session_id,
             location=location,
-            chat_memory=chat_memory
+            chat_memory=chat_memory,
+            use_multi_agent=self.use_multi_agent
         )
         
         return result
