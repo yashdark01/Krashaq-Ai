@@ -2,7 +2,7 @@ import os
 from functools import lru_cache
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 class Settings:
@@ -43,6 +43,5 @@ class Settings:
         self.redis_cache_ttl = int(os.getenv("REDIS_CACHE_TTL", "1200"))  # 20 minutes in seconds
 
 
-@lru_cache()
 def get_settings() -> Settings:
     return Settings()

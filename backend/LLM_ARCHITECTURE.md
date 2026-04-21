@@ -18,8 +18,12 @@
 
 Krashaq currently uses a **single-agent architecture** with LangGraph ReAct pattern:
 
-```
-User Query → Intent Classification → Tool Execution → LLM Response → Output
+```mermaid
+flowchart LR
+    A[User Query] --> B[Intent Classification]
+    B --> C[Tool Execution]
+    C --> D[LLM Response]
+    D --> E[Output]
 ```
 
 ### Current Components
@@ -78,8 +82,22 @@ User Query → Intent Classification → Tool Execution → LLM Response → Out
 
 **Key Patterns:**
 1. **Multi-Stage Processing Pipeline**
-   - Input validation → Intent classification → Context retrieval → Tool orchestration → Response generation → Safety filtering
-   - Each stage has specialized sub-systems
+
+```mermaid
+flowchart LR
+    A[Input Validation] --> B[Intent Classification]
+    B --> C[Context Retrieval]
+    C --> D[Tool Orchestration]
+    D --> E[Response Generation]
+    E --> F[Safety Filtering]
+    F --> G[Final Output]
+    
+    style A fill:#E91E63
+    style F fill:#E91E63
+```
+
+- Input validation → Intent classification → Context retrieval → Tool orchestration → Response generation → Safety filtering
+- Each stage has specialized sub-systems
 
 2. **Tool-Use Architecture**
    - Function calling with structured outputs
@@ -88,16 +106,54 @@ User Query → Intent Classification → Tool Execution → LLM Response → Out
    - Tool result aggregation and synthesis
 
 3. **Hierarchical Memory System**
-   - Short-term: Conversation context (recent messages)
-   - Medium-term: Session memory (current interaction)
-   - Long-term: User preferences and history
-   - Knowledge base: Vector embeddings for RAG
+
+```mermaid
+flowchart TB
+    subgraph MemoryHierarchy["Memory Hierarchy"]
+        A[Short-term<br/>Conversation Context] --> B[Medium-term<br/>Session Memory]
+        B --> C[Long-term<br/>User Preferences]
+        C --> D[Knowledge Base<br/>Vector Embeddings]
+    end
+    
+    E[User Query] --> A
+    D --> F[RAG Retrieval]
+    A --> G[Context Window]
+    F --> G
+    G --> H[LLM Processing]
+    
+    style A fill:#64B5F6
+    style D fill:#4CAF50
+```
+
+- Short-term: Conversation context (recent messages)
+- Medium-term: Session memory (current interaction)
+- Long-term: User preferences and history
+- Knowledge base: Vector embeddings for RAG
 
 4. **Self-Correction Loops**
-   - Reflection: Agent reviews its own output
-   - Critique: Specialized evaluator checks quality
-   - Revision: Agent refines response based on feedback
-   - Multi-pass refinement for complex queries
+
+```mermaid
+flowchart TB
+    A[Initial Response] --> B[Reflection<br/>Agent reviews output]
+    B --> C[Critique<br/>Evaluator checks quality]
+    C --> D{Quality OK?}
+    
+    D -->|Yes| E[Final Response]
+    D -->|No| F[Revision<br/>Agent refines response]
+    F --> G{Max iterations?}
+    
+    G -->|No| B
+    G -->|Yes| E
+    
+    style B fill:#FF9800
+    style C fill:#E91E63
+    style E fill:#4CAF50
+```
+
+- Reflection: Agent reviews its own output
+- Critique: Specialized evaluator checks quality
+- Revision: Agent refines response based on feedback
+- Multi-pass refinement for complex queries
 
 5. **Safety & Moderation**
    - Pre-processing: Input sanitization
@@ -109,10 +165,29 @@ User Query → Intent Classification → Tool Execution → LLM Response → Out
 
 **Key Patterns:**
 1. **Constitutional AI (CAI)**
-   - Constitutional principles guide behavior
-   - Self-critique against principles
-   - Revision based on constitutional feedback
-   - Red-teaming for safety
+
+```mermaid
+flowchart TB
+    A[Constitutional Principles] --> B[Initial Response]
+    B --> C[Self-Critique<br/>Against Principles]
+    C --> D{Violates Principles?}
+    
+    D -->|No| E[Final Response]
+    D -->|Yes| F[Revision<br/>Based on Feedback]
+    F --> B
+    
+    A -.->|Guides| B
+    A -.->|Checks| C
+    
+    style A fill:#9C27B0
+    style C fill:#E91E63
+    style E fill:#4CAF50
+```
+
+- Constitutional principles guide behavior
+- Self-critique against principles
+- Revision based on constitutional feedback
+- Red-teaming for safety
 
 2. **Multi-Agent Collaboration**
    - Specialist agents for different domains
@@ -174,50 +249,32 @@ User Query → Intent Classification → Tool Execution → LLM Response → Out
 
 ### Proposed Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        USER QUERY                                  │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   ORCHESTRATOR AGENT                               │
-│  • Intent classification (multi-label)                            │
-│  • Query decomposition (break into sub-tasks)                     │
-│  • Agent selection & routing                                      │
-│  • Response synthesis & coordination                              │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-         ┌───────────────┼───────────────┬───────────────┐
-         │               │               │               │
-         ▼               ▼               ▼               ▼
-┌────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ WEATHER AGENT  │ │ CROP AGENT   │ │ IRRIGATION    │ │ FERTILIZER   │
-│                │ │              │ │ AGENT         │ │ AGENT        │
-│ • Weather API  │ │ • Crop DB    │ │ • Weather     │ │ • Soil DB    │
-│ • Forecasting   │ │ • Knowledge  │ │ • Soil data   │ │ • Knowledge  │
-│ • Alerts       │ │ • Expertise  │ │ • Expertise   │ │ • Expertise  │
-└────────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
-         │               │               │               │
-         └───────────────┼───────────────┴───────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   EVALUATOR AGENT                                 │
-│  • Quality assessment                                            │
-│  • Fact-checking                                                  │
-│  • Safety validation                                              │
-│  • Consistency check                                             │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   RESPONSE AGENT                                  │
-│  • Response synthesis                                            │
-│  • Language adaptation                                           │
-│  • Formatting & structure                                         │
-│  • Personalization                                                │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    A[User Query] --> B[Orchestrator Agent]
+    
+    B --> C{Intent Classification}
+    C -->|Weather| D[Weather Agent]
+    C -->|Crop| E[Crop Agent]
+    C -->|Irrigation| F[Irrigation Agent]
+    C -->|Fertilizer| G[Fertilizer Agent]
+    
+    D --> H[Evaluator Agent]
+    E --> H
+    F --> H
+    G --> H
+    
+    H --> I[Response Agent]
+    I --> J[Final Response]
+    
+    B -.->|Multi-label| C
+    B -.->|Decompose| C
+    B -.->|Route| C
+    B -.->|Synthesize| I
+    
+    style B fill:#4CAF50
+    style H fill:#FF9800
+    style I fill:#2196F3
 ```
 
 ### Agent Definitions
@@ -374,33 +431,71 @@ class OrchestratorAgent:
 
 #### 1. Supervisor Pattern
 
-```
-Orchestrator → Agent1 → Result
-           → Agent2 → Result
-           → Agent3 → Result
-Orchestrator aggregates all results
+```mermaid
+flowchart TB
+    O[Orchestrator] --> A1[Agent 1]
+    O --> A2[Agent 2]
+    O --> A3[Agent 3]
+    
+    A1 --> R1[Result 1]
+    A2 --> R2[Result 2]
+    A3 --> R3[Result 3]
+    
+    R1 --> O
+    R2 --> O
+    R3 --> O
+    
+    O --> S[Synthesized Response]
+    
+    style O fill:#4CAF50
+    style S fill:#2196F3
 ```
 
 #### 2. Hierarchical Pattern
 
-```
-Orchestrator
-    ├── Weather Agent
-    │   ├── Current Weather Sub-agent
-    │   └── Forecast Sub-agent
-    └── Crop Agent
-        ├── Disease Sub-agent
-        └── Pest Sub-agent
+```mermaid
+flowchart TB
+    O[Orchestrator] --> WA[Weather Agent]
+    O --> CA[Crop Agent]
+    
+    WA --> CW[Current Weather Sub-agent]
+    WA --> FW[Forecast Sub-agent]
+    
+    CA --> DA[Disease Sub-agent]
+    CA --> PA[Pest Sub-agent]
+    
+    CW --> O
+    FW --> O
+    DA --> O
+    PA --> O
+    
+    style O fill:#4CAF50
+    style WA fill:#FF9800
+    style CA fill:#FF9800
 ```
 
 #### 3. Debate Pattern
 
-```
-Agent1 proposes solution
-Agent2 critiques solution
-Agent1 refines solution
-Agent2 agrees or continues critique
-Consensus reached
+```mermaid
+sequenceDiagram
+    participant A1 as Agent 1
+    participant A2 as Agent 2
+    participant C as Consensus
+    
+    A1->>A2: Propose Solution
+    A2->>A1: Critique Solution
+    A1->>A2: Refined Solution
+    
+    alt Agreement
+        A2->>C: Consensus Reached
+    else Disagreement
+        A2->>A1: Continue Critique
+        A1->>A2: Further Refinement
+        A2->>C: Consensus Reached
+    end
+    
+    C->>A1: Final Decision
+    C->>A2: Final Decision
 ```
 
 ---
@@ -427,6 +522,27 @@ LangGraph is a library for building stateful, multi-actor applications with LLMs
 ### Phase 1: Enhanced Single Agent (Current → Improved)
 
 **Goal:** Improve current ReAct agent with better tool orchestration
+
+```mermaid
+flowchart TB
+    A[User Query] --> B[Agent Node]
+    B --> C{Needs Tools?}
+    
+    C -->|Yes| D[Tools Node]
+    C -->|No| E{Needs Reflection?}
+    
+    D --> B
+    
+    E -->|Yes| F[Reflect Node]
+    E -->|No| G[END]
+    
+    F --> H{Max Reflections?}
+    H -->|No| B
+    H -->|Yes| E
+    
+    style F fill:#FF9800
+    style D fill:#2196F3
+```
 
 **Changes:**
 - Dynamic tool selection (instead of keyword matching)
@@ -489,6 +605,29 @@ workflow.add_edge("reflect", "agent")
 ### Phase 2: Multi-Agent with Supervisor (LangGraph)
 
 **Goal:** Implement supervisor pattern with specialist agents
+
+```mermaid
+flowchart TB
+    A[User Query] --> B[Supervisor Node]
+    
+    B --> C{Route to Agent}
+    
+    C -->|Weather| D[Weather Agent]
+    C -->|Crop| E[Crop Agent]
+    C -->|Irrigation| F[Irrigation Agent]
+    C -->|Fertilizer| G[Fertilizer Agent]
+    C -->|Synthesize| H[Synthesize Node]
+    
+    D --> B
+    E --> B
+    F --> B
+    G --> B
+    
+    H --> I[Final Response]
+    
+    style B fill:#4CAF50
+    style H fill:#2196F3
+```
 
 **Implementation:**
 ```python
@@ -593,6 +732,35 @@ app = workflow.compile()
 
 **Goal:** Execute independent agents in parallel for faster responses
 
+```mermaid
+flowchart TB
+    A[User Query] --> B[Orchestrator]
+    
+    B --> C[Task Decomposition]
+    
+    C --> D[Parallel Execution]
+    
+    subgraph Parallel["Parallel Agents"]
+        E[Weather Agent]
+        F[Crop Agent]
+        G[Irrigation Agent]
+    end
+    
+    D --> E
+    D --> F
+    D --> G
+    
+    E --> H[Result Aggregation]
+    F --> H
+    G --> H
+    
+    H --> I[Response Synthesis]
+    I --> J[Final Response]
+    
+    style D fill:#FF9800
+    style H fill:#4CAF50
+```
+
 **Implementation with LangGraph:**
 ```python
 from langgraph.graph import StateGraph
@@ -623,6 +791,43 @@ workflow.add_node("parallel_execute", execute_parallel_agents)
 ### Phase 4: Hierarchical Multi-Agent
 
 **Goal:** Implement nested agent hierarchy for complex queries
+
+```mermaid
+flowchart TB
+    A[User Query] --> B[Main Orchestrator]
+    
+    B --> C{Domain?}
+    
+    C -->|Weather| D[Weather Sub-graph]
+    C -->|Crop| E[Crop Sub-graph]
+    
+    subgraph WeatherSub["Weather Sub-graph"]
+        D --> D1[Current Weather Agent]
+        D --> D2[Forecast Agent]
+        D --> D3[Alerts Agent]
+    end
+    
+    subgraph CropSub["Crop Sub-graph"]
+        E --> E1[Disease Agent]
+        E --> E2[Pest Agent]
+        E --> E3[Yield Agent]
+    end
+    
+    D1 --> B
+    D2 --> B
+    D3 --> B
+    
+    E1 --> B
+    E2 --> B
+    E3 --> B
+    
+    B --> F[Response Synthesis]
+    F --> G[Final Response]
+    
+    style B fill:#4CAF50
+    style D fill:#64B5F6
+    style E fill:#64B5F6
+```
 
 **Implementation:**
 ```python
@@ -723,6 +928,81 @@ class AgentState(BaseModel):
 - **LangChain** - Agent orchestration and tools
 - **LangGraph** - Stateful multi-agent workflows
 - **LangSmith** - Tracing and evaluation
+
+```mermaid
+flowchart TB
+    subgraph Client["Client Layer"]
+        A[Web App]
+        B[WhatsApp Bot]
+    end
+    
+    subgraph API["API Layer"]
+        C[FastAPI Backend]
+        D[Rate Limiter]
+        E[Auth Middleware]
+    end
+    
+    subgraph Agents["Multi-Agent System"]
+        F[Orchestrator Agent]
+        G[Weather Agent]
+        H[Crop Agent]
+        I[Irrigation Agent]
+        J[Fertilizer Agent]
+        K[Evaluator Agent]
+    end
+    
+    subgraph LLM["LLM Providers"]
+        L[Ollama<br/>Primary]
+        M[Claude<br/>Fallback 1]
+        N[OpenAI<br/>Fallback 2]
+    end
+    
+    subgraph Data["Data Layer"]
+        O[Redis<br/>Cache]
+        P[ChromaDB<br/>Vector Store]
+        Q[PostgreSQL<br/>Long-term]
+        R[MongoDB<br/>User Data]
+    end
+    
+    subgraph Monitoring["Monitoring"]
+        S[LangSmith<br/>Tracing]
+        T[Prometheus<br/>Metrics]
+        U[Grafana<br/>Dashboard]
+    end
+    
+    A --> C
+    B --> C
+    
+    C --> D
+    D --> E
+    E --> F
+    
+    F --> G
+    F --> H
+    F --> I
+    F --> J
+    
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    
+    F --> L
+    K --> M
+    
+    F --> O
+    H --> P
+    K --> Q
+    C --> R
+    
+    F --> S
+    C --> T
+    T --> U
+    
+    style F fill:#4CAF50
+    style P fill:#9C27B0
+    style S fill:#FF9800
+```
 
 **LLM Providers:**
 - **Primary**: Ollama (local, cost-effective)
@@ -842,6 +1122,30 @@ async def batch_process(queries: list[str]):
 
 ## Implementation Roadmap
 
+```mermaid
+gantt
+    title LLM Multi-Agent Implementation Roadmap
+    dateFormat  YYYY-MM-DD
+    section Phase 1
+    Enhanced Single Agent       :a1, 2025-01-01, 14d
+    Reflection Loops           :a2, after a1, 7d
+    
+    section Phase 2
+    Multi-Agent Setup          :b1, after a2, 14d
+    Supervisor Pattern         :b2, after b1, 7d
+    
+    section Phase 3
+    Parallel Execution         :c1, after b2, 7d
+    
+    section Phase 4
+    RAG Integration            :d1, after c1, 14d
+    Vector Database            :d2, after d1, 7d
+    
+    section Phase 5
+    Advanced Features          :e1, after d2, 14d
+    Production Deployment      :e2, after e1, 7d
+```
+
 ### Phase 1: Foundation (Week 1-2)
 
 **Goals:**
@@ -908,6 +1212,38 @@ async def batch_process(queries: list[str]):
 - Add vector database
 - Implement knowledge retrieval
 - Add document indexing
+
+```mermaid
+flowchart TB
+    A[User Query] --> B[Query Embedding]
+    
+    B --> C[Vector Search]
+    
+    C --> D[Vector Database<br/>ChromaDB/Pinecone]
+    
+    D --> E[Top-K Retrieved Documents]
+    
+    E --> F[Context Construction]
+    
+    F --> G[Agent Processing]
+    
+    G --> H[Response Generation]
+    
+    subgraph KnowledgeBase["Knowledge Base"]
+        I[Agricultural Documents]
+        J[Crop Guides]
+        K[Pest Libraries]
+        L[Best Practices]
+    end
+    
+    I --> D
+    J --> D
+    K --> D
+    L --> D
+    
+    style D fill:#4CAF50
+    style F fill:#FF9800
+```
 
 **Tasks:**
 - [ ] Set up ChromaDB/Pinecone

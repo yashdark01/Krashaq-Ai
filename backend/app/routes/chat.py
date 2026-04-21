@@ -8,6 +8,7 @@ from app.services.weather import get_weather, format_weather_for_farmer
 from app.services.irrigation import get_irrigation_advice
 from app.services.memory import cleanup_old_sessions, get_session_stats
 from app.services.langchain_memory import langchain_memory_service
+from app.services.metrics import get_metrics_service
 from app.config import get_settings
 
 router = APIRouter()
@@ -239,3 +240,22 @@ async def cleanup_sessions(days: int = 30):
         "message": f"Cleaned up {result.deleted_count} old messages",
         "days_threshold": days
     }
+
+
+@router.get("/llm/metrics")
+async def get_llm_metrics():
+    """
+    Get LLM agent metrics including response quality, tool usage, and performance.
+    """
+    metrics = get_metrics_service()
+    return metrics.get_metrics()
+
+
+@router.post("/llm/metrics/reset")
+async def reset_llm_metrics():
+    """
+    Reset all LLM metrics to zero.
+    """
+    metrics = get_metrics_service()
+    metrics.reset_metrics()
+    return {"message": "Metrics reset successfully"}
