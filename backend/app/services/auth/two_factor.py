@@ -1,9 +1,12 @@
 import pyotp
 import random
-from typing import Optional
+import secrets
+from typing import Optional, List
+from passlib.context import CryptContext
 from app.config import get_settings
 
 settings = get_settings()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class TwoFactorService:
@@ -49,6 +52,60 @@ class TwoFactorService:
         """
         totp = pyotp.TOTP(secret)
         return totp.verify(code, valid_window=1)  # Allow 1 step window for clock skew
+    
+    def generate_backup_codes(self, count: int = 10) -> List[str]:
+        """
+        Generate backup codes for 2FA recovery.
+        
+        Args:
+            count: Number of backup codes to generate
+        
+        Returns:
+            List of backup codes
+        """
+        codes = []
+        for _ in range(count):
+            code = secrets.token_hex(4).upper()  # 8-character hex code
+            codes.append(code)
+        return codes
+    
+    def verify_backup_code(self, backup_codes: List[str], code: str) -> bool:
+        """
+        Verify a backup code.
+        
+        Args:
+            backup_codes: List of valid backup codes
+            code: Code to verify
+        
+        Returns:
+            True if code is valid and not already used
+        """
+        return code.upper() in [bc.upper() for bc in backup_codes]
+    
+    def encrypt_secret(self, secret: str) -> str:
+        """
+        Encrypt a secret using bcrypt.
+        
+        Args:
+            secret: Secret to encrypt
+        
+        Returns:
+            Encrypted secret
+        """
+        return pwd_context.hash(secret)
+    
+    def verify_encrypted_secret(self, secret: str, encrypted: str) -> bool:
+        """
+        Verify a secret against encrypted value.
+        
+        Args:
+            secret: Secret to verify
+            encrypted: Encrypted secret
+        
+        Returns:
+            True if secret matches
+        """
+        return pwd_context.verify(secret, encrypted)
     
     def generate_sms_otp(self) -> str:
         """

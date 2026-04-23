@@ -13,9 +13,9 @@ class Settings:
         self.twilio_whatsapp_number = os.getenv("TWILIO_WHATSAPP_NUMBER", "")
         self.database_url = os.getenv("DATABASE_URL", "sqlite:///./krashaq.db")
         
-        # LLM Provider Settings
-        self.llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # ollama | gemini | openai | claude | grok
-        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+        # LLM Configuration
+        self.llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # ollama, gemini, openai, claude, grok
+        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
         
         # Cloud Provider API Keys
@@ -41,6 +41,20 @@ class Settings:
         # Redis Configuration
         self.redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         self.redis_cache_ttl = int(os.getenv("REDIS_CACHE_TTL", "1200"))  # 20 minutes in seconds
+        
+        # LangSmith Configuration
+        self.langsmith_api_key = os.getenv("LANGCHAIN_API_KEY", "")
+        self.langsmith_project = os.getenv("LANGCHAIN_PROJECT", "krashaq")
+        self.langsmith_tracing = os.getenv("LANGCHAIN_TRACING_V2", "true").lower() == "true"
+        
+        # Sentry Configuration
+        self.sentry_dsn = os.getenv("SENTRY_DSN", "")
+        
+        # Email Configuration
+        self.email_provider = os.getenv("EMAIL_PROVIDER", "sendgrid")  # sendgrid or mailgun
+        self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "")
+        self.mailgun_api_key = os.getenv("MAILGUN_API_KEY", "")
+        self.email_from = os.getenv("EMAIL_FROM", "noreply@krashaq.com")
 
 
 def get_settings() -> Settings:

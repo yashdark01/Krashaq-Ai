@@ -22,6 +22,37 @@ class LLMAgent:
         """
         self.use_multi_agent = use_multi_agent
     
+    async def process_message(
+        self,
+        message: str,
+        location: str = "Delhi",
+        phone: Optional[str] = None,
+        session_id: Optional[str] = None,
+        language: Optional[str] = None,
+        conversation_context: Optional[list] = None
+    ) -> Dict[str, Any]:
+        """
+        Process a chat message and return response.
+        
+        Args:
+            message: User's message
+            location: User's location for weather queries
+            phone: User's phone number (optional)
+            session_id: Existing session ID for conversation continuity
+            language: Preferred language (en, hi, hinglish)
+            conversation_context: Conversation history context (optional)
+        
+        Returns:
+            Dict containing reply and metadata
+        """
+        return await self.chat(
+            message=message,
+            location=location,
+            phone=phone,
+            session_id=session_id,
+            language_hint=language
+        )
+
     async def chat(
         self,
         message: str,

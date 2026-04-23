@@ -146,9 +146,11 @@ async def general_response(message: str, location: str = "Delhi", language: str 
     try:
         logger.info("[GENERAL RESPONSE] Importing get_llm_with_fallback")
         from app.services.llm_provider import get_llm_with_fallback
+        from app.config import get_settings
         
-        logger.info("[GENERAL RESPONSE] Initializing LLM with Ollama (primary)")
-        llm = get_llm_with_fallback(primary_provider="ollama", temperature=0.7)
+        settings = get_settings()
+        logger.info(f"[GENERAL RESPONSE] Initializing LLM with {settings.llm_provider} (primary)")
+        llm = get_llm_with_fallback(primary_provider=settings.llm_provider, temperature=0.7)
         logger.info(f"[GENERAL RESPONSE] LLM initialized successfully: {type(llm)}")
         
         # Build language instruction based on user's preference
@@ -160,8 +162,8 @@ async def general_response(message: str, location: str = "Delhi", language: str 
             language_instruction = "Answer in simple Hindi or Hinglish (Hindi written in English script). Use conversational tone."
         
         # Build prompt with location context
-        prompt = f"""You are Krashaq, a helpful farming assistant for Indian farmers.
-You are helping farmers with agricultural questions including weather, irrigation, crop advice, and market information.
+        prompt = f"""You are Krashaq, a helpful assistant for Indian farmers.
+You can help with any questions - agricultural questions, weather, irrigation, crop advice, market information, or any general topics.
 
 User's location: {location}
 
@@ -194,9 +196,9 @@ Answer:"""
         
         # Fallback message when all LLMs fail
         if language == "hi":
-            return "कृपया अपना प्रश्न सिंचाई या मौसम से संबंधित पूछें।"
+            return "कृपया बाद में पुनः प्रयास करें।"
         else:
-            return "Kripya apna prashn sinchai ya mausam se sambandhit poochein."
+            return "Please try again later."
 
 
 async def handle_farmer_query(message: str, farmer: Optional[Dict]) -> str:

@@ -23,6 +23,10 @@ def _import_anthropic():
     from langchain_anthropic import ChatAnthropic
     return ChatAnthropic
 
+def _import_grok():
+    from langchain_openai import ChatOpenAI
+    return ChatOpenAI
+
 
 # Provider configurations with default models
 PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
@@ -47,8 +51,8 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
         "required_key": "anthropic_api_key",
     },
     "grok": {
-        "class_fn": None,  # Placeholder for xAI when langchain-xai is available
-        "default_model": "grok-2",
+        "class_fn": _import_grok,
+        "default_model": "grok-4.20-reasoning",
         "required_key": "xai_api_key",
     },
 }
@@ -120,8 +124,12 @@ def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
             temperature=temperature,
         )
     elif provider == "grok":
-        # Future implementation
-        raise RuntimeError("Grok provider not yet implemented.")
+        return LLMClass(
+            model=config["default_model"],
+            api_key=settings.xai_api_key,
+            base_url="https://api.x.ai/v1",
+            temperature=temperature,
+        )
     
     raise RuntimeError(f"Failed to initialize provider: {provider}")
 

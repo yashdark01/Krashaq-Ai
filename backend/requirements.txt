@@ -30,3 +30,27 @@ ffmpeg-python>=0.2.0
 
 # Phase 1 Enhancements
 tenacity>=8.2.3
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+mongomock>=4.1.2
+faker>=19.0.0
+httpx>=0.24.0
+fakeredis>=2.20.0
+
+# Rate Limiting
+slowapi>=0.1.9
+
+# Logging
+python-json-logger>=2.0.7
+
+# LLM Observability
+langsmith>=0.1.0
+
+# Error Tracking
+sentry-sdk>=1.40.0
+
+# System Monitoring
+psutil>=5.9.0

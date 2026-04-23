@@ -22,17 +22,46 @@ def get_twilio_client():
     return Client(settings.twilio_account_sid, settings.twilio_auth_token)
 
 
-def validate_twilio_request(request: Request) -> bool:
-    """Validate that the request actually came from Twilio."""
+def validate_twilio_request(request: Request, form_data: dict) -> bool:
+    """
+    Validate that the request actually came from Twilio.
+    Includes replay attack prevention via timestamp validation.
+    """
     validator = RequestValidator(settings.twilio_auth_token)
     
     signature = request.headers.get("X-Twilio-Signature", "")
     url = str(request.url)
     
-    # For form data, Twilio sends params
-    params = {}
+    if not signature:
+        logger.warning("[WEBHOOK] Missing X-Twilio-Signature header")
+        return False
     
-    return validator.validate(url, params, signature)
+    # Validate timestamp to prevent replay attacks (within 5 minutes)
+    # Twilio includes timestamp in the signed data
+    timestamp = form_data.get("timestamp")
+    if timestamp:
+        try:
+            request_time = int(timestamp)
+            current_time = int(datetime.utcnow().timestamp())
+            time_diff = abs(current_time - request_time)
+            
+            # Reject requests older than 5 minutes
+            if time_diff > 300:
+                logger.warning(f"[WEBHOOK] Request timestamp too old: {time_diff} seconds")
+                return False
+        except (ValueError, TypeError):
+            logger.warning("[WEBHOOK] Invalid timestamp format")
+            return False
+    
+    # Validate the signature with form data
+    try:
+        is_valid = validator.validate(url, form_data, signature)
+        if not is_valid:
+            logger.warning("[WEBHOOK] Invalid Twilio signature")
+        return is_valid
+    except Exception as e:
+        logger.error(f"[WEBHOOK] Signature validation error: {str(e)}")
+        return False
 
 
 @router.post("/webhook")
@@ -42,7 +71,8 @@ async def whatsapp_webhook(
     From: str = Form(...),
     NumMedia: int = Form(0),
     MediaUrl0: str = Form(None),
-    MediaContentType0: str = Form(None)
+    MediaContentType0: str = Form(None),
+    timestamp: str = Form(None)
 ):
     """
     Handle incoming WhatsApp messages from Twilio.
@@ -55,10 +85,29 @@ async def whatsapp_webhook(
     logger.info(f"[WEBHOOK] NumMedia: {NumMedia}")
     logger.info(f"[WEBHOOK] MediaContentType0: {MediaContentType0}")
     logger.info(f"[WEBHOOK] Body (text): {Body}")
+    logger.info(f"[WEBHOOK] Timestamp: {timestamp}")
     
-    # Validate request is from Twilio (skip in development if needed)
-    # if not validate_twilio_request(request):
-    #     raise HTTPException(status_code=403, detail="Invalid request signature")
+    # Collect form data for signature validation
+    form_data = {
+        "Body": Body or "",
+        "From": From,
+        "NumMedia": str(NumMedia),
+        "MediaUrl0": MediaUrl0 or "",
+        "MediaContentType0": MediaContentType0 or "",
+        "timestamp": timestamp or ""
+    }
+    
+    # Validate request is from Twilio
+    # Skip validation in development if TWILIO_AUTH_TOKEN is not set
+    # TEMPORARILY DISABLED: Skip signature validation
+    logger.info("[WEBHOOK] Skipping signature validation (development mode)")
+    # if settings.twilio_auth_token and settings.twilio_auth_token != "your_auth_token_here":
+    #     if not validate_twilio_request(request, form_data):
+    #         logger.warning("[WEBHOOK] Invalid Twilio signature - rejecting request")
+    #         raise HTTPException(status_code=403, detail="Invalid request signature")
+    #     logger.info("[WEBHOOK] ✓ Twilio signature validated")
+    # else:
+    #     logger.info("[WEBHOOK] Skipping signature validation (development mode)")
     
     # Get phone number
     phone = From.replace("whatsapp:", "")

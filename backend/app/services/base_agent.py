@@ -29,6 +29,12 @@ class BaseAgent(ABC):
         self.temperature = temperature
         self.cache = get_cache_service()
         self.settings = get_settings()
+        
+        # LangSmith tracing tags
+        self.langchain_tags = [
+            f"agent:{agent_name}",
+            f"model:{model if model else self.settings.llm_provider}"
+        ]
     
     def get_llm(self):
         """Get LLM instance for this agent."""
@@ -103,6 +109,27 @@ Key guidelines:
             Agent response
         """
         pass
+    
+    def get_langchain_metadata(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get metadata for LangSmith tracing.
+        
+        Args:
+            context: Context dictionary
+        
+        Returns:
+            Metadata dictionary for LangSmith
+        """
+        metadata = {
+            "agent_name": self.agent_name,
+            "language": context.get("language", "en"),
+            "location": context.get("location", {}),
+            "user_id": context.get("user_id"),
+            "session_id": context.get("session_id")
+        }
+        
+        # Remove None values
+        return {k: v for k, v in metadata.items() if v is not None}
     
     def format_response(self, response: str, language: str = "en") -> str:
         """

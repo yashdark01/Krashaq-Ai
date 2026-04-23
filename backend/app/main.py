@@ -4,6 +4,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.mongodb import connect_to_mongodb, close_mongodb_connection
 from app.routes import webhook, chat, user, auth, locations, admin
 from app.scheduler import start_scheduler, stop_scheduler
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.validation import ValidationMiddleware
+from app.middleware.security import SecurityMiddleware
+from app.middleware.logging import LoggingMiddleware
+from app.utils.logging import setup_logging, get_logger
+from app.utils.sentry import init_sentry
+from app.config import get_settings
+
+# Setup structured logging
+setup_logging()
+logger = get_logger(__name__)
+settings = get_settings()
+
+# Initialize LangSmith for LLM observability
+if settings.langsmith_tracing and settings.langsmith_api_key:
+    import os
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = settings.langsmith_api_key
+    os.environ["LANGCHAIN_PROJECT"] = settings.langsmith_project
+    logger.info("LangSmith tracing enabled")
+else:
+    logger.info("LangSmith tracing disabled")
+
+# Initialize Sentry for error tracking
+init_sentry()
+if settings.sentry_dsn:
+    logger.info("Sentry error tracking enabled")
+else:
+    logger.info("Sentry error tracking disabled")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -21,6 +50,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add rate limiting middleware
+app.add_middleware(RateLimitMiddleware)
+
+# Add input validation middleware
+app.add_middleware(ValidationMiddleware)
+
+# Add security headers middleware
+app.add_middleware(SecurityMiddleware)
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
+
 # Include routers
 app.include_router(webhook.router, tags=["WhatsApp Webhook"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
@@ -33,19 +74,28 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 @app.on_event("startup")
 async def startup_event():
     """Connect to MongoDB and start the scheduler on application startup."""
+    logger.info("Starting Krashaq API...")
     await connect_to_mongodb()
+    logger.info("Connected to MongoDB")
     await start_scheduler()
+    logger.info("Scheduler started successfully")
+    logger.info("Krashaq API startup complete")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop the scheduler and close MongoDB connection on application shutdown."""
+    logger.info("Shutting down Krashaq API...")
     stop_scheduler()
+    logger.info("Scheduler stopped")
     await close_mongodb_connection()
+    logger.info("Disconnected from MongoDB")
+    logger.info("Krashaq API shutdown complete")
 
 
 @app.get("/")
 def root():
+    logger.info("Root endpoint accessed")
     return {
         "status": "running",
         "app": "Krashaq API",
@@ -63,4 +113,5 @@ def root():
 
 @app.get("/health")
 def health_check():
+    logger.debug("Health check endpoint accessed")
     return {"status": "healthy"}

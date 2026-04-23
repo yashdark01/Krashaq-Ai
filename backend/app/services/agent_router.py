@@ -517,7 +517,7 @@ def get_synthesis_agent():
     return _synthesis_agent
 
 
-def process_with_multi_agent(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+async def process_with_multi_agent(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a query using the multi-agent system.
     
@@ -530,9 +530,24 @@ def process_with_multi_agent(message: str, context: Dict[str, Any]) -> Dict[str,
     """
     orchestrator = get_orchestrator()
     
+    # LangSmith metadata for multi-agent
+    langchain_metadata = {
+        "agent_type": "multi-agent",
+        "session_id": context.get("session_id", ""),
+        "location": context.get("location", "Delhi"),
+        "language": context.get("language", "en"),
+        "detected_crop": context.get("detected_crop"),
+        "user_id": context.get("user_id")
+    }
+    
+    # Add metadata to orchestrator context for LangSmith tracing
+    context_with_metadata = context.copy()
+    context_with_metadata["langchain_metadata"] = langchain_metadata
+    context_with_metadata["langchain_tags"] = ["multi-agent", "krashaq", "orchestrator"]
+    
     try:
-        # Process through orchestrator
-        response = orchestrator.process(message, context)
+        # Process through orchestrator with LangSmith tracing
+        response = orchestrator.process(message, context_with_metadata)
         
         return {
             "reply": response,
@@ -548,10 +563,10 @@ def process_with_multi_agent(message: str, context: Dict[str, Any]) -> Dict[str,
     except Exception as e:
         # Fallback to single agent on error
         print(f"Multi-agent error, falling back: {e}")
-        return process_with_single_agent(message, context)
+        return await process_with_single_agent(message, context)
 
 
-def process_with_single_agent(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+async def process_with_single_agent(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
     """
     Process a query using the single-agent system (Phase 1 fallback).
     
@@ -564,6 +579,16 @@ def process_with_single_agent(message: str, context: Dict[str, Any]) -> Dict[str
     """
     # Build initial state for single agent
     messages = [HumanMessage(content=message)]
+    
+    # LangSmith metadata
+    langchain_metadata = {
+        "agent_type": "single-agent",
+        "session_id": context.get("session_id", ""),
+        "location": context.get("location", "Delhi"),
+        "language": context.get("language", "en"),
+        "detected_crop": context.get("detected_crop"),
+        "user_id": context.get("user_id")
+    }
     
     initial_state = AgentState(
         messages=messages,
@@ -578,9 +603,15 @@ def process_with_single_agent(message: str, context: Dict[str, Any]) -> Dict[str
         selected_tools=[]
     )
     
-    # Run single agent
+    # Run single agent with LangSmith tracing
     agent = get_agent()
-    final_state = agent.invoke(initial_state)
+    config = {
+        "configurable": {
+            "langchain_tags": ["single-agent", "krashaq"],
+            "langchain_metadata": langchain_metadata
+        }
+    }
+    final_state = await agent.ainvoke(initial_state, config=config)
     
     # Extract response
     last_message = final_state["messages"][-1]
@@ -655,18 +686,18 @@ async def process_chat(
         
         # Route to appropriate agent system
         if use_multi_agent:
-            result = process_with_multi_agent(message, context)
+            result = await process_with_multi_agent(message, context)
         else:
-            result = process_with_single_agent(message, context)
+            result = await process_with_single_agent(message, context)
         
         # Save to memory if provided
         if chat_memory:
-            chat_memory.add_message(
+            await chat_memory.add_message(
                 role="user",
                 content=message,
                 language=context.get("language", "en")
             )
-            chat_memory.add_message(
+            await chat_memory.add_message(
                 role="assistant",
                 content=result["reply"],
                 tools_used=result.get("tools_used", []),
