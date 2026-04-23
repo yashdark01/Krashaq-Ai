@@ -191,7 +191,77 @@ Release is acceptable only if:
 - Rotate any exposed credentials immediately.
 - Ensure local development remains viable through Ollama terminal fallback.
 
-## 9) Rollout Plan
+## 9) System-Wide Gap and Break Inventory (Pre-Plan Baseline)
+
+This section expands scope from LLM reliability to whole-system break risks observed in architecture/docs/core runtime paths.
+
+### 9.1 Security Gaps
+
+- Live credentials present in local environment artifacts must be treated as exposed and rotated.
+- Webhook request signature validation is currently disabled in runtime flow, creating spoofing risk.
+- Frontend token strategy still relies on local storage path; increased XSS blast radius if compromised.
+- CSRF/security-header protections are documented as future work in several places and not uniformly enforced.
+
+### 9.2 Auth and Account-Lifecycle Gaps
+
+- 2FA is documented as partial; UI and backend completeness are not aligned.
+- Email verification, password reset, and account deletion flows are uneven across docs and implementation state.
+- Session management and revocation guarantees are not clearly validated end to end.
+
+### 9.3 LLM and Conversational Reliability Gaps
+
+- Multi-provider support claim is broader than observed runtime fallback behavior.
+- Provider readiness checks are key-presence-heavy and not true invoke-health checks.
+- Provider behavior is inconsistent across chat and webhook paths.
+- Reflection/fallback behavior exists but lacks strict acceptance testing for regression prevention.
+
+### 9.4 Data and Persistence Gaps
+
+- Some route logic appears to assume ID handling patterns that may diverge from Mongo `_id` object semantics unless normalized.
+- Message/search/export features are broad, but schema-index expectations and query guarantees are not fully documented as operational requirements.
+- Migration and data-evolution approach is script-based but not yet a standardized migration discipline.
+
+### 9.5 API Contract and Route Consistency Gaps
+
+- Documentation and runtime endpoint behavior can drift without a contract-validation step.
+- Frontend API proxy patterns are inconsistent (centralized client vs hardcoded backend URL path in places).
+- Error envelope shapes are not fully standardized across all API routes, increasing frontend handling complexity.
+
+### 9.6 Frontend Reliability and UX Gaps
+
+- Several advanced features are present in docs as planned/partial without explicit feature-flag or readiness signaling.
+- Admin and analytics surfaces depend on backend maturity; partial backend availability can degrade UX paths.
+- Comprehensive integration/e2e coverage is limited compared with feature surface.
+
+### 9.7 Observability and Operations Gaps
+
+- Logging and metrics maturity is mixed across modules; no single operational dashboard contract for critical flows.
+- Provider fallback, webhook validation, and scheduler behavior need explicit alerting thresholds.
+- Failure triage remains reactive without a single health/diagnostics aggregation source.
+
+### 9.8 Testing and Quality Gaps
+
+- Unit and integration coverage does not yet uniformly enforce critical path guarantees (auth, webhook security, fallback chain, admin ops).
+- Cross-path contract tests (frontend route proxy -> backend route -> persistence) are limited.
+- Regression-safe acceptance suite for production-like behavior is incomplete.
+
+### 9.9 Documentation Integrity Gaps
+
+- Root/backend/frontend architecture docs contain claims that may outpace tested runtime behavior.
+- Setup docs assume artifacts (example env templates and exact setup flow) that must be present and validated.
+- No strict docs-to-runtime verification gate currently prevents drift.
+
+### 9.10 Prioritized Gap Classes for Planning
+
+The implementation plan must prioritize in this order:
+
+1. Security-critical breaks (credential hygiene, webhook validation, auth-hardening essentials)
+2. Runtime correctness breaks (LLM fallback chain, route-contract consistency)
+3. Operational visibility breaks (diagnostics, metrics, logs, alertability)
+4. Quality gates (automated tests and acceptance criteria)
+5. Documentation synchronization and onboarding reliability
+
+## 10) Rollout Plan
 
 1. Establish config contract and provider registry alignment.
 2. Implement resolver chain and provider skip/fallback logic.
@@ -201,7 +271,7 @@ Release is acceptable only if:
 6. Update backend/frontend/root documentation to match behavior.
 7. Validate acceptance criteria in local environment.
 
-## 10) Risks and Mitigations
+## 11) Risks and Mitigations
 
 - **Risk:** Slow provider responses increase overall latency.  
   **Mitigation:** strict per-provider timeout and bounded chain.
@@ -212,7 +282,7 @@ Release is acceptable only if:
 - **Risk:** Divergence across code paths (chat vs webhook).  
   **Mitigation:** shared resolver function and cross-path integration tests.
 
-## 11) Out-of-Scope Follow-ups
+## 12) Out-of-Scope Follow-ups
 
 Potential future iteration topics (not in this design scope):
 
