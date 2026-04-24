@@ -209,6 +209,7 @@ Multiple LLM providers supported through strategy pattern:
 - User management (`/api/farmers`)
 - Locations (`/api/locations/*`)
 - WhatsApp (`/webhook`)
+- Admin (`/api/admin/*`)
 
 ### 6. Services Module
 
@@ -230,10 +231,20 @@ Multiple LLM providers supported through strategy pattern:
 **LLM Services**:
 - `llm_provider.py` - Multi-provider LLM factory (Ollama, Gemini, OpenAI, Claude, Grok)
 - `llm_agent.py` - AI orchestration
-- `agent_router.py` - LangGraph agent routing
+- `agent_router.py` - LangGraph agent routing with multi-agent support
 - `langchain_memory.py` - Conversation memory
 - `memory.py` - Session management
 - `prompts.py` - Prompt templates
+- `base_agent.py` - Base agent class for multi-agent system
+- `agent_config.py` - Agent configuration management
+- `orchestrator_agent.py` - Multi-agent coordination
+- `weather_agent.py` - Weather specialist agent
+- `crop_agent.py` - Crop specialist agent
+- `irrigation_agent.py` - Irrigation specialist agent
+- `fertilizer_agent.py` - Fertilizer specialist agent
+- `synthesis_agent.py` - Response synthesis agent
+- `metrics.py` - Agent performance metrics
+- `session_service.py` - Session management service
 
 **Query Handler Services**:
 - `query_handler.py` - Intent detection and routing for WhatsApp
@@ -241,6 +252,7 @@ Multiple LLM providers supported through strategy pattern:
 - `audio_utils.py` - Audio download, conversion, and cleanup
 - `stt.py` - Speech-to-text transcription using faster-whisper
 - `irrigation_decision.py` - Rule-based irrigation logic
+- `daily_decision.py` - Daily decision making service
 
 **Domain Services**:
 - `weather.py` - Weather data (WeatherAPI.com)
@@ -249,6 +261,7 @@ Multiple LLM providers supported through strategy pattern:
 
 **Infrastructure Services**:
 - `cache/redis_service.py` - Caching
+- `cache_service.py` - Cache service implementation
 - `config_service.py` - System configuration management
 
 ### 7. Middleware Module
@@ -439,24 +452,26 @@ sequenceDiagram
 ### Current State
 
 **Database**:
-- SQLite for development
+- MongoDB for all environments
 - Single instance
-- No replication
+- Connection pooling via PyMongo
+- Automatic reconnection
 
 **Caching**:
 - Redis integration (partial)
 - Response caching (planned)
 
 **LLM**:
-- Single provider at a time
-- No load balancing
-- No fallback mechanism
+- Multi-provider support (Ollama, Gemini, OpenAI, Claude, Grok)
+- Fallback mechanism implemented
+- Multi-agent system with specialist agents
+- Orchestrator agent for coordination
 
 ### Scalability Considerations
 
 **Database**:
-- Migrate to PostgreSQL
-- Connection pooling
+- MongoDB replica sets
+- Connection pooling optimization
 - Read replicas
 - Database indexing
 
@@ -467,10 +482,11 @@ sequenceDiagram
 - Distributed caching
 
 **LLM**:
-- Provider fallback
-- Load balancing
+- Multi-agent parallel execution
+- Load balancing across providers
 - Request queuing
 - Response caching
+- Agent-specific caching strategies
 
 **API**:
 - Horizontal scaling
@@ -597,14 +613,14 @@ sequenceDiagram
 ## Deployment Architecture
 
 ### Development Environment
-- SQLite database
+- MongoDB database
 - Local file storage
 - Debug mode enabled
 - Hot reload
 
 ### Production Environment (Planned)
-- PostgreSQL database
-- Redis cache
+- MongoDB replica sets
+- Redis cluster
 - Cloud deployment (AWS/GCP)
 - Load balancer
 - CDN for static assets
@@ -620,9 +636,10 @@ sequenceDiagram
 ## Performance Architecture
 
 ### Current Optimizations
-- Connection pooling (SQLAlchemy)
+- Connection pooling (PyMongo)
 - Lazy loading
 - Async support (partial)
+- Redis caching for weather and LLM responses
 
 ### Planned Optimizations
 - Response caching

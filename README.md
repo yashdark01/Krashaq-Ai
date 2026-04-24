@@ -4,24 +4,28 @@ A full-stack agricultural assistant that provides AI-powered farming advice, wea
 
 ## Features
 
-- 🤖 **AI-powered farming advice** using LLM (Ollama with Gemini fallback)
+- 🤖 **AI-powered farming advice** using multi-agent LLM system (Ollama, Gemini, OpenAI, Claude, Grok)
 - 🌦️ **WeatherAPI.com integration** for accurate weather forecasts
 - 💧 **Smart irrigation recommendations** based on temperature, humidity, and rainfall
 - 📱 **WhatsApp two-way communication** via Twilio with intent detection
-- �️ **Voice message support** with faster-whisper STT for audio transcription
-- � **Web chat interface** for easy access
+- 🎙️ **Voice message support** with faster-whisper STT for audio transcription
+- 💬 **Web chat interface** for easy access
 - 👨‍🌾 **Farmer management** with registration and location tracking
 - 🗣️ **Multi-language support** (Hindi Devanagari script, English, Hinglish)
 - 📍 **Location-aware responses** using farmer's location context
 - 🎯 **Intent detection** for irrigation, weather, and general queries
+- 🤖 **Multi-agent system** with specialist agents for weather, crop, irrigation, and fertilizer
+- 📊 **Admin dashboard** with analytics, audit logs, and system health monitoring
+- ⚙️ **Configurable scheduler** for background jobs and alerts
 
 ## Tech Stack
 
 ### Backend
 - **FastAPI** - Modern Python web framework
 - **MongoDB** - NoSQL database with PyMongo
-- **Ollama** - Local LLM for AI responses (primary)
-- **Google Gemini** - Cloud LLM fallback
+- **Multi-LLM Support** - Ollama (primary), Gemini, OpenAI, Claude, Grok (fallback)
+- **Multi-Agent System** - Specialist agents for weather, crop, irrigation, fertilizer
+- **LangGraph** - Agent orchestration and routing
 - **WeatherAPI.com** - Real weather data
 - **Twilio** - WhatsApp messaging
 - **faster-whisper** - Speech-to-text transcription
@@ -34,6 +38,10 @@ A full-stack agricultural assistant that provides AI-powered farming advice, wea
 - **TypeScript** - Type-safe code
 - **Tailwind CSS** - Utility-first styling
 - **shadcn/ui** - UI component library
+- **Admin Dashboard** - Analytics, user management, system health
+- **Jest** - Testing framework
+- **ESLint** - Code linting
+- **Prettier** - Code formatting
 
 ## Quick Start
 
@@ -92,6 +100,12 @@ Frontend will be available at `http://localhost:3000`
 | `/send-whatsapp` | POST | Send proactive WhatsApp message |
 | `/api/locations/*` | GET | Location hierarchy data |
 | `/api/admin/*` | Various | Admin operations (admin only) |
+| `/api/admin/analytics` | GET | System analytics and metrics |
+| `/api/admin/audit-logs` | GET | Audit log viewer |
+| `/api/admin/config` | GET/POST | System configuration |
+| `/api/admin/health` | GET | System health status |
+| `/api/admin/scheduler` | GET/POST | Scheduler job management |
+| `/api/admin/users` | GET/DELETE | User management |
 
 ## WhatsApp Setup
 
@@ -167,7 +181,7 @@ Krashaq-Ai/
 │   │   │   ├── user.py        # User/farmer CRUD
 │   │   │   ├── auth.py        # Authentication
 │   │   │   ├── locations.py   # Location hierarchy
-│   │   │   └── admin.py       # Admin operations
+│   │   │   ├── admin.py       # Admin operations
 │   │   ├── schemas/           # Pydantic schemas
 │   │   ├── services/          # Business logic
 │   │   │   ├── query_handler.py    # Intent detection & routing
@@ -177,7 +191,17 @@ Krashaq-Ai/
 │   │   │   ├── irrigation.py  # Irrigation advice
 │   │   │   ├── llm_agent.py   # LLM orchestration
 │   │   │   ├── llm_provider.py # Multi-provider LLM factory
-│   │   │   └── agent_router.py # LangGraph agent
+│   │   │   ├── agent_router.py # LangGraph agent routing
+│   │   │   ├── base_agent.py  # Base agent class
+│   │   │   ├── agent_config.py # Agent configuration
+│   │   │   ├── orchestrator_agent.py # Multi-agent coordinator
+│   │   │   ├── weather_agent.py # Weather specialist
+│   │   │   ├── crop_agent.py # Crop specialist
+│   │   │   ├── irrigation_agent.py # Irrigation specialist
+│   │   │   ├── fertilizer_agent.py # Fertilizer specialist
+│   │   │   ├── synthesis_agent.py # Response synthesis
+│   │   │   ├── metrics.py # Agent performance metrics
+│   │   │   └── session_service.py # Session management
 │   │   ├── config.py          # Application settings
 │   │   ├── main.py            # FastAPI app entry
 │   │   └── scheduler.py       # Background job scheduler
@@ -189,14 +213,17 @@ Krashaq-Ai/
 │   ├── app/                   # Next.js app router
 │   │   ├── auth/              # Authentication pages
 │   │   ├── farmers/           # Farmers management
-│   │   ├── admin/             # Admin dashboard
+│   │   ├── admin/             # Admin dashboard (analytics, audit, config, health, scheduler, users)
+│   │   ├── profile/           # User profile pages
 │   │   ├── api/               # API routes
 │   │   └── layout.tsx         # Root layout
 │   ├── components/
 │   │   ├── auth/              # Authentication components
 │   │   ├── chat/              # Chat interface
 │   │   ├── dashboard/         # Dashboard components
-│   │   ├── admin/             # Admin components
+│   │   ├── admin/             # Admin components (analytics, audit, config, health, scheduler, users)
+│   │   ├── layout/            # Layout components
+│   │   ├── theme/             # Theme provider
 │   │   └── ui/                # shadcn/ui components
 │   ├── contexts/              # React contexts
 │   └── package.json
@@ -224,6 +251,9 @@ LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=llama3.1:8b
 GOOGLE_API_KEY=your_google_api_key_here  # For Gemini fallback
+OPENAI_API_KEY=your_openai_api_key_here  # For OpenAI fallback
+ANTHROPIC_API_KEY=your_anthropic_api_key_here  # For Claude fallback
+XAI_API_KEY=your_xai_api_key_here  # For Grok fallback
 
 # JWT Configuration
 JWT_SECRET_KEY=your-super-secret-jwt-key
@@ -264,11 +294,14 @@ The app provides context-aware irrigation advice based on:
 - [ ] Regional language support (Punjabi, Gujarati, Marathi, etc.)
 - [ ] IoT sensor integration
 - [ ] Push notifications for weather alerts
-- [ ] Admin dashboard with analytics
+- [ ] Advanced admin dashboard with more analytics
 - [ ] Image recognition for pest/disease detection
 - [ ] File upload for crop photos
 - [ ] Market price integration
 - [ ] RAG implementation with vector database
+- [ ] Mobile app (React Native)
+- [ ] PWA support for offline access
+- [ ] Real-time features (WebSockets)
 
 ## License
 

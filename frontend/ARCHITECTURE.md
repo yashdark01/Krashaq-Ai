@@ -23,7 +23,8 @@ graph TB
         AuthPages["Auth Pages"]
         Dashboard["Dashboard"]
         Profile["Profile"]
-        Admin["Admin"]
+        Admin["Admin Dashboard"]
+        Farmers["Farmers Management"]
     end
 
     subgraph Layouts["Layouts"]
@@ -236,6 +237,29 @@ app/api/
 - Register page
 - Callback page
 
+#### Protected Routes
+
+- `/` - Dashboard (home)
+- `/farmers` - Farmers management
+- `/admin` - Admin dashboard (admin only)
+- `/admin/analytics` - Analytics dashboard (admin only)
+- `/admin/audit` - Audit logs (admin only)
+- `/admin/config` - System configuration (admin only)
+- `/admin/health` - System health (admin only)
+- `/admin/scheduler` - Scheduler configuration (admin only)
+- `/admin/users` - User management (admin only)
+- `/profile` - User profile
+- `/profile/settings` - User settings
+
+#### Admin Pages
+
+- Admin dashboard with analytics
+- User management
+- Audit log viewer
+- System configuration
+- Scheduler configuration
+- System health monitoring
+
 #### Farmers Page
 
 - Farmer management
@@ -259,6 +283,16 @@ app/api/
 
 - `WeatherCard`: Weather display
 - `IrrigationPanel`: Irrigation advice
+
+#### Admin Components
+
+- `AdminDashboard`: Main admin dashboard
+- `AnalyticsDashboard`: Analytics and metrics
+- `AuditLogView`: Audit log viewer
+- `ConfigPanel`: System configuration panel
+- `SchedulerConfigPanel`: Scheduler job configuration
+- `SystemHealth`: System health monitoring
+- `UserList`: User management list
 
 #### Auth Components
 
@@ -449,6 +483,13 @@ sequenceDiagram
 /auth/signup               → app/auth/signup/page.tsx
 /auth/callback             → app/auth/callback/page.tsx
 /farmers                   → app/farmers/page.tsx
+/admin                     → app/admin/page.tsx
+/admin/analytics           → app/admin/analytics/page.tsx
+/admin/audit               → app/admin/audit/page.tsx
+/admin/config              → app/admin/config/page.tsx
+/admin/health              → app/admin/health/page.tsx
+/admin/scheduler           → app/admin/scheduler/page.tsx
+/admin/users               → app/admin/users/page.tsx
 /profile                   → app/profile/page.tsx
 /profile/settings          → app/profile/settings/page.tsx
 ```

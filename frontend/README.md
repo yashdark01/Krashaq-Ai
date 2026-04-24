@@ -2,7 +2,7 @@
 
 ## Overview
 
-Krashaq Frontend is a Next.js 16 web application that provides a modern, responsive interface for the smart farming assistant platform. It features real-time weather data, AI-powered chat, irrigation advice, and comprehensive user authentication.
+Krashaq Frontend is a Next.js 16 web application that provides a modern, responsive interface for the smart farming assistant platform. It features real-time weather data, AI-powered chat with multi-agent system, irrigation advice, comprehensive user authentication, and a full admin dashboard with analytics and system monitoring.
 
 ## Technology Stack
 
@@ -269,9 +269,116 @@ frontend/
 
 ---
 
-### 5. Profile Pages (`app/profile/`)
+### 5. Admin Pages (`app/admin/`)
 
-#### 5.1 Profile Page (`app/profile/page.tsx`)
+#### 5.1 Admin Dashboard (`app/admin/page.tsx`)
+
+**Purpose**: Main admin dashboard
+
+**Features**:
+
+- Overview of system metrics
+- Quick access to admin features
+- Navigation to admin sub-pages
+
+#### 5.2 Analytics Dashboard (`app/admin/analytics/page.tsx`)
+
+**Purpose**: System analytics and metrics
+
+**Features**:
+
+- User activity metrics
+- Chat statistics
+- LLM provider usage
+- Agent performance metrics
+- System performance charts
+
+**API Calls**:
+
+- `GET /api/admin/analytics`: Get analytics data
+
+#### 5.3 Audit Logs (`app/admin/audit/page.tsx`)
+
+**Purpose**: Audit log viewer
+
+**Features**:
+
+- View system audit logs
+- Filter by user, action, date
+- Export logs
+
+**API Calls**:
+
+- `GET /api/admin/audit-logs`: Get audit logs
+
+#### 5.4 System Configuration (`app/admin/config/page.tsx`)
+
+**Purpose**: System configuration management
+
+**Features**:
+
+- View and update system configuration
+- LLM provider settings
+- Cache settings
+- Feature flags
+
+**API Calls**:
+
+- `GET /api/admin/config`: Get configuration
+- `POST /api/admin/config`: Update configuration
+
+#### 5.5 System Health (`app/admin/health/page.tsx`)
+
+**Purpose**: System health monitoring
+
+**Features**:
+
+- Database health status
+- Redis health status
+- LLM provider availability
+- System resource usage
+
+**API Calls**:
+
+- `GET /api/admin/health`: Get system health
+
+#### 5.6 Scheduler Configuration (`app/admin/scheduler/page.tsx`)
+
+**Purpose**: Background job scheduler management
+
+**Features**:
+
+- View scheduled jobs
+- Update job schedules
+- Pause/resume jobs
+- View job execution history
+
+**API Calls**:
+
+- `GET /api/admin/scheduler`: Get scheduler config
+- `POST /api/admin/scheduler`: Update scheduler config
+- `POST /api/admin/jobs/{job_id}/pause`: Pause job
+- `POST /api/admin/jobs/{job_id}/resume`: Resume job
+
+#### 5.7 User Management (`app/admin/users/page.tsx`)
+
+**Purpose**: User management for admins
+
+**Features**:
+
+- List all users
+- View user details
+- Delete users
+- Filter and search
+
+**API Calls**:
+
+- `GET /api/admin/users`: Get all users
+- `DELETE /api/admin/users/{id}`: Delete user
+
+### 6. Profile Pages (`app/profile/`)
+
+#### 6.1 Profile Page (`app/profile/page.tsx`)
 
 **Purpose**: User profile page
 
@@ -319,9 +426,9 @@ frontend/
 
 ---
 
-### 6. Components
+### 7. Components
 
-#### 6.1 Authentication Components (`components/auth/`)
+#### 7.1 Authentication Components (`components/auth/`)
 
 **ProtectedRoute Component**
 
@@ -338,7 +445,7 @@ frontend/
 
 ---
 
-#### 6.2 Chat Components (`components/chat/`)
+#### 7.2 Chat Components (`components/chat/`)
 
 **ChatInterface Component**
 
@@ -374,7 +481,7 @@ frontend/
 
 ---
 
-#### 6.3 Dashboard Components (`components/dashboard/`)
+#### 7.3 Dashboard Components (`components/dashboard/`)
 
 **WeatherCard Component**
 
@@ -402,7 +509,7 @@ frontend/
 
 ---
 
-#### 6.4 Layout Components (`components/layout/`)
+#### 7.4 Layout Components (`components/layout/`)
 
 **MainLayout Component**
 
@@ -428,7 +535,7 @@ frontend/
 
 ---
 
-#### 6.5 Theme Components (`components/theme/`)
+#### 7.5 Theme Components (`components/theme/`)
 
 **ThemeProvider Component**
 
@@ -445,7 +552,51 @@ frontend/
 
 ---
 
-#### 6.6 UI Components (`components/ui/`)
+#### 7.6 Admin Components (`components/admin/`)
+
+**AdminDashboard Component**
+
+- Main admin dashboard layout
+- Navigation to admin sub-pages
+- Quick stats overview
+
+**AnalyticsDashboard Component**
+
+- Analytics charts and graphs
+- Metrics display
+- Performance indicators
+
+**AuditLogView Component**
+
+- Audit log table
+- Filtering and search
+- Export functionality
+
+**ConfigPanel Component**
+
+- Configuration form
+- System settings editor
+- Save/apply changes
+
+**SchedulerConfigPanel Component**
+
+- Scheduler job list
+- Job configuration forms
+- Pause/resume controls
+
+**SystemHealth Component**
+
+- Health status indicators
+- Resource usage displays
+- Service availability checks
+
+**UserList Component**
+
+- User table with actions
+- User details view
+- Delete confirmation
+
+#### 7.7 UI Components (`components/ui/`)
 
 Based on shadcn/ui components:
 
@@ -465,9 +616,9 @@ All components are customizable and follow the shadcn/ui pattern.
 
 ---
 
-### 7. Contexts
+### 8. Contexts
 
-#### 7.1 AuthContext (`contexts/AuthContext.tsx`)
+#### 8.1 AuthContext (`contexts/AuthContext.tsx`)
 
 **Purpose**: Global authentication state management
 
@@ -505,7 +656,7 @@ All components are customizable and follow the shadcn/ui pattern.
 
 ---
 
-### 8. Utility Functions (`lib/`)
+### 9. Utility Functions (`lib/`)
 
 **API Client**
 
@@ -548,6 +699,13 @@ All components are customizable and follow the shadcn/ui pattern.
 
 - `/` - Dashboard (home)
 - `/farmers` - Farmers management
+- `/admin` - Admin dashboard (admin only)
+- `/admin/analytics` - Analytics dashboard (admin only)
+- `/admin/audit` - Audit logs (admin only)
+- `/admin/config` - System configuration (admin only)
+- `/admin/health` - System health (admin only)
+- `/admin/scheduler` - Scheduler configuration (admin only)
+- `/admin/users` - User management (admin only)
 - `/profile` - User profile
 - `/profile/settings` - User settings
 
@@ -595,6 +753,18 @@ headers: {
 - `POST /api/farmers` - Create farmer
 - `PUT /api/farmers/{id}` - Update farmer
 - `DELETE /api/farmers/{id}` - Delete farmer
+
+**Admin**
+
+- `GET /api/admin/analytics` - Get analytics
+- `GET /api/admin/audit-logs` - Get audit logs
+- `GET /api/admin/config` - Get configuration
+- `POST /api/admin/config` - Update configuration
+- `GET /api/admin/health` - Get system health
+- `GET /api/admin/scheduler` - Get scheduler config
+- `POST /api/admin/scheduler` - Update scheduler config
+- `GET /api/admin/users` - Get users
+- `DELETE /api/admin/users/{id}` - Delete user
 
 ---
 
@@ -907,14 +1077,17 @@ The frontend includes a comprehensive CI/CD pipeline that ensures code quality:
 - Implement email verification
 - Add loading skeletons
 - Improve error handling
+- Complete admin dashboard features
+- Add real-time updates for admin metrics
 
 ### Medium Term
 
 - Add file upload support
 - Implement voice messages
-- Create admin dashboard
-- Add analytics charts
+- Enhance admin dashboard with more analytics
+- Add advanced analytics charts
 - Implement notifications
+- Add real-time WebSocket updates
 
 ### Long Term
 
