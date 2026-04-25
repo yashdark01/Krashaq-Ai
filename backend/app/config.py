@@ -15,6 +15,8 @@ class Settings:
         
         # LLM Configuration
         self.llm_provider = os.getenv("LLM_PROVIDER", "ollama")  # ollama, gemini, openai, claude, grok
+        self.llm_fallback_chain = os.getenv("LLM_FALLBACK_CHAIN", "grok,gemini,xai,ollama")
+        self.llm_provider_timeout_seconds = int(os.getenv("LLM_PROVIDER_TIMEOUT_SECONDS", "12"))
         self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
         
@@ -23,6 +25,14 @@ class Settings:
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "")
         self.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
         self.xai_api_key = os.getenv("XAI_API_KEY", "")
+        self.grok_api_key = os.getenv("GROK_API_KEY", "")
+        
+        # Cloud Provider Models
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.claude_model = os.getenv("CLAUDE_MODEL", "claude-3-haiku-20240307")
+        self.xai_model = os.getenv("XAI_MODEL", "xai-reasoner")
+        self.grok_model = os.getenv("GROK_MODEL", "grok-2-latest")
         
         # JWT Configuration
         self.jwt_secret_key = os.getenv("JWT_SECRET_KEY", "")
