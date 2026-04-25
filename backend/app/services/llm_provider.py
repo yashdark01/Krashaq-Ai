@@ -23,7 +23,7 @@ def _import_anthropic():
     from langchain_anthropic import ChatAnthropic
     return ChatAnthropic
 
-def _import_grok():
+def _import_groq():
     from langchain_openai import ChatOpenAI
     return ChatOpenAI
 
@@ -50,10 +50,10 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
         "default_model": "claude-3-haiku-20240307",
         "required_key": "anthropic_api_key",
     },
-    "grok": {
-        "class_fn": _import_grok,
-        "default_model": "grok-2-latest",
-        "required_key": "grok_api_key",
+    "groq": {
+        "class_fn": _import_groq,
+        "default_model": "llama-3.3-70b-versatile",
+        "required_key": "groq_api_key",
     },
     "xai": {
         "class_fn": _import_openai,
@@ -62,7 +62,7 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-DEFAULT_CHAIN = ["grok", "gemini", "xai", "ollama"]
+DEFAULT_CHAIN = ["groq", "gemini", "xai", "ollama"]
 
 
 def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
@@ -70,7 +70,7 @@ def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
     Factory function to get LLM instance based on provider.
     
     Args:
-        provider: Provider name (ollama, gemini, openai, claude, grok). 
+        provider: Provider name (ollama, gemini, openai, claude, groq). 
                   If None, uses LLM_PROVIDER from settings.
         temperature: Temperature for response generation (0.0-1.0)
     
@@ -130,11 +130,11 @@ def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
             api_key=settings.anthropic_api_key,
             temperature=temperature,
         )
-    elif provider == "grok":
+    elif provider == "groq":
         return LLMClass(
-            model=settings.grok_model or config["default_model"],
-            api_key=settings.grok_api_key,
-            base_url="https://api.x.ai/v1",
+            model=settings.groq_model or config["default_model"],
+            api_key=settings.groq_api_key,
+            base_url="https://api.groq.com/openai/v1",
             temperature=temperature,
         )
     elif provider == "xai":
