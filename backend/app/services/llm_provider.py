@@ -37,7 +37,7 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
     },
     "gemini": {
         "class_fn": _import_gemini,
-        "default_model": "gemini-1.0-pro",
+        "default_model": "gemini-1.5-pro",
         "required_key": "google_api_key",
     },
     "openai": {
@@ -52,10 +52,17 @@ PROVIDER_CONFIGS: Dict[str, Dict[str, Any]] = {
     },
     "grok": {
         "class_fn": _import_grok,
-        "default_model": "grok-4.20-reasoning",
+        "default_model": "grok-2-latest",
+        "required_key": "grok_api_key",
+    },
+    "xai": {
+        "class_fn": _import_openai,
+        "default_model": "xai-reasoner",
         "required_key": "xai_api_key",
     },
 }
+
+DEFAULT_CHAIN = ["grok", "gemini", "xai", "ollama"]
 
 
 def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
@@ -107,25 +114,32 @@ def get_llm(provider: Optional[str] = None, temperature: float = 0.7):
         )
     elif provider == "gemini":
         return LLMClass(
-            model=config["default_model"],
+            model=settings.gemini_model or config["default_model"],
             google_api_key=settings.google_api_key,
             temperature=temperature,
         )
     elif provider == "openai":
         return LLMClass(
-            model=config["default_model"],
+            model=settings.openai_model or config["default_model"],
             api_key=settings.openai_api_key,
             temperature=temperature,
         )
     elif provider == "claude":
         return LLMClass(
-            model=config["default_model"],
+            model=settings.claude_model or config["default_model"],
             api_key=settings.anthropic_api_key,
             temperature=temperature,
         )
     elif provider == "grok":
         return LLMClass(
-            model=config["default_model"],
+            model=settings.grok_model or config["default_model"],
+            api_key=settings.grok_api_key,
+            base_url="https://api.x.ai/v1",
+            temperature=temperature,
+        )
+    elif provider == "xai":
+        return LLMClass(
+            model=settings.xai_model or config["default_model"],
             api_key=settings.xai_api_key,
             base_url="https://api.x.ai/v1",
             temperature=temperature,
@@ -176,3 +190,31 @@ def get_llm_with_fallback(primary_provider: Optional[str] = None, temperature: f
             except Exception:
                 pass
         raise e
+
+
+def resolve_llm_with_chain(chain=None, temperature=0.7, init_fn=None):
+    """
+    Resolve LLM using deterministic fallback chain.
+    
+    Args:
+        chain: List of provider names in fallback order. If None, uses DEFAULT_CHAIN.
+        temperature: Temperature for response generation
+        init_fn: Optional custom initialization function. If None, uses get_llm.
+    
+    Returns:
+        Tuple of (llm_instance, provider_used, errors_dict)
+    
+    Raises:
+        RuntimeError: If all providers in the chain fail
+    """
+    init = init_fn or get_llm
+    ordered = chain or DEFAULT_CHAIN
+    errors = {}
+    for provider in ordered:
+        try:
+            llm = init(provider, temperature=temperature)
+            return llm, provider, errors
+        except Exception as exc:
+            errors[provider] = str(exc)
+            continue
+    raise RuntimeError(f"All providers failed: {errors}")
