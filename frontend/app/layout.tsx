@@ -5,6 +5,8 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { FieldModeProvider } from '@/contexts/FieldModeContext';
+import { SidebarProvider } from '@/contexts/SidebarContext';
+import { ChatSessionsProvider } from '@/contexts/ChatSessionsContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -49,9 +51,13 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <FieldModeProvider>
-              <AuthProvider>
-                <ToastProvider>{children}</ToastProvider>
-              </AuthProvider>
+              <SidebarProvider>
+                <ChatSessionsProvider>
+                  <AuthProvider>
+                    <ToastProvider>{children}</ToastProvider>
+                  </AuthProvider>
+                </ChatSessionsProvider>
+              </SidebarProvider>
             </FieldModeProvider>
           </ThemeProvider>
         </ErrorBoundary>

@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home, exact: true },
-  { href: '/#chat', label: 'Chat', icon: MessageSquare, exact: false },
+  { href: '/chat', label: 'Chat', icon: MessageSquare, exact: false },
   { href: '/farmers', label: 'Farmers', icon: Users, exact: false },
   { href: '/profile', label: 'Profile', icon: User, exact: false },
 ];
@@ -26,25 +26,17 @@ export function BottomNav() {
     >
       <ul className="flex h-bottom-nav items-stretch justify-around px-1">
         {navItems.map(({ href, label, icon: Icon, exact }) => {
-          const isActive = exact ? pathname === href : pathname.startsWith(href.replace('/#chat', '/'));
-
-          const handleClick = (e: React.MouseEvent) => {
-            if (href === '/#chat' && pathname === '/') {
-              e.preventDefault();
-              document.getElementById('krashaq-chat')?.scrollIntoView({ behavior: 'smooth' });
-            }
-          };
+          const isActive = exact
+            ? pathname === href
+            : pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <li key={href} className="flex flex-1">
               <Link
-                href={href === '/#chat' ? '/' : href}
-                onClick={handleClick}
+                href={href}
                 className={cn(
                   'krashaq-touch-target flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-medium transition-colors',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >

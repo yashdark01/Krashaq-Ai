@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { WeatherCard } from '@/components/dashboard/WeatherCard';
 import { IrrigationPanel } from '@/components/dashboard/IrrigationPanel';
-import { ChatInterface } from '@/components/chat/ChatInterface';
+import { ChatPreview } from '@/modules/conversation/components/ChatPreview';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,9 +77,8 @@ export default function Home() {
   return (
     <ProtectedRoute>
       <MainLayout>
-        <div className="krashaq-page-padding flex h-full flex-col gap-4 md:gap-6 max-w-7xl mx-auto">
-          {/* Bento dashboard — mobile stacks, desktop 2-col */}
-          <section aria-label="Farm insights" className="grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
+        <div className="krashaq-page-padding flex flex-col gap-4 md:gap-6 max-w-7xl mx-auto">
+          <section aria-label="Farm insights" className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {weatherLoading ? (
               <>
                 <Skeleton className="h-44 rounded-xl" />
@@ -106,12 +105,8 @@ export default function Home() {
             )}
           </section>
 
-          <section id="krashaq-chat" aria-label="AI chat" className="flex-1 min-h-[420px] md:min-h-0">
-            <ChatInterface
-              location={location}
-              onLocationChange={setLocation}
-              fullLocation={fullLocation}
-            />
+          <section aria-label="AI chat" className="shrink-0">
+            <ChatPreview location={fullLocation} />
           </section>
         </div>
       </MainLayout>

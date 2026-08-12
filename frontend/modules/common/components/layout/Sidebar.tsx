@@ -1,106 +1,88 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Plus, MessageSquare, Settings, User, Home, Users, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { PanelLeftClose, PanelLeftOpen, Sprout } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { SidebarNav } from './SidebarNav';
 
 interface SidebarProps {
   className?: string;
 }
 
-const mainLinks = [
-  { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/farmers', label: 'Farmers', icon: Users },
-  { href: '/profile', label: 'Profile', icon: User },
-  { href: '/profile/settings', label: 'Settings', icon: Settings },
-];
-
 export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname();
-  const { isAdmin } = useAuth();
-  const [conversations] = useState([
-    { id: '1', title: 'Weather in Delhi', date: 'Today' },
-    { id: '2', title: 'Wheat irrigation advice', date: 'Yesterday' },
-  ]);
+  const { isExpanded, isCollapsed, toggle, isMobile } = useSidebar();
+
+  if (isMobile) return null;
 
   return (
     <aside
-      className={cn('flex h-full w-64 shrink-0 flex-col border-r bg-muted/30', className)}
+      className={cn(
+        'hidden md:flex h-full shrink-0 flex-col border-r bg-muted/30 transition-[width] duration-200 ease-out',
+        isExpanded ? 'w-64' : 'w-14',
+        className
+      )}
       aria-label="Sidebar navigation"
     >
-      <div className="p-4">
-        <Button className="w-full justify-start gap-2" variant="default" size="default">
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          New Chat
-        </Button>
+      <div
+        className={cn(
+          'flex items-center border-b h-header shrink-0',
+          isExpanded ? 'justify-between px-3' : 'justify-center px-1'
+        )}
+      >
+        {isExpanded ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Sprout className="h-4 w-4" />
+            </div>
+            <span className="font-display text-sm font-bold truncate">Krashaq</span>
+          </div>
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Sprout className="h-4 w-4" />
+          </div>
+        )}
+        {isExpanded && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={toggle}
+                aria-label="Collapse sidebar"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Collapse sidebar (⌘B)</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
-      <nav className="px-3 pb-2">
-        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Menu
-        </p>
-        <ul className="space-y-0.5">
-          {mainLinks.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className={cn(
-                    'flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    active
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                  )}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-          {isAdmin() && (
-            <li>
-              <Link
-                href="/admin"
-                className={cn(
-                  'flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  pathname.startsWith('/admin')
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                )}
+      {!isExpanded && (
+        <div className="flex justify-center py-2 border-b">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={toggle}
+                aria-label="Expand sidebar"
               >
-                <Shield className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Admin
-              </Link>
-            </li>
-          )}
-        </ul>
-      </nav>
-
-      <ScrollArea className="flex-1 px-2">
-        <div className="space-y-2 p-2">
-          <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Recent chats
-          </p>
-          {conversations.map((conv) => (
-            <button
-              key={conv.id}
-              type="button"
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-left text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="flex-1 truncate">{conv.title}</span>
-            </button>
-          ))}
+                <PanelLeftOpen className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar (⌘B)</TooltipContent>
+          </Tooltip>
         </div>
-      </ScrollArea>
+      )}
+
+      <SidebarNav expanded={isExpanded} />
     </aside>
   );
 }
