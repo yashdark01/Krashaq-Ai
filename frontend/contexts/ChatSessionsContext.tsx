@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import type { ChatSessionSummary } from '@/modules/conversation/types/message';
 
 const LLM_STORAGE_KEY = 'krashaq_llm';
@@ -22,16 +23,19 @@ interface ChatSessionsContextType {
   startNewChat: () => void;
   openSession: (id: string) => void;
   deleteSessionById: (id: string) => Promise<void>;
+  renameSessionById: (id: string, title: string) => Promise<boolean>;
   provider: string;
   model: string;
   setProvider: (p: string) => void;
   setModel: (m: string) => void;
+  clearSessions: () => void;
 }
 
 const ChatSessionsContext = createContext<ChatSessionsContextType | undefined>(undefined);
 
 export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { fetchWithAuth, isAuthenticated } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
@@ -55,9 +59,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(LLM_STORAGE_KEY, JSON.stringify({ provider: p, model: m }));
   }, []);
 
+  const clearSessions = useCallback(() => {
+    setSessions([]);
+    setSessionId(null);
+    setSessionsLoading(false);
+  }, []);
+
   const refreshSessions = useCallback(async () => {
+    if (!isAuthenticated) {
+      clearSessions();
+      return;
+    }
+    setSessionsLoading(true);
     try {
-      const res = await fetch('/api/messages/sessions');
+      const res = await fetchWithAuth('/api/messages/sessions');
       if (res.ok) {
         const data = await res.json();
         setSessions(
@@ -66,17 +81,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
             updated_at: new Date(s.updated_at).toISOString(),
           }))
         );
+      } else if (res.status === 401) {
+        clearSessions();
       }
     } catch (e) {
       console.error('Failed to load sessions', e);
     } finally {
       setSessionsLoading(false);
     }
-  }, []);
+  }, [fetchWithAuth, isAuthenticated, clearSessions]);
 
   useEffect(() => {
     refreshSessions();
   }, [refreshSessions]);
+
+  useEffect(() => {
+    const onLogout = () => clearSessions();
+    window.addEventListener('krashaq:auth-logout', onLogout);
+    return () => window.removeEventListener('krashaq:auth-logout', onLogout);
+  }, [clearSessions]);
 
   const startNewChat = useCallback(() => {
     setSessionId(null);
@@ -93,11 +116,29 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
   const deleteSessionById = useCallback(
     async (id: string) => {
-      await fetch(`/api/messages?session_id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await fetchWithAuth(`/api/messages?session_id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       setSessions((prev) => prev.filter((s) => s.session_id !== id));
       if (sessionId === id) startNewChat();
     },
-    [sessionId, startNewChat]
+    [sessionId, startNewChat, fetchWithAuth]
+  );
+
+  const renameSessionById = useCallback(
+    async (id: string, title: string) => {
+      const res = await fetchWithAuth(`/api/messages/sessions/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) return false;
+      setSessions((prev) =>
+        prev.map((s) => (s.session_id === id ? { ...s, title: title.trim() } : s))
+      );
+      return true;
+    },
+    [fetchWithAuth]
   );
 
   const setProvider = useCallback(
@@ -127,10 +168,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         startNewChat,
         openSession,
         deleteSessionById,
+        renameSessionById,
         provider,
         model,
         setProvider,
         setModel,
+        clearSessions,
       }}
     >
       {children}
@@ -144,7 +187,6 @@ export function useChatSessions() {
   return ctx;
 }
 
-// Backward-compatible hooks
 export function useChatSession(initialSessionId?: string) {
   const ctx = useChatSessions();
   useEffect(() => {

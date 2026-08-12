@@ -1,6 +1,11 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/auth/verify-phone');
+export async function POST() {
+  return NextResponse.json(
+    {
+      detail: 'Phone verification is not enabled in the native monolith yet. Use email authentication.',
+      code: 'NOT_IMPLEMENTED',
+    },
+    { status: 501 }
+  );
 }

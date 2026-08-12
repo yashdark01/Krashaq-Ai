@@ -41,7 +41,7 @@ export function ChatEmptyState({ onSelect, userName, className }: ChatEmptyState
             key={value}
             type="button"
             onClick={() => onSelect(value)}
-            className="rounded-full border bg-card px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-accent hover:border-primary/30 min-h-touch text-left"
+            className="rounded-full border border-border bg-card px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary hover:border-primary/30 min-h-touch text-left"
           >
             {label}
           </button>

@@ -23,7 +23,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user: _user, refreshAccessToken: _refreshAccessToken } = useAuth();
+  const { fetchWithAuth } = useAuth();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,14 +33,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetchWithAuth('/api/auth/me');
 
       if (response.ok) {
         const data = await response.json();
@@ -57,7 +50,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading profile...</p>
         </div>
       </div>
@@ -94,7 +87,7 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">My Profile</h1>
 
@@ -102,7 +95,7 @@ export default function ProfilePage() {
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarFallback className="text-2xl bg-green-600 text-white">
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
                     {getInitials(profileData.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -135,6 +128,9 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
                   <p className="font-medium">{profileData.phone || 'Not provided'}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    SMS verification is not enabled — login uses email and password.
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Default Location</p>
@@ -168,10 +164,8 @@ export default function ProfilePage() {
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Phone Verified</p>
-                  <Badge variant={profileData.phone_verified ? 'default' : 'secondary'}>
-                    {profileData.phone_verified ? 'Verified' : 'Not Verified'}
-                  </Badge>
+                  <p className="text-sm text-muted-foreground">Phone verification</p>
+                  <Badge variant="secondary">Email login only</Badge>
                 </div>
               </CardContent>
             </Card>

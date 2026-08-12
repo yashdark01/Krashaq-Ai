@@ -1,6 +1,12 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/rbac';
+import { listAuditLogs } from '@/lib/server/services/audit-service';
 
 export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/admin/audit-logs');
+  const auth = await requireAdmin(request);
+  if (!auth.success) return auth.response;
+
+  const limit = Number(request.nextUrl.searchParams.get('limit') ?? 100);
+  const items = await listAuditLogs(limit);
+  return NextResponse.json({ items });
 }

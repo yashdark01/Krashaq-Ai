@@ -37,6 +37,20 @@ export function getConfig() {
     jwtAlgorithm: 'HS256' as const,
     accessTokenExpireMinutes: Number(process.env.ACCESS_TOKEN_EXPIRE_MINUTES ?? 30),
     refreshTokenExpireDays: Number(process.env.REFRESH_TOKEN_EXPIRE_DAYS ?? 7),
-    legacyPythonUrl: process.env.LEGACY_PYTHON_URL ?? '',
+
+    appUrl: process.env.APP_URL ?? 'http://localhost:3000',
+    smtpHost: process.env.SMTP_HOST ?? '',
+    smtpPort: Number(process.env.SMTP_PORT ?? 587),
+    smtpUser: process.env.SMTP_USER ?? '',
+    smtpPass: process.env.SMTP_PASS ?? '',
+    smtpFrom: process.env.SMTP_FROM ?? 'Krashaq <noreply@krashaq.app>',
+
+    langsmithTracing: process.env.LANGCHAIN_TRACING_V2 === 'true',
+    langsmithApiKey: process.env.LANGCHAIN_API_KEY ?? '',
+    langsmithProject: process.env.LANGCHAIN_PROJECT ?? 'krashaq',
+    langsmithEndpoint: process.env.LANGSMITH_ENDPOINT ?? process.env.LANGCHAIN_ENDPOINT ?? '',
+
+    tavilyApiKey: process.env.TAVILY_API_KEY ?? '',
+    tavilyMaxResults: Number(process.env.TAVILY_MAX_RESULTS ?? 5),
   };
 }

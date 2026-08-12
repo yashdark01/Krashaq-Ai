@@ -32,7 +32,7 @@ interface User {
 }
 
 export default function UserList() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, fetchWithAuth } = useAuth();
   const { addToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +62,7 @@ export default function UserList() {
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (search) params.append('search', search);
 
-      const response = await fetch(`/api/admin/users?${params.toString()}`);
+      const response = await fetchWithAuth(`/api/admin/users?${params.toString()}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -91,7 +91,7 @@ export default function UserList() {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/activate`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}/activate`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !currentStatus }),
@@ -111,7 +111,7 @@ export default function UserList() {
     if (!selectedUser || !newRole) return;
 
     try {
-      const response = await fetch(`/api/admin/users/${selectedUser.id}/role`, {
+      const response = await fetchWithAuth(`/api/admin/users/${selectedUser.id}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
@@ -130,7 +130,7 @@ export default function UserList() {
 
   const banUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/ban`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}/ban`, {
         method: 'POST',
       });
 
@@ -146,7 +146,7 @@ export default function UserList() {
 
   const unbanUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/unban`, {
+      const response = await fetchWithAuth(`/api/admin/users/${userId}/unban`, {
         method: 'POST',
       });
 
@@ -164,7 +164,7 @@ export default function UserList() {
     if (!selectedUser) return;
 
     try {
-      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+      const response = await fetchWithAuth(`/api/admin/users/${selectedUser.id}`, {
         method: 'DELETE',
       });
 

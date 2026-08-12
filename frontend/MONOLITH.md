@@ -1,68 +1,51 @@
 # Krashaq Monolithic Next.js App
 
-Krashaq now runs as a **single Next.js application**. The browser talks to same-origin `/api/*` routes — no separate FastAPI server required for core features.
+Krashaq runs as a **single Next.js application**. The browser talks to same-origin `/api/*` routes — no separate FastAPI server.
 
 ## Architecture
 
 ```
 Browser  →  Next.js (frontend + API routes)
-              ├── Native handlers: chat, weather, auth, farmers
-              ├── lib/server/* services (MongoDB, Redis, LangChain, JWT)
-              └── Legacy proxy: admin, LLM admin, messages, locations, 2FA…
+              ├── app/api/* — all REST handlers
+              └── lib/server/* — MongoDB, JWT, LangGraph, services
 ```
 
-## What runs natively (no Python)
+## What runs in the monolith
 
-| Feature | Route(s) | Service |
-|---------|----------|---------|
-| AI chat | `POST /api/chat` | LangChain + Gemini/Groq |
-| Weather | `GET /api/weather?city=` | WeatherAPI + Redis cache |
-| Email auth | `/api/auth/login/email`, signup, register, me, refresh, logout | MongoDB + JWT |
-| Farmers CRUD | `/api/farmers/*` | MongoDB |
+| Feature | Route(s) |
+|---------|----------|
+| AI chat (LangGraph + RAG) | `POST /api/chat`, `/api/chat/stream` |
+| Weather | `GET /api/weather` |
+| Auth + MFA | `/api/auth/*` |
+| Farmers + suppliers + subscriptions | `/api/farmers`, `/api/admin/suppliers`, `/api/supplier/*` |
+| Farmer alerts + notifications | `/api/supplier/alerts`, `/api/cron/alerts` |
+| Admin dashboard, analytics, config | `/api/admin/*` |
 
-## What still uses legacy Python (optional)
+## Legacy Python backend
 
-Admin dashboard, user management, LLM session admin, WhatsApp messages, location hierarchy, 2FA, Google OAuth, and scheduler routes proxy to FastAPI when `LEGACY_PYTHON_URL` is set.
-
-Without it, those endpoints return **501** with a migration hint.
+The old FastAPI app is archived at **`archive/backend/`** (reference only). It is not used in production.
 
 ## Setup
 
 ```bash
 cd frontend
 cp .env.example .env.local
-# Copy values from backend/.env (MongoDB, API keys, JWT secret)
 npm install
+npm run db:reset   # optional demo data
 npm run dev
 ```
 
-Production:
-
-```bash
-npm run build
-npm start
-```
-
-Deploy to **Vercel** with env vars from [docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md). Set root directory to `frontend`.
-
-Full deployment guide: [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md)
-
-## Migration from split stack
-
-1. **Phase 1 (done):** Core API in Next.js — chat, weather, auth, farmers
-2. **Phase 2:** Port admin + locations to TypeScript (or keep `LEGACY_PYTHON_URL`)
-3. **Phase 3:** WhatsApp webhooks + scheduler (Vercel Cron or worker)
+Deploy to **Vercel** with root directory `frontend`. See [docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
 
 ## Key files
 
 - `lib/server/config.ts` — environment config
 - `lib/server/services/` — business logic
-- `lib/server/proxy/legacy-python.ts` — FastAPI bridge
-- `lib/api/client.ts` — browser API client (same-origin by default)
-- `contexts/AuthContext.tsx` — uses `/api/auth/*` relative paths
+- `lib/server/agents/` — LangGraph agent
+- `contexts/AuthContext.tsx` — auth client
 
 ## Notes
 
-- Uses the **same MongoDB** as the Python backend (string UUID `_id` fields).
-- Python password hashes (bcrypt + legacy SHA256) are supported via `lib/server/auth/password.ts`.
-- Redis is optional; in-memory cache is used if Redis is unavailable.
+- MongoDB with string UUID `_id` fields
+- Redis optional (in-memory fallback)
+- Run alerts locally: `npm run alerts:run`

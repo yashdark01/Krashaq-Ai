@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFarmerByPhone } from '@/lib/server/services/farmers-service';
+import { getFarmerByPhoneForUser } from '@/lib/server/services/farmers-service';
+import { requireSupplierOrAdmin } from '@/lib/server/auth/rbac';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ phone: string }> }
 ) {
+  const auth = await requireSupplierOrAdmin(request);
+  if (!auth.success) return auth.response;
+
   const { phone } = await params;
   try {
-    const { phone } = await params;
-    const farmer = await getFarmerByPhone(decodeURIComponent(phone));
+    const farmer = await getFarmerByPhoneForUser(auth.user, decodeURIComponent(phone));
     if (!farmer) {
-      return NextResponse.json({ error: 'Farmer not found' }, { status: 404 });
+      return NextResponse.json({ detail: 'Farmer not found', code: 'NOT_FOUND' }, { status: 404 });
     }
     return NextResponse.json(farmer);
   } catch (error) {

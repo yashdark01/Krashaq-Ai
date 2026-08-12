@@ -14,6 +14,7 @@ import {
   PanelLeft,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { NotificationBell } from '@/modules/common/components/notifications/NotificationBell';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,7 +63,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-40 w-full krashaq-glass-nav">
         <div className="flex h-header items-center justify-between gap-2 px-3 md:px-5">
           <div className="flex min-w-0 items-center gap-2">
             <Button
@@ -114,6 +115,7 @@ export function Header() {
               <SunMedium className="h-4 w-4" />
             </button>
             <ThemeToggle />
+            <NotificationBell />
 
             {user && (
               <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -149,7 +151,7 @@ export function Header() {
                       <DropdownMenuItem asChild>
                         <Link href="/admin/scheduler">
                           <Clock className="mr-2 h-4 w-4" />
-                          Scheduler
+                          Alert scheduler
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

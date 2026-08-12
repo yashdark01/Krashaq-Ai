@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionMessages, deleteSession } from '@/lib/server/services/chat-memory';
+import { deleteSessionForUser, getSessionMessages } from '@/lib/server/services/chat-memory';
+import { requireAuth } from '@/lib/server/auth/rbac';
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.success) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
@@ -12,10 +16,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
     }
 
-    const { items, total } = await getSessionMessages(sessionId, skip, limit);
+    const result = await getSessionMessages(auth.user.id, sessionId, skip, limit);
+    if (!result) {
+      return NextResponse.json({ detail: 'Session not found', code: 'NOT_FOUND' }, { status: 404 });
+    }
 
     return NextResponse.json({
-      items: items.map((m) => ({
+      items: result.items.map((m) => ({
         id: m.id,
         role: m.role,
         content: m.content,
@@ -26,8 +33,9 @@ export async function GET(request: NextRequest) {
         detected_crop: m.detected_crop,
         language: m.language,
         feedback: m.feedback,
+        starred: m.starred ?? false,
       })),
-      total,
+      total: result.total,
       session_id: sessionId,
     });
   } catch (error) {
@@ -37,14 +45,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.success) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
     if (!sessionId) {
       return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
     }
-    const deleted = await deleteSession(sessionId);
-    return NextResponse.json({ deleted });
+    const deleted = await deleteSessionForUser(auth.user.id, sessionId);
+    if (!deleted) {
+      return NextResponse.json({ detail: 'Session not found', code: 'NOT_FOUND' }, { status: 404 });
+    }
+    return NextResponse.json({ deleted: true });
   } catch (error) {
     console.error('Messages DELETE error:', error);
     return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });

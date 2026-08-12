@@ -11,9 +11,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
-        devanagari: ['var(--font-devanagari)', 'var(--font-sans)', 'sans-serif'],
+        sans: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+        devanagari: ['var(--font-devanagari)', 'var(--font-geist-sans)', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -21,6 +22,10 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          elevated: 'hsl(var(--surface-elevated))',
+        },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -50,6 +55,9 @@ const config: Config = {
           foreground: 'hsl(var(--card-foreground))',
         },
         brand: {
+          accent: 'hsl(var(--brand-accent))',
+          'accent-hover': 'hsl(var(--brand-accent-hover))',
+          'accent-muted': 'hsl(var(--brand-accent-muted))',
           soil: 'hsl(var(--brand-soil))',
           wheat: 'hsl(var(--brand-wheat))',
           sky: 'hsl(var(--brand-sky))',

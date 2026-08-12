@@ -26,10 +26,10 @@ export function IrrigationPanel({
   const { variant, label, icon: Icon } = urgencyBadge[urgency];
 
   return (
-    <Card variant="insight" className="h-full border-l-brand-sky">
+    <Card variant="insight" className="h-full border-l-primary">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-          <Droplets className="h-5 w-5 text-brand-sky" aria-hidden="true" />
+          <Droplets className="h-5 w-5 text-primary" aria-hidden="true" />
           Irrigation advice
         </CardTitle>
       </CardHeader>

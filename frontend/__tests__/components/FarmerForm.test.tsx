@@ -1,6 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import FarmerForm from '@/components/FarmerForm';
 
+jest.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    fetchWithAuth: jest.fn(),
+  }),
+}));
+
 describe('FarmerForm', () => {
   it('renders the form with required fields', () => {
     const mockOnFarmerAdded = jest.fn();

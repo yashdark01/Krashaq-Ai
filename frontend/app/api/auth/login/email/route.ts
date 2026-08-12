@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loginWithEmail } from '@/lib/server/services/auth-service';
+import { loginWithEmail, AuthError, extractRequestMeta } from '@/lib/server/services/auth-service';
+import { parseBody } from '@/lib/server/validation/parse-body';
+import { loginSchema } from '@/lib/server/validation/auth.schemas';
 
 export async function POST(request: NextRequest) {
+  const parsed = await parseBody(request, loginSchema);
+  if (!parsed.success) return parsed.response;
+
   try {
-    const body = await request.json();
-    const result = await loginWithEmail(body.email, body.password);
+    const meta = extractRequestMeta(request);
+    const result = await loginWithEmail(parsed.data.email, parsed.data.password, meta);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      { detail: error instanceof Error ? error.message : 'Login failed' },
-      { status: 401 }
-    );
+    if (error instanceof AuthError) {
+      return NextResponse.json({ detail: error.message, code: error.code }, { status: error.status });
+    }
+    console.error('Login error:', error);
+    return NextResponse.json({ detail: 'Login failed', code: 'LOGIN_FAILED' }, { status: 500 });
   }
 }

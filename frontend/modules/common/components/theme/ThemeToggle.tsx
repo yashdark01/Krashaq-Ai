@@ -21,7 +21,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       className={cn(
-        'relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground',
+        'relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-secondary hover:text-foreground',
         className
       )}
     >

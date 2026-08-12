@@ -19,7 +19,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden md:flex h-full shrink-0 flex-col border-r bg-muted/30 transition-[width] duration-200 ease-out',
+        'hidden md:flex h-full shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 ease-out',
         isExpanded ? 'w-64' : 'w-14',
         className
       )}

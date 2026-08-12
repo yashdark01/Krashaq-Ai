@@ -1,9 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Farmer {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   location: string | null;
@@ -14,9 +18,11 @@ interface FarmerFormProps {
 }
 
 export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
+  const { fetchWithAuth } = useAuth();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
+  const [subscriptionPlan, setSubscriptionPlan] = useState('trial');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -28,23 +34,24 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/farmers', {
+      const res = await fetchWithAuth('/api/farmers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
           location: location.trim() || null,
+          subscription_plan: subscriptionPlan,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || 'Failed to register farmer');
+        throw new Error(data.detail || data.error || 'Failed to register farmer');
       }
 
       const farmer = await res.json();
-      setSuccess(`✅ ${farmer.name} registered successfully!`);
+      setSuccess(`${farmer.name} registered successfully.`);
       setName('');
       setPhone('');
       setLocation('');
@@ -59,57 +66,74 @@ export default function FarmerForm({ onFarmerAdded }: FarmerFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
       {success && (
-        <div className="p-3 bg-green-50 text-green-700 rounded-lg text-sm">{success}</div>
+        <div className="rounded-lg border border-primary/30 bg-accent p-3 text-sm text-primary">
+          {success}
+        </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="farmer-name">Full Name *</Label>
+        <Input
+          id="farmer-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           placeholder="Enter farmer's name"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="farmer-phone">Phone Number *</Label>
+        <Input
+          id="farmer-phone"
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          placeholder="e.g., +91 9876543210"
+          placeholder="+91 9876543210"
         />
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted-foreground">
           Include country code for WhatsApp (e.g., +91 for India)
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Location / City</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="farmer-location">Location / City</Label>
+        <Input
+          id="farmer-location"
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          placeholder="e.g., Delhi, Mumbai, etc."
+          placeholder="e.g., Delhi, Bhopal"
         />
-        <p className="text-xs text-gray-500 mt-1">Used for weather and irrigation advice</p>
+        <p className="text-xs text-muted-foreground">Used for weather and irrigation advice</p>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-2 px-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-      >
-        {isSubmitting ? 'Registering...' : 'Register Farmer'}
-      </button>
+      <div className="space-y-2">
+        <Label htmlFor="farmer-plan">Subscription plan to sell</Label>
+        <select
+          id="farmer-plan"
+          className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+          value={subscriptionPlan}
+          onChange={(e) => setSubscriptionPlan(e.target.value)}
+        >
+          <option value="trial">Trial — 14 days free</option>
+          <option value="basic">Basic — ₹99 / 30 days</option>
+          <option value="standard">Standard — ₹249 / 90 days</option>
+          <option value="premium">Premium — ₹799 / 365 days</option>
+        </select>
+      </div>
+
+      <Button type="submit" className="w-full" loading={isSubmitting} disabled={isSubmitting}>
+        {isSubmitting ? 'Registering…' : 'Register Farmer'}
+      </Button>
     </form>
   );
 }

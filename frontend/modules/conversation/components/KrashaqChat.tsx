@@ -29,6 +29,7 @@ export function KrashaqChat({
   const {
     messages,
     loading,
+    accessDenied,
     appendMessage,
     updateMessage,
     appendDelta,
@@ -98,6 +99,12 @@ export function KrashaqChat({
     },
     [sessionId, setFeedback]
   );
+
+  useEffect(() => {
+    if (accessDenied) {
+      router.replace('/chat');
+    }
+  }, [accessDenied, router]);
 
   if (compact) {
     const lastMessages = messages.slice(-2);

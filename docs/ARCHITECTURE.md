@@ -51,10 +51,10 @@ flowchart TB
 | UI (dashboard, chat, auth pages) | ✅ Production | `frontend/app/` |
 | Chat, weather, auth, farmers API | ✅ Native Next.js | `frontend/app/api/` + `lib/server/` |
 | Multi-provider LLM | ✅ Native | `lib/server/llm/` |
-| Admin, messages, 2FA, locations | ⏳ Legacy proxy | `LEGACY_PYTHON_URL` → FastAPI |
-| WhatsApp webhooks | ⏳ Python only | `backend/app/routes/webhook.py` |
+| Admin, suppliers, subscriptions, alerts | ✅ Native | `frontend/app/api/` |
+| WhatsApp webhooks | ❌ Not ported | See `archive/backend/` reference |
 
-The **recommended production path** is the Next.js monolith on Vercel. The Python backend is optional during migration.
+The **production path** is the Next.js monolith on Vercel. The Python backend is archived at `archive/backend/` (reference only).
 
 ## Frontend structure
 

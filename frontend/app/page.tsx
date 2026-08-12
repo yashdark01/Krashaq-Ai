@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { WeatherCard } from '@/components/dashboard/WeatherCard';
 import { IrrigationPanel } from '@/components/dashboard/IrrigationPanel';
 import { ChatPreview } from '@/modules/conversation/components/ChatPreview';
+import { RoleDashboard } from '@/modules/common/components/dashboard/RoleDashboard';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -78,6 +79,7 @@ export default function Home() {
     <ProtectedRoute>
       <MainLayout>
         <div className="krashaq-page-padding flex flex-col gap-4 md:gap-6 max-w-7xl mx-auto">
+          <RoleDashboard />
           <section aria-label="Farm insights" className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {weatherLoading ? (
               <>

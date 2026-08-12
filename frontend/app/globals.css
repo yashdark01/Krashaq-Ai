@@ -4,68 +4,76 @@
 
 @layer base {
   :root {
-    /* Krashaq earthy design tokens — Phase 1 */
-    --background: 40 33% 96%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 100 57% 20%;
-    --primary-foreground: 40 40% 98%;
-    --secondary: 40 20% 92%;
-    --secondary-foreground: 0 0% 15%;
-    --muted: 40 15% 93%;
-    --muted-foreground: 0 0% 36%;
-    --accent: 199 36% 90%;
-    --accent-foreground: 199 40% 25%;
+    /* Yash Patidar portfolio theme — dark emerald (https://yashpatidar.vercel.app) */
+    --background: 240 3% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 4% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 5% 11%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 240 3% 4%;
+    --secondary: 240 5% 11%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 11%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 160 60% 15%;
+    --accent-foreground: 160 84% 45%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 100 57% 20%;
+    --border: 240 5% 16%;
+    --input: 240 5% 16%;
+    --ring: 160 84% 39%;
     --radius: 0.75rem;
 
-    /* Brand palette */
-    --brand-soil: 100 57% 20%;
-    --brand-wheat: 42 47% 56%;
-    --brand-sky: 199 36% 47%;
-    --brand-clay: 42 72% 32%;
-    --brand-harvest: 108 44% 33%;
+    --surface: 240 4% 8%;
+    --surface-elevated: 240 5% 11%;
 
-    /* Layout */
+    /* Brand — aligned to portfolio accent system */
+    --brand-accent: 160 84% 39%;
+    --brand-accent-hover: 161 94% 30%;
+    --brand-accent-muted: 160 60% 15%;
+    --brand-soil: 160 84% 39%;
+    --brand-harvest: 160 84% 39%;
+    --brand-sky: 160 70% 45%;
+    --brand-wheat: 43 74% 49%;
+    --brand-clay: 38 92% 50%;
+
     --header-height: 3.5rem;
     --bottom-nav-height: 4rem;
   }
 
-  .dark {
-    --background: 120 10% 6%;
-    --foreground: 40 20% 95%;
-    --card: 120 8% 10%;
-    --card-foreground: 40 20% 95%;
-    --popover: 120 8% 10%;
-    --popover-foreground: 40 20% 95%;
-    --primary: 108 44% 40%;
-    --primary-foreground: 120 10% 6%;
-    --secondary: 120 8% 16%;
-    --secondary-foreground: 40 20% 95%;
-    --muted: 120 8% 16%;
-    --muted-foreground: 40 10% 65%;
-    --accent: 120 8% 18%;
-    --accent-foreground: 40 20% 95%;
-    --destructive: 0 62% 45%;
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 240 6% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 6% 10%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 160 60% 95%;
+    --accent-foreground: 161 94% 30%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 8% 18%;
-    --input: 120 8% 18%;
-    --ring: 108 44% 40%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 160 84% 39%;
+    --surface: 0 0% 100%;
+    --surface-elevated: 240 5% 96%;
+    --brand-accent-muted: 160 60% 95%;
   }
 
-  /* High-contrast outdoor / field readability mode */
   .field-mode {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --muted-foreground: 0 0% 20%;
-    --primary: 100 70% 15%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --muted-foreground: 0 0% 75%;
+    --primary: 160 84% 45%;
+    --card: 0 0% 5%;
     font-size: 106.25%;
   }
 
@@ -81,11 +89,21 @@
 
   html {
     @apply scroll-smooth;
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     line-height: 1.5;
+  }
+
+  ::selection {
+    background-color: hsl(160 84% 39% / 0.3);
+    color: hsl(var(--foreground));
   }
 
   h1,
@@ -126,6 +144,14 @@
 }
 
 @layer components {
+  .krashaq-glass-nav {
+    @apply bg-background/75 backdrop-blur-xl border-b border-border;
+  }
+
+  .krashaq-card-surface {
+    @apply rounded-xl border bg-card shadow-sm transition-colors hover:border-border/80;
+  }
+
   .krashaq-insight-card {
     @apply rounded-xl border bg-card shadow-sm border-l-4 border-l-primary;
   }
@@ -136,5 +162,13 @@
 
   .krashaq-touch-target {
     @apply min-h-11 min-w-11 md:min-h-9 md:min-w-9;
+  }
+
+  .krashaq-accent-glow {
+    background: radial-gradient(ellipse at top, hsl(160 84% 39% / 0.06), transparent 50%);
+  }
+
+  .section-label {
+    @apply font-mono text-xs uppercase tracking-widest text-muted-foreground;
   }
 }

@@ -56,31 +56,6 @@ jobs:
           LLM_PROVIDER: groq
         run: npm run build
 
-  backend:
-    name: Backend — tests (legacy, optional)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    defaults:
-      run:
-        working-directory: backend
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Pytest
-        run: python -m pytest app/ -v --tb=short || echo "No backend tests / skipped"
-
   security:
     name: Dependency audit
     runs-on: ubuntu-latest

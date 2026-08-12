@@ -74,7 +74,7 @@ export function ModelSelectorPill({
           <span
             className={cn(
               'h-1.5 w-1.5 rounded-full',
-              configured ? 'bg-brand-harvest' : 'bg-brand-clay'
+              configured ? 'bg-primary' : 'bg-brand-clay'
             )}
           />
           {selected?.label ?? provider} · {modelLabel}

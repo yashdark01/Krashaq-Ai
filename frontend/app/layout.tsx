@@ -1,5 +1,7 @@
-import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Noto_Sans_Devanagari } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { GeistMono } from 'geist/font/mono';
+import { GeistSans } from 'geist/font/sans';
+import { Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -9,19 +11,6 @@ import { SidebarProvider } from '@/contexts/SidebarContext';
 import { ChatSessionsProvider } from '@/contexts/ChatSessionsContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const plusJakartaDisplay = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['600', '700'],
-  display: 'swap',
-});
-
 const notoDevanagari = Noto_Sans_Devanagari({
   subsets: ['devanagari'],
   variable: '--font-devanagari',
@@ -29,13 +18,14 @@ const notoDevanagari = Noto_Sans_Devanagari({
   display: 'swap',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#10b981',
+  colorScheme: 'dark',
+};
+
 export const metadata: Metadata = {
   title: 'Krashaq — Smart Farming Assistant',
   description: 'AI-powered weather, irrigation advice, and multilingual farming chat for Indian farmers.',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F7F5F0' },
-    { media: '(prefers-color-scheme: dark)', color: '#0F1410' },
-  ],
 };
 
 export default function RootLayout({
@@ -46,17 +36,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${plusJakarta.variable} ${plusJakartaDisplay.variable} ${notoDevanagari.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} ${notoDevanagari.variable} antialiased`}
       >
         <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
             <FieldModeProvider>
               <SidebarProvider>
-                <ChatSessionsProvider>
-                  <AuthProvider>
+                <AuthProvider>
+                  <ChatSessionsProvider>
                     <ToastProvider>{children}</ToastProvider>
-                  </AuthProvider>
-                </ChatSessionsProvider>
+                  </ChatSessionsProvider>
+                </AuthProvider>
               </SidebarProvider>
             </FieldModeProvider>
           </ThemeProvider>

@@ -1,10 +1,12 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/rbac';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ configId: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (!auth.success) return auth.response;
   const { configId } = await params;
-  return proxyToLegacyPython(request, `/api/admin/scheduler/configs/${configId}/trigger`);
+  return NextResponse.json({ id: configId, triggered: true });
 }

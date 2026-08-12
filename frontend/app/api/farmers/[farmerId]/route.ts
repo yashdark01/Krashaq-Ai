@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  deleteFarmer,
-  getFarmerById,
-  updateFarmer,
+  deleteFarmerForUser,
+  getFarmerByIdForUser,
+  updateFarmerForUser,
 } from '@/lib/server/services/farmers-service';
+import { requireSupplierOrAdmin } from '@/lib/server/auth/rbac';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ farmerId: string }> }
 ) {
+  const auth = await requireSupplierOrAdmin(request);
+  if (!auth.success) return auth.response;
+
   const { farmerId } = await params;
   try {
-    const { farmerId } = await params;
-    const farmer = await getFarmerById(farmerId);
+    const farmer = await getFarmerByIdForUser(auth.user, farmerId);
     if (!farmer) {
-      return NextResponse.json({ error: 'Farmer not found' }, { status: 404 });
+      return NextResponse.json({ detail: 'Farmer not found', code: 'NOT_FOUND' }, { status: 404 });
     }
     return NextResponse.json(farmer);
   } catch (error) {
@@ -27,13 +30,15 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ farmerId: string }> }
 ) {
+  const auth = await requireSupplierOrAdmin(request);
+  if (!auth.success) return auth.response;
+
   const { farmerId } = await params;
   try {
-    const { farmerId } = await params;
     const body = await request.json();
-    const farmer = await updateFarmer(farmerId, body);
+    const farmer = await updateFarmerForUser(auth.user, farmerId, body);
     if (!farmer) {
-      return NextResponse.json({ error: 'Farmer not found' }, { status: 404 });
+      return NextResponse.json({ detail: 'Farmer not found', code: 'NOT_FOUND' }, { status: 404 });
     }
     return NextResponse.json(farmer);
   } catch (error) {
@@ -43,15 +48,17 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ farmerId: string }> }
 ) {
+  const auth = await requireSupplierOrAdmin(request);
+  if (!auth.success) return auth.response;
+
   const { farmerId } = await params;
   try {
-    const { farmerId } = await params;
-    const deleted = await deleteFarmer(farmerId);
+    const deleted = await deleteFarmerForUser(auth.user, farmerId);
     if (!deleted) {
-      return NextResponse.json({ error: 'Farmer not found' }, { status: 404 });
+      return NextResponse.json({ detail: 'Farmer not found', code: 'NOT_FOUND' }, { status: 404 });
     }
     return NextResponse.json({ message: 'Farmer deleted successfully' });
   } catch (error) {

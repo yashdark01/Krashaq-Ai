@@ -1,165 +1,120 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Settings } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Settings, CheckCircle2, XCircle } from 'lucide-react';
 
-interface Config {
+interface AdminConfig {
   llm_provider: string;
-  ollama_base_url: string;
-  ollama_model: string;
-  weather_api_key: string;
-  twilio_account_sid: string;
-  twilio_whatsapp_number: string;
+  groq_model: string;
+  gemini_model: string;
+  llm_fallback_chain: string[];
+  langsmith_tracing: boolean;
+  langsmith_project: string;
+  agent_runtime: string;
+  services: Record<string, boolean>;
+  note: string;
+}
+
+function ServiceRow({ label, ok }: { label: string; ok: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 text-sm">
+      <span>{label}</span>
+      {ok ? (
+        <Badge variant="default" className="gap-1">
+          <CheckCircle2 className="h-3 w-3" /> Configured
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="gap-1 text-muted-foreground">
+          <XCircle className="h-3 w-3" /> Not set
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 export default function ConfigPanel() {
-  const [config, setConfig] = useState<Config>({
-    llm_provider: '',
-    ollama_base_url: '',
-    ollama_model: '',
-    weather_api_key: '',
-    twilio_account_sid: '',
-    twilio_whatsapp_number: '',
-  });
+  const { fetchWithAuth } = useAuth();
+  const [config, setConfig] = useState<AdminConfig | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchConfig();
-  }, []);
-
-  const fetchConfig = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/admin/config`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setConfig(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch config:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateConfig = async () => {
-    setSaving(true);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/admin/config`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
-
-      if (response.ok) {
-        alert('Configuration updated successfully');
-      }
-    } catch (error) {
-      console.error('Failed to update config:', error);
-      alert('Failed to update configuration');
-    } finally {
-      setSaving(false);
-    }
-  };
+    fetchWithAuth('/api/admin/config')
+      .then((r) => r.json())
+      .then(setConfig)
+      .catch(() => setConfig(null))
+      .finally(() => setLoading(false));
+  }, [fetchWithAuth]);
 
   if (loading) {
-    return <div className="flex justify-center py-8">Loading configuration...</div>;
+    return <div className="flex justify-center py-8 text-muted-foreground">Loading configuration…</div>;
+  }
+
+  if (!config) {
+    return <div className="text-destructive py-8">Failed to load configuration</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-2">
         <Settings className="h-6 w-6" />
-        <h2 className="text-2xl font-bold">System Configuration</h2>
+        <h2 className="text-2xl font-bold">System configuration</h2>
       </div>
 
+      <p className="text-sm text-muted-foreground">{config.note}</p>
+
       <Card>
         <CardHeader>
-          <CardTitle>LLM Provider Settings</CardTitle>
+          <CardTitle>LLM & agent</CardTitle>
+          <CardDescription>Active provider and models from environment</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="llm_provider">LLM Provider</Label>
-            <Input
-              id="llm_provider"
-              value={config.llm_provider}
-              onChange={(e) => setConfig({ ...config, llm_provider: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ollama_base_url">Ollama Base URL</Label>
-            <Input
-              id="ollama_base_url"
-              value={config.ollama_base_url}
-              onChange={(e) => setConfig({ ...config, ollama_base_url: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ollama_model">Ollama Model</Label>
-            <Input
-              id="ollama_model"
-              value={config.ollama_model}
-              onChange={(e) => setConfig({ ...config, ollama_model: e.target.value })}
-            />
-          </div>
+        <CardContent className="text-sm space-y-2">
+          <p>
+            Provider: <strong className="capitalize">{config.llm_provider}</strong>
+          </p>
+          <p>
+            Groq model: <code className="text-xs bg-muted px-1 rounded">{config.groq_model}</code>
+          </p>
+          <p>
+            Gemini model: <code className="text-xs bg-muted px-1 rounded">{config.gemini_model}</code>
+          </p>
+          <p>
+            Agent runtime: <strong>{config.agent_runtime}</strong>
+          </p>
+          <p>
+            Fallback chain: {config.llm_fallback_chain.join(' → ')}
+          </p>
+          <p>
+            LangSmith:{' '}
+            {config.langsmith_tracing ? (
+              <Badge variant="default">Tracing on · {config.langsmith_project}</Badge>
+            ) : (
+              <Badge variant="outline">Off</Badge>
+            )}
+          </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>API Keys</CardTitle>
+          <CardTitle>Service connectivity</CardTitle>
+          <CardDescription>Whether required env keys are present (values are never shown)</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="weather_api_key">Weather API Key</Label>
-            <Input
-              id="weather_api_key"
-              type="password"
-              value={config.weather_api_key}
-              onChange={(e) => setConfig({ ...config, weather_api_key: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="twilio_account_sid">Twilio Account SID</Label>
-            <Input
-              id="twilio_account_sid"
-              type="password"
-              value={config.twilio_account_sid}
-              onChange={(e) => setConfig({ ...config, twilio_account_sid: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="twilio_whatsapp_number">Twilio WhatsApp Number</Label>
-            <Input
-              id="twilio_whatsapp_number"
-              value={config.twilio_whatsapp_number}
-              onChange={(e) => setConfig({ ...config, twilio_whatsapp_number: e.target.value })}
-            />
-          </div>
+        <CardContent className="divide-y">
+          <ServiceRow label="MongoDB" ok={config.services.mongodb} />
+          <ServiceRow label="Redis" ok={config.services.redis} />
+          <ServiceRow label="SMTP (email)" ok={config.services.smtp} />
+          <ServiceRow label="Weather API" ok={config.services.weather} />
+          <ServiceRow label="Groq API" ok={config.services.groq} />
+          <ServiceRow label="Google / Gemini API" ok={config.services.google} />
+          <ServiceRow label="OpenAI API" ok={config.services.openai} />
+          <ServiceRow label="Anthropic API" ok={config.services.anthropic} />
+          <ServiceRow label="Tavily search" ok={config.services.tavily} />
+          <ServiceRow label="LangSmith" ok={config.services.langsmith} />
         </CardContent>
       </Card>
-
-      <Button onClick={updateConfig} disabled={saving}>
-        {saving ? 'Saving...' : 'Save Configuration'}
-      </Button>
     </div>
   );
 }

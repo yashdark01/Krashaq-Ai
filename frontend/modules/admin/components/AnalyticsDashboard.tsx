@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, MessageSquare, Cloud, Activity } from 'lucide-react';
+import { LlmAnalyticsSection } from './LlmAnalyticsSection';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStats {
   users: {
@@ -32,6 +34,7 @@ interface DashboardStats {
 }
 
 export default function AnalyticsDashboard() {
+  const { fetchWithAuth } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +45,7 @@ export default function AnalyticsDashboard() {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/dashboard');
+      const response = await fetchWithAuth('/api/admin/dashboard');
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -68,6 +71,8 @@ export default function AnalyticsDashboard() {
         <h2 className="text-2xl font-bold">Analytics Dashboard</h2>
         <p className="text-muted-foreground">Overview of system performance and usage</p>
       </div>
+
+      <LlmAnalyticsSection />
 
       {/* User Stats */}
       <Card>

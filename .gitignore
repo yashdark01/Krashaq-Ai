@@ -1,0 +1,18 @@
+# OS & IDE
+.DS_Store
+.vscode/
+*.log
+
+# Python (local artifacts at repo root)
+.pytest_cache/
+__pycache__/
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/node_modules/
+
+# Env secrets
+.env
+.env.local
+.env.*.local

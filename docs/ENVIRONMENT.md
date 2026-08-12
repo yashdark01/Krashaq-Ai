@@ -44,7 +44,7 @@ NEXT_PUBLIC_GOOGLE_REDIRECT_URI=https://your-app.vercel.app/auth/callback
 
 ```env
 REDIS_URL=redis://...                  # Upstash for production cache
-LEGACY_PYTHON_URL=                     # FastAPI bridge for admin/WhatsApp
+CRON_SECRET=...                        # Vercel cron auth for alert delivery
 ```
 
 ## Variable details
@@ -57,7 +57,6 @@ LEGACY_PYTHON_URL=                     # FastAPI bridge for admin/WhatsApp
 | `MONGODB_DB` | `krashaq` | Database name |
 | `JWT_SECRET_KEY` | dev placeholder | **Must change in production** |
 | `WEATHER_API_KEY` | — | [WeatherAPI.com](https://www.weatherapi.com/) |
-| `LEGACY_PYTHON_URL` | — | If set, unmigrated routes proxy to FastAPI |
 
 ## Files
 

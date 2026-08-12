@@ -1,19 +1,34 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getBrowserApiBaseUrl } from '@/lib/api/base-url';
+import { normalizeRole, isAdminRole, isSupplierRole, isFarmerRole } from '@/lib/auth/roles';
+import {
+  authenticatedFetch,
+  clearStoredTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  refreshAccessTokenClient,
+  scheduleProactiveRefresh,
+  storeTokens,
+} from '@/lib/api/authenticated-fetch';
 
-interface User {
-  id: number;
+export type UserRole = 'admin' | 'supplier' | 'farmer' | string;
+
+export interface User {
+  id: string;
   email: string;
   name: string;
   default_location: string | null;
-  role: string;
+  role: UserRole;
+  supplier_id?: string | null;
   state?: string | null;
   district?: string | null;
   tehsil?: string | null;
   locality?: string | null;
   pincode?: string | null;
+  email_verified?: boolean;
+  two_factor_enabled?: boolean;
 }
 
 interface AuthContextType {
@@ -21,13 +36,25 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: () => boolean;
+  isSupplier: () => boolean;
+  isFarmer: () => boolean;
   isPestisidesSupplier: () => boolean;
+  getAccessToken: () => string | null;
   login: (code: string) => Promise<void>;
-  emailLogin: (email: string, password: string) => Promise<void>;
+  emailLogin: (email: string, password: string) => Promise<MfaLoginChallenge | null>;
+  verifyMfaLogin: (mfaToken: string, code: string) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  fetchWithAuth: typeof authenticatedFetch;
+}
+
+export interface MfaLoginChallenge {
+  requires_2fa: true;
+  mfa_token: string;
+  user: User;
 }
 
 interface RegisterData {
@@ -57,217 +84,202 @@ interface SignupData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function persistUser(user: User) {
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [_accessToken, setAccessToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
 
-  const fetchUserProfile = async (token: string) => {
+  const fetchUserProfile = useCallback(async (token?: string) => {
     try {
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await authenticatedFetch('/api/auth/me', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser({
-          id: data.id,
+        const profile: User = {
+          id: String(data.id),
           email: data.email,
           name: data.name,
           default_location: data.default_location,
-          role: data.role,
+          role: normalizeRole(data.role),
+          supplier_id: data.supplier_id ?? null,
           state: data.state,
           district: data.district,
           tehsil: data.tehsil,
           locality: data.locality,
           pincode: data.pincode,
-        });
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            id: data.id,
-            email: data.email,
-            name: data.name,
-            default_location: data.default_location,
-            role: data.role,
-            state: data.state,
-            district: data.district,
-            tehsil: data.tehsil,
-            locality: data.locality,
-            pincode: data.pincode,
-          })
-        );
+          email_verified: data.email_verified,
+          two_factor_enabled: data.two_factor_enabled,
+        };
+        setUser(profile);
+        persistUser(profile);
+      } else if (response.status === 401) {
+        clearStoredTokens();
+        setUser(null);
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Check for existing tokens on mount
-    const storedAccessToken = localStorage.getItem('access_token');
-    const storedRefreshToken = localStorage.getItem('refresh_token');
+    const storedAccessToken = getStoredAccessToken();
+    const storedRefreshToken = getStoredRefreshToken();
     const storedUser = localStorage.getItem('user');
 
-    if (storedAccessToken && storedRefreshToken && storedUser) {
-      setAccessToken(storedAccessToken);
-      setRefreshToken(storedRefreshToken);
-      setUser(JSON.parse(storedUser));
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser) as User;
+        setUser({ ...parsed, id: String(parsed.id), role: normalizeRole(parsed.role) });
+      } catch {
+        localStorage.removeItem('user');
+      }
+    }
 
-      // Fetch full user profile
+    if (storedAccessToken && storedRefreshToken) {
       fetchUserProfile(storedAccessToken);
     } else {
       setIsLoading(false);
     }
-  }, []);
 
-  const login = async (code: string) => {
-    try {
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/google/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
+    const stopRefresh = scheduleProactiveRefresh(
+      Number(process.env.NEXT_PUBLIC_ACCESS_TOKEN_EXPIRE_MINUTES ?? 30)
+    );
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
+    const onTokensUpdated = () => {
+      const t = getStoredAccessToken();
+      if (t) fetchUserProfile(t);
+    };
+    window.addEventListener('krashaq:auth-tokens-updated', onTokensUpdated);
 
-      const data = await response.json();
-      // Store user info temporarily for registration
-      localStorage.setItem('google_user_info', JSON.stringify(data.user_info));
-      localStorage.setItem('google_tokens', JSON.stringify(data.google_tokens));
+    return () => {
+      stopRefresh();
+      window.removeEventListener('krashaq:auth-tokens-updated', onTokensUpdated);
+    };
+  }, [fetchUserProfile]);
 
-      // Redirect to registration page
-      window.location.href = '/auth/register';
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+  const applyAuthResult = async (data: {
+    access_token: string | null;
+    refresh_token: string | null;
+    user: User;
+    requires_2fa?: boolean;
+  }) => {
+    if (data.requires_2fa) {
+      throw new Error('Two-factor authentication required');
     }
+    if (!data.access_token || !data.refresh_token) {
+      throw new Error('Authentication failed');
+    }
+    storeTokens(data.access_token, data.refresh_token);
+    setUser({ ...data.user, id: String(data.user.id) });
+    persistUser({ ...data.user, id: String(data.user.id) });
+    await fetchUserProfile(data.access_token);
   };
 
-  const emailLogin = async (email: string, password: string) => {
-    try {
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/login/email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+  const emailLogin = async (email: string, password: string): Promise<MfaLoginChallenge | null> => {
+    const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/login/email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Login failed');
-      }
-
-      const data = await response.json();
-
-      // Store tokens and user
-      setAccessToken(data.access_token);
-      setRefreshToken(data.refresh_token);
-      setUser(data.user);
-
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Fetch full user profile
-      await fetchUserProfile(data.access_token);
-
-      // Redirect to dashboard
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Email login error:', error);
-      throw error;
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || data.errors?.password?.[0] || 'Login failed');
     }
+
+    if (data.requires_2fa && data.mfa_token) {
+      return {
+        requires_2fa: true,
+        mfa_token: data.mfa_token,
+        user: { ...data.user, id: String(data.user.id), role: normalizeRole(data.user.role) },
+      };
+    }
+
+    await applyAuthResult(data);
+    window.location.href = '/';
+    return null;
+  };
+
+  const verifyMfaLogin = async (mfaToken: string, code: string) => {
+    const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/verify-2fa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mfa_token: mfaToken, code }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.detail || 'Invalid verification code');
+    }
+
+    await applyAuthResult(data);
+    window.location.href = '/';
+  };
+
+  const login = async (code: string) => {
+    const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/google/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+
+    if (!response.ok) throw new Error('Login failed');
+
+    const data = await response.json();
+    localStorage.setItem('google_user_info', JSON.stringify(data.user_info));
+    localStorage.setItem('google_tokens', JSON.stringify(data.google_tokens));
+    window.location.href = '/auth/register';
   };
 
   const signup = async (data: SignupData) => {
-    try {
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Signup failed');
-      }
-
-      const result = await response.json();
-
-      // Store tokens and user
-      setAccessToken(result.access_token);
-      setRefreshToken(result.refresh_token);
-      setUser(result.user);
-
-      localStorage.setItem('access_token', result.access_token);
-      localStorage.setItem('refresh_token', result.refresh_token);
-      localStorage.setItem('user', JSON.stringify(result.user));
-
-      // Fetch full user profile
-      await fetchUserProfile(result.access_token);
-
-      // Redirect to dashboard
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Signup error:', error);
-      throw error;
+    const result = await response.json();
+    if (!response.ok) {
+      const firstError =
+        result.errors &&
+        Object.values(result.errors as Record<string, string[]>)[0]?.[0];
+      throw new Error(firstError || result.detail || 'Signup failed');
     }
+
+    await applyAuthResult(result);
+    window.location.href = '/';
   };
 
   const register = async (data: RegisterData) => {
-    try {
-      const _googleUser = JSON.parse(localStorage.getItem('google_user_info') || '{}');
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: data.email,
-          name: data.name,
-          default_location: data.default_location,
-          location_details: data.location_details,
-          phone: data.phone,
-        }),
-      });
+    const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        password: `oauth-${Date.now()}`,
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
+    if (!response.ok) throw new Error('Registration failed');
 
-      const result = await response.json();
+    const result = await response.json();
+    await applyAuthResult(result);
 
-      // Store tokens and user
-      setAccessToken(result.access_token);
-      setRefreshToken(result.refresh_token);
-      setUser(result.user);
-
-      localStorage.setItem('access_token', result.access_token);
-      localStorage.setItem('refresh_token', result.refresh_token);
-      localStorage.setItem('user', JSON.stringify(result.user));
-
-      // Fetch full user profile
-      await fetchUserProfile(result.access_token);
-
-      // Clear temporary Google data
-      localStorage.removeItem('google_user_info');
-      localStorage.removeItem('google_tokens');
-
-      // Redirect to dashboard
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+    localStorage.removeItem('google_user_info');
+    localStorage.removeItem('google_tokens');
+    window.location.href = '/';
   };
 
   const logout = async () => {
     try {
+      const refreshToken = getStoredRefreshToken();
       if (refreshToken) {
         await fetch(`${getBrowserApiBaseUrl()}/api/auth/logout`, {
           method: 'POST',
@@ -278,57 +290,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear local storage regardless of API call success
-      setAccessToken(null);
-      setRefreshToken(null);
+      clearStoredTokens();
       setUser(null);
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('google_user_info');
-      localStorage.removeItem('google_tokens');
-
+      window.dispatchEvent(new Event('krashaq:auth-logout'));
       window.location.href = '/auth/login';
     }
   };
 
   const refreshAccessToken = async () => {
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    try {
-      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
-
-      setAccessToken(data.access_token);
-      setRefreshToken(data.refresh_token);
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      // If refresh fails, logout the user
+    const token = await refreshAccessTokenClient();
+    if (!token) {
       await logout();
-      throw error;
+      throw new Error('Token refresh failed');
     }
   };
 
-  const isAdmin = () => {
-    return user?.role === 'admin';
-  };
+  const refreshProfile = useCallback(async () => {
+    const token = getStoredAccessToken();
+    if (token) await fetchUserProfile(token);
+  }, [fetchUserProfile]);
 
-  const isPestisidesSupplier = () => {
-    return user?.role === 'pestisides-supplier';
-  };
+  const isAdmin = () => isAdminRole(user?.role);
+  const isSupplier = () => isSupplierRole(user?.role);
+  const isFarmer = () => isFarmerRole(user?.role);
+  const isPestisidesSupplier = () => isSupplier();
 
   return (
     <AuthContext.Provider
@@ -337,13 +322,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         isAdmin,
+        isSupplier,
+        isFarmer,
         isPestisidesSupplier,
+        getAccessToken: getStoredAccessToken,
         login,
         emailLogin,
+        verifyMfaLogin,
         signup,
         register,
         logout,
         refreshAccessToken,
+        refreshProfile,
+        fetchWithAuth: authenticatedFetch,
       }}
     >
       {children}

@@ -28,7 +28,7 @@
 | LLM | LangChain — Groq, OpenAI, Anthropic, Gemini, xAI, DeepSeek, Mistral, Ollama |
 | Deploy | Vercel (Mumbai region) |
 | CI/CD | GitHub Actions |
-| Legacy | FastAPI + LangGraph (optional, migration in progress) |
+| Legacy | Archived FastAPI at `archive/backend/` (reference only) |
 
 ## Quick start
 
@@ -72,7 +72,8 @@ Krashaq-Ai/
 │   ├── app/           # Pages + API routes
 │   ├── lib/server/    # MongoDB, JWT, LLM, services
 │   └── modules/       # Feature UI components
-├── backend/           # Legacy FastAPI (optional)
+├── archive/
+│   └── backend/       # Legacy FastAPI (reference only, not deployed)
 ├── docs/              # Documentation
 └── .github/workflows/ # CI + Vercel deploy
 ```

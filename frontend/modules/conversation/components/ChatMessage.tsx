@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/modules/conversation/types/message';
 import { MarkdownContent } from './MarkdownContent';
 import { ChatMessageActions } from './ChatMessageActions';
+import { ToolCallList } from './ToolCallChip';
+import { CitationList } from './CitationList';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -42,7 +44,7 @@ export function ChatMessageBubble({
 
   return (
     <div className="group flex gap-3 px-4 py-3">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-sky/15 text-brand-sky">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
         <Sprout className="h-3.5 w-3.5" aria-hidden />
       </div>
       <div className="min-w-0 flex-1 space-y-1.5 max-w-3xl">
@@ -66,6 +68,10 @@ export function ChatMessageBubble({
           )}
         </div>
 
+        {message.tool_calls && message.tool_calls.length > 0 && (
+          <ToolCallList calls={message.tool_calls} />
+        )}
+
         <div
           className={cn(
             'text-sm text-foreground',
@@ -81,6 +87,10 @@ export function ChatMessageBubble({
             />
           )}
         </div>
+
+        {message.citations && message.citations.length > 0 && (
+          <CitationList citations={message.citations} />
+        )}
 
         <div className="flex items-center gap-2 min-h-[28px]">
           {message.status === 'complete' && message.content && (

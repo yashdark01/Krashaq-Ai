@@ -1,33 +1,19 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import UserList from '@/components/admin/UserList';
+import Link from 'next/link';
 
 export default function AdminUsersPage() {
-  const { isAdmin, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/auth/login');
-    } else if (!isLoading && isAuthenticated && !isAdmin()) {
-      router.push('/');
-    }
-  }, [isAuthenticated, isAdmin, isLoading, router]);
-
-  if (isLoading) {
-    return <div className="flex justify-center py-8">Loading...</div>;
-  }
-
-  if (!isAuthenticated || !isAdmin()) {
-    return null;
-  }
-
   return (
-    <div className="container mx-auto py-8">
+    <AdminPageShell>
+      <div className="mb-4 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+        Supplier accounts are managed separately.{' '}
+        <Link href="/admin/suppliers" className="text-primary underline">
+          Go to Suppliers →
+        </Link>
+      </div>
       <UserList />
-    </div>
+    </AdminPageShell>
   );
 }

@@ -1,6 +1,34 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/server/auth/rbac';
+import { changePassword } from '@/lib/server/auth/mfa-service';
+import { AuthError } from '@/lib/server/services/auth-service';
+import { parseBody } from '@/lib/server/validation/parse-body';
+import { z } from 'zod';
+import { passwordSchema } from '@/lib/server/validation/common';
 
-export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/auth/me/password');
+const schema = z.object({
+  current_password: z.string().min(1),
+  new_password: passwordSchema,
+});
+
+export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.success) return auth.response;
+
+  const parsed = await parseBody(request, schema);
+  if (!parsed.success) return parsed.response;
+
+  try {
+    const result = await changePassword(
+      auth.user.id,
+      parsed.data.current_password,
+      parsed.data.new_password
+    );
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ detail: error.message, code: error.code }, { status: error.status });
+    }
+    return NextResponse.json({ detail: 'Password change failed' }, { status: 500 });
+  }
 }

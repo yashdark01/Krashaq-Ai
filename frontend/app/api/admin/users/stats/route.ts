@@ -1,6 +1,11 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/rbac';
+import { getAdminAnalyticsStats } from '@/lib/server/services/admin-service';
 
 export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/admin/users/stats');
+  const auth = await requireAdmin(request);
+  if (!auth.success) return auth.response;
+
+  const stats = await getAdminAnalyticsStats();
+  return NextResponse.json(stats.users);
 }

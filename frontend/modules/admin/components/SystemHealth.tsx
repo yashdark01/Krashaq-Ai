@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
@@ -25,6 +26,7 @@ interface SystemHealthStatus {
 }
 
 export default function SystemHealth() {
+  const { fetchWithAuth } = useAuth();
   const [health, setHealth] = useState<SystemHealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,7 @@ export default function SystemHealth() {
 
   const fetchHealth = async () => {
     try {
-      const response = await fetch('/api/admin/health');
+      const response = await fetchWithAuth('/api/admin/health');
       if (response.ok) {
         const data = await response.json();
         setHealth(data);

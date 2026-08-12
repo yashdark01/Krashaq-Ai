@@ -7,19 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-
-interface ProfileData {
-  name: string;
-  email: string;
-  phone?: string;
-  default_location?: string;
-  location_details?: string;
-  [key: string]: unknown;
-}
+import { MfaSecuritySection } from '@/modules/auth/components/MfaSecuritySection';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 export default function ProfileSettingsPage() {
-  const { user: _user } = useAuth();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const { user, fetchWithAuth, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +21,6 @@ export default function ProfileSettingsPage() {
     name: '',
     phone: '',
     default_location: '',
-    location_details: '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -39,36 +30,15 @@ export default function ProfileSettingsPage() {
   });
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    if (user) {
+      setFormData({
+        name: user.name ?? '',
+        phone: '',
+        default_location: user.default_location ?? '',
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProfileData(data);
-        setFormData({
-          name: data.name || '',
-          phone: data.phone || '',
-          default_location: data.default_location || '',
-          location_details: data.location_details || '',
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile:', error);
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,21 +47,14 @@ export default function ProfileSettingsPage() {
     setIsSaving(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/auth/me`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      const response = await fetchWithAuth('/api/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setProfileData(data);
+        await refreshProfile();
         setSuccess('Profile updated successfully');
       } else {
         const errorData = await response.json();
@@ -114,23 +77,17 @@ export default function ProfileSettingsPage() {
       return;
     }
 
-    if (passwordData.new_password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (passwordData.new_password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
     setIsSaving(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/auth/me/password`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      const response = await fetchWithAuth('/api/auth/me/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           current_password: passwordData.current_password,
           new_password: passwordData.new_password,
@@ -157,86 +114,57 @@ export default function ProfileSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading settings...</p>
-        </div>
-      </div>
+      <ProtectedRoute>
+        <MainLayout>
+          <div className="flex justify-center py-16 text-muted-foreground">Loading settings…</div>
+        </MainLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
+      <ProtectedRoute>
+        <MainLayout>
+        <div className="krashaq-page-padding max-w-4xl mx-auto space-y-6">
+          <div>
+            <h1 className="text-2xl font-display font-bold">Settings</h1>
+            <p className="text-sm text-muted-foreground">Manage your profile, password, and security</p>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your personal details</CardDescription>
+                <CardTitle>Personal information</CardTitle>
+                <CardDescription>Update your name and default farm location</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name">Full name</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Your full name"
+                      required
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      value={profileData?.email || ''}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                    <Input id="email" value={user?.email ?? ''} disabled className="bg-muted" />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+91 XXXXX XXXXX"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="default_location">Default Location</Label>
+                    <Label htmlFor="default_location">Default location</Label>
                     <Input
                       id="default_location"
                       value={formData.default_location}
                       onChange={(e) =>
                         setFormData({ ...formData, default_location: e.target.value })
                       }
-                      placeholder="e.g., Delhi, Mumbai, Pune"
+                      placeholder="e.g. Bhopal, Madhya Pradesh"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="location_details">Location Details</Label>
-                    <Input
-                      id="location_details"
-                      value={formData.location_details}
-                      onChange={(e) =>
-                        setFormData({ ...formData, location_details: e.target.value })
-                      }
-                      placeholder="e.g., coordinates, district, state"
-                    />
-                  </div>
-
                   <Button type="submit" className="w-full" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    {isSaving ? 'Saving…' : 'Save changes'}
                   </Button>
                 </form>
               </CardContent>
@@ -244,13 +172,13 @@ export default function ProfileSettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>Update your password</CardDescription>
+                <CardTitle>Change password</CardTitle>
+                <CardDescription>Use a strong password you do not reuse elsewhere</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePasswordUpdate} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current_password">Current Password</Label>
+                    <Label htmlFor="current_password">Current password</Label>
                     <Input
                       id="current_password"
                       type="password"
@@ -259,12 +187,10 @@ export default function ProfileSettingsPage() {
                         setPasswordData({ ...passwordData, current_password: e.target.value })
                       }
                       required
-                      placeholder="Enter current password"
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="new_password">New Password</Label>
+                    <Label htmlFor="new_password">New password</Label>
                     <Input
                       id="new_password"
                       type="password"
@@ -273,12 +199,11 @@ export default function ProfileSettingsPage() {
                         setPasswordData({ ...passwordData, new_password: e.target.value })
                       }
                       required
-                      placeholder="Min 6 characters"
+                      minLength={8}
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="confirm_password">Confirm New Password</Label>
+                    <Label htmlFor="confirm_password">Confirm new password</Label>
                     <Input
                       id="confirm_password"
                       type="password"
@@ -287,37 +212,34 @@ export default function ProfileSettingsPage() {
                         setPasswordData({ ...passwordData, confirm_password: e.target.value })
                       }
                       required
-                      placeholder="Re-enter new password"
                     />
                   </div>
-
                   <Button type="submit" className="w-full" disabled={isSaving}>
-                    {isSaving ? 'Updating...' : 'Update Password'}
+                    {isSaving ? 'Updating…' : 'Update password'}
                   </Button>
                 </form>
               </CardContent>
             </Card>
           </div>
 
+          <MfaSecuritySection />
+
           {error && (
-            <div className="mt-6 p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-md">
+            <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
               {error}
             </div>
           )}
-
           {success && (
-            <div className="mt-6 p-4 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 rounded-md">
+            <div className="p-3 text-sm text-primary bg-primary/10 border border-primary/20 rounded-lg">
               {success}
             </div>
           )}
 
-          <div className="mt-6">
-            <Button variant="outline" onClick={() => (window.location.href = '/profile')}>
-              Back to Profile
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => (window.location.href = '/profile')}>
+            Back to profile
+          </Button>
         </div>
-      </div>
-    </ProtectedRoute>
+        </MainLayout>
+      </ProtectedRoute>
   );
 }

@@ -166,8 +166,8 @@ export default function SignupPage() {
     }
 
     // Validate password length
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -207,8 +207,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8">
-      <Card className="w-full max-w-4xl shadow-md animate-fade-in">
+    <div className="relative min-h-screen flex items-center justify-center bg-background p-4 py-8">
+      <div className="pointer-events-none absolute inset-0 krashaq-accent-glow" aria-hidden />
+      <Card className="relative w-full max-w-4xl shadow-md animate-fade-in border-border bg-card">
         <CardHeader className="text-center pb-2">
           <KrashaqLogo size="md" className="mb-2" />
           <CardTitle className="text-2xl font-display">Create your account</CardTitle>
@@ -252,7 +253,7 @@ export default function SignupPage() {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  placeholder="Min 6 characters"
+                  placeholder="Min 8 characters"
                 />
               </div>
 

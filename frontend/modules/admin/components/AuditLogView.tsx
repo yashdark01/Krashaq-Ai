@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ interface AuditLog {
 }
 
 export default function AuditLogView() {
+  const { fetchWithAuth } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,18 +31,11 @@ export default function AuditLogView() {
 
   const fetchLogs = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`${apiUrl}/api/admin/audit-logs`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetchWithAuth('/api/admin/audit-logs');
 
       if (response.ok) {
         const data = await response.json();
-        setLogs(data);
+        setLogs(Array.isArray(data) ? data : (data.items ?? []));
       }
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);

@@ -1,6 +1,12 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/rbac';
+import { getLangSmithStats } from '@/lib/server/services/langsmith-service';
 
 export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/llm/metrics');
+  const auth = await requireAdmin(request);
+  if (!auth.success) return auth.response;
+
+  const range = request.nextUrl.searchParams.get('range') ?? '7d';
+  const stats = await getLangSmithStats(range);
+  return NextResponse.json(stats);
 }

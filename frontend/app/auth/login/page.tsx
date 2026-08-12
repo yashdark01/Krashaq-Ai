@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { KrashaqLogo } from '@/modules/common/components/KrashaqLogo';
 
 export default function LoginPage() {
-  const { login, emailLogin } = useAuth();
+  const { login, emailLogin, verifyMfaLogin } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [loginMethod, setLoginMethod] = useState<'google' | 'email'>('google');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   useEffect(() => {
     // Check if we have a Google OAuth code in the URL
@@ -46,7 +48,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await emailLogin(email, password);
+      const challenge = await emailLogin(email, password);
+      if (challenge?.requires_2fa) {
+        setMfaToken(challenge.mfa_token);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
       setError(message);
@@ -55,9 +60,26 @@ export default function LoginPage() {
     }
   };
 
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaToken) return;
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      await verifyMfaLogin(mfaToken, mfaCode);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Verification failed. Please try again.';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-md animate-fade-in">
+    <div className="relative min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="pointer-events-none absolute inset-0 krashaq-accent-glow" aria-hidden />
+      <Card className="relative w-full max-w-md shadow-md animate-fade-in border-border bg-card">
         <CardHeader className="text-center pb-2">
           <KrashaqLogo size="md" className="mb-2" />
           <CardTitle className="text-2xl font-display sr-only">Welcome to Krashaq</CardTitle>
@@ -65,12 +87,12 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Login Method Toggle */}
-          <div className="flex rounded-md bg-muted p-1">
+          <div className="flex rounded-lg border border-border p-1">
             <button
               onClick={() => setLoginMethod('google')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 loginMethod === 'google'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-secondary text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -80,7 +102,7 @@ export default function LoginPage() {
               onClick={() => setLoginMethod('email')}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 loginMethod === 'email'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-secondary text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -110,6 +132,39 @@ export default function LoginPage() {
               </svg>
               Sign in with Google
             </Button>
+          ) : mfaToken ? (
+            <form onSubmit={handleMfaSubmit} className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Enter the 6-digit code from your authenticator app or a backup code.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="mfa-code">Verification code</Label>
+                <Input
+                  id="mfa-code"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  required
+                  placeholder="123456"
+                />
+              </div>
+              <Button type="submit" className="w-full" loading={isLoading} disabled={isLoading}>
+                Verify & sign in
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setMfaToken(null);
+                  setMfaCode('');
+                }}
+              >
+                Back to login
+              </Button>
+            </form>
           ) : (
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <div className="space-y-2">

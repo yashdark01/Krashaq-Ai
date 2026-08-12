@@ -1,5 +1,6 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { processChatStream } from '@/lib/server/services/chat';
+import { requireAuth } from '@/lib/server/auth/rbac';
 import type { StreamEvent } from '@/modules/conversation/types/message';
 
 function encodeSse(event: StreamEvent): Uint8Array {
@@ -7,6 +8,9 @@ function encodeSse(event: StreamEvent): Uint8Array {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.success) return auth.response;
+
   const body = await request.json();
   const signal = request.signal;
 
@@ -16,8 +20,9 @@ export async function POST(request: NextRequest) {
         for await (const event of processChatStream(
           {
             message: body.message,
+            user_id: auth.user.id,
+            user_role: auth.user.role,
             location: body.location,
-            phone: body.phone,
             session_id: body.session_id,
             language: body.language,
             provider: body.provider,
@@ -30,11 +35,18 @@ export async function POST(request: NextRequest) {
         controller.close();
       } catch (error) {
         console.error('Chat stream error:', error);
+        const message =
+          error instanceof Error && error.message === 'SESSION_NOT_FOUND'
+            ? 'Chat session not found'
+            : error instanceof Error
+              ? error.message
+              : 'Stream failed';
+        const status = error instanceof Error && error.message === 'SESSION_NOT_FOUND' ? 404 : 500;
         const errEvent: StreamEvent = {
           type: 'error',
-          code: 'STREAM_FAILED',
-          message: error instanceof Error ? error.message : 'Stream failed',
-          retryable: true,
+          code: status === 404 ? 'SESSION_NOT_FOUND' : 'STREAM_FAILED',
+          message,
+          retryable: status !== 404,
         };
         controller.enqueue(encodeSse(errEvent));
         controller.close();

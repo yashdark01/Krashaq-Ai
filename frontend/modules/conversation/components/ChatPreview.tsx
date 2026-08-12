@@ -17,7 +17,7 @@ const QUICK_ASKS = [
 
 export function ChatPreview({ location }: ChatPreviewProps) {
   return (
-    <Card variant="insight" className="border-l-brand-soil">
+    <Card variant="insight" className="border-l-primary">
       <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base font-display flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-primary" aria-hidden />

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setMessageFeedback } from '@/lib/server/services/chat-memory';
+import { requireAuth } from '@/lib/server/auth/rbac';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> }
 ) {
+  const auth = await requireAuth(request);
+  if (!auth.success) return auth.response;
+
   try {
     const { messageId } = await params;
     const body = await request.json();
@@ -15,7 +19,7 @@ export async function POST(
       return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
     }
 
-    const ok = await setMessageFeedback(sessionId, messageId, feedback);
+    const ok = await setMessageFeedback(auth.user.id, sessionId, messageId, feedback);
     if (!ok) {
       return NextResponse.json({ error: 'Message not found' }, { status: 404 });
     }

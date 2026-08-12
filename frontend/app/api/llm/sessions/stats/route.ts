@@ -1,6 +1,11 @@
-import { NextRequest } from 'next/server';
-import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/rbac';
+import { getLlmSessionStats } from '@/lib/server/services/chat-memory';
 
 export async function GET(request: NextRequest) {
-  return proxyToLegacyPython(request, '/api/llm/sessions/stats');
+  const auth = await requireAdmin(request);
+  if (!auth.success) return auth.response;
+
+  const stats = await getLlmSessionStats();
+  return NextResponse.json(stats);
 }

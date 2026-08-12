@@ -60,15 +60,15 @@ function ToastContainer() {
   const getToastColor = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return 'bg-green-500 text-white';
+        return 'bg-primary text-primary-foreground border border-primary/30';
       case 'error':
-        return 'bg-red-500 text-white';
+        return 'bg-destructive text-destructive-foreground border border-destructive/30';
       case 'warning':
-        return 'bg-yellow-500 text-white';
+        return 'bg-brand-clay/20 text-brand-clay border border-brand-clay/30';
       case 'info':
-        return 'bg-blue-500 text-white';
+        return 'bg-secondary text-foreground border border-border';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-secondary text-foreground border border-border';
     }
   };
 
