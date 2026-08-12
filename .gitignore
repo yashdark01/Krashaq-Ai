@@ -1,0 +1,24 @@
+# OS & IDE
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Python (local artifacts)
+.pytest_cache/
+__pycache__/
+
+# Node / Next.js
+node_modules/
+.next/
+.swc/
+tsconfig.tsbuildinfo
+out/
+
+# Env secrets
+.env
+.env.local
+.env.*.local
+
+# Test / coverage
+coverage/

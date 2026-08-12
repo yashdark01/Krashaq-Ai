@@ -46,36 +46,31 @@ flowchart TB
 
 ## Monolith vs legacy backend
 
-| Layer | Status | Location |
-|-------|--------|----------|
-| UI (dashboard, chat, auth pages) | ✅ Production | `frontend/app/` |
-| Chat, weather, auth, farmers API | ✅ Native Next.js | `frontend/app/api/` + `lib/server/` |
-| Multi-provider LLM | ✅ Native | `lib/server/llm/` |
-| Admin, messages, 2FA, locations | ⏳ Legacy proxy | `LEGACY_PYTHON_URL` → FastAPI |
-| WhatsApp webhooks | ⏳ Python only | `backend/app/routes/webhook.py` |
+| Layer                                   | Status            | Location                                                                         |
+| --------------------------------------- | ----------------- | -------------------------------------------------------------------------------- |
+| UI (dashboard, chat, auth pages)        | ✅ Production     | `src/app/`                                                                       |
+| Chat, weather, auth, farmers API        | ✅ Native Next.js | `src/app/api/` + `src/lib/server/`                                               |
+| Multi-provider LLM                      | ✅ Native         | `src/lib/server/llm/`                                                            |
+| Admin, suppliers, subscriptions, alerts | ✅ Native         | `src/app/api/`                                                                   |
+| WhatsApp webhooks                       | ❌ Not ported     | See [archive/PYTHON-BACKEND-REFERENCE.md](./archive/PYTHON-BACKEND-REFERENCE.md) |
 
-The **recommended production path** is the Next.js monolith on Vercel. The Python backend is optional during migration.
+The **production path** is the Next.js monolith on Vercel. Legacy Python was removed; recover from git tag `legacy/python-backend-v1` if needed.
 
 ## Frontend structure
 
 ```
-frontend/
+src/
 ├── app/                    # Next.js App Router
 │   ├── api/                # Serverless API (monolith backend)
 │   ├── auth/               # Login, signup, OAuth callback
 │   ├── admin/              # Admin dashboard pages
 │   └── page.tsx            # Farmer dashboard
 ├── modules/                # Feature modules
-│   ├── conversation/       # Chat UI + ModelSelector
-│   ├── admin/              # Admin components
-│   ├── auth/               # ProtectedRoute
-│   ├── farmers/            # FarmerForm
-│   └── common/             # Layout, weather, theme
-├── lib/
-│   ├── server/             # Server-only: DB, auth, LLM, services
-│   └── api/                # Browser HTTP client
+├── lib/server/             # Server-only: DB, auth, LLM, services
 ├── contexts/               # AuthContext, ToastContext
 └── components/ui/          # shadcn/ui primitives
+content/kb/                 # RAG corpus (repo root)
+scripts/                    # db:reset, kb:ingest, QA
 ```
 
 ## LLM architecture
@@ -95,11 +90,11 @@ Config: `LLM_PROVIDER`, `LLM_FALLBACK_CHAIN`, per-provider API keys — see [ENV
 
 ## Data model (MongoDB)
 
-| Collection | Purpose |
-|------------|---------|
-| `users` | Farmers, admins, suppliers |
-| `refresh_tokens` | JWT refresh token rotation |
-| `chat_sessions` | Conversation history by session_id |
+| Collection       | Purpose                            |
+| ---------------- | ---------------------------------- |
+| `users`          | Farmers, admins, suppliers         |
+| `refresh_tokens` | JWT refresh token rotation         |
+| `chat_sessions`  | Conversation history by session_id |
 
 ## Security considerations
 

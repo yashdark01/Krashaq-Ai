@@ -1,1 +1,0 @@
-"""Delivery module schemas."""
