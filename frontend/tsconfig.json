@@ -18,7 +18,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/components/ErrorBoundary": ["./modules/common/components/ErrorBoundary"],
+      "@/components/FarmerForm": ["./modules/farmers/components/FarmerForm"],
+      "@/components/admin/*": ["./modules/admin/components/*"],
+      "@/components/auth/*": ["./modules/auth/components/*"],
+      "@/components/chat/*": ["./modules/conversation/components/*"],
+      "@/components/dashboard/*": ["./modules/common/components/dashboard/*"],
+      "@/components/layout/*": ["./modules/common/components/layout/*"],
+      "@/components/theme/*": ["./modules/common/components/theme/*"]
     },
     "target": "ES2017"
   },

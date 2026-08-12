@@ -10,7 +10,10 @@ Krashaq Backend is a FastAPI-based REST API that powers the smart farming assist
 - **Database**: MongoDB (with PyMongo)
 - **ORM**: PyMongo (direct MongoDB access)
 - **Authentication**: JWT + Google OAuth 2.0
-- **LLM Integration**: Ollama (primary), Google Gemini (fallback), OpenAI, Claude, Grok
+- **LLM Integration**: Multi-provider support - Ollama (primary), Gemini, OpenAI, Claude, Grok (fallback)
+- Multi-agent system with specialist agents (weather, crop, irrigation, fertilizer)
+- Orchestrator agent for coordination
+- LangGraph for agent routing and orchestration
 - **Messaging**: Twilio WhatsApp API
 - **Speech-to-Text**: faster-whisper (local STT)
 - **Audio Processing**: ffmpeg (format conversion)
@@ -146,24 +149,30 @@ backend/
 
 ---
 
-### 4. Database (`db.py`)
+### 4. Database Module (`db/`)
 
-**Purpose**: Database connection and session management
+**Purpose**: MongoDB database connection and collection management
 
 **Features**:
-- SQLAlchemy engine configuration
-- Session factory for database transactions
-- Dependency injection for FastAPI routes
-- Support for SQLite and PostgreSQL
+- MongoDB connection via PyMongo
+- Connection pooling
+- Automatic reconnection
+- Database: krashaq
+
+**Collections**:
+- `users` - Web application users and farmers
+- `messages` - Chat history from WhatsApp and web
+- `refresh_tokens` - JWT refresh tokens
+- `audit_logs` - System audit logs
+- `scheduler_configs` - Background job configurations
 
 **Usage**:
 ```python
-from app.db import get_db
+from app.db import get_database
 
-@router.get("/endpoint")
-def endpoint(db: Session = Depends(get_db)):
-    # Use db for database operations
-    pass
+db = get_database()
+users_collection = db["users"]
+# Use collection for database operations
 ```
 
 ---
@@ -420,6 +429,10 @@ def endpoint(db: Session = Depends(get_db)):
 - `DELETE /api/admin/users/{id}` - Delete user
 - `GET /api/admin/audit-logs` - Get audit logs
 - `POST /api/admin/config` - Update system configuration
+- `GET /api/admin/analytics` - Get system analytics and metrics
+- `GET /api/admin/health` - Get system health status
+- `GET /api/admin/scheduler` - Get scheduler job configurations
+- `POST /api/admin/scheduler` - Update scheduler job
 - `POST /api/admin/jobs/{job_id}/pause` - Pause scheduled job
 - `POST /api/admin/jobs/{job_id}/resume` - Resume scheduled job
 
@@ -428,6 +441,8 @@ def endpoint(db: Session = Depends(get_db)):
 - Audit logging
 - System configuration management
 - Job control
+- System health monitoring
+- Analytics dashboard data
 
 ---
 
@@ -511,6 +526,7 @@ def endpoint(db: Session = Depends(get_db)):
 - Tool invocation
 - Response generation
 - Multi-agent system integration (default routing to orchestrator)
+- Session management via ChatMemory
 
 **Agent Router (`services/agent_router.py`)**
 - Routes queries to appropriate tools or agents
@@ -519,6 +535,7 @@ def endpoint(db: Session = Depends(get_db)):
 - Response aggregation
 - Multi-agent vs single-agent routing
 - Agent-specific metrics tracking
+- LangGraph StateGraph implementation
 
 ---
 
@@ -685,7 +702,7 @@ If the multi-agent system fails or no agents are enabled, the system automatical
 - Decision reasoning generation
 
 **Weather Service (`services/weather.py`)**
-- Fetches weather data from OpenWeatherMap
+- Fetches weather data from WeatherAPI.com
 - Formats weather for farmers
 - Location-based queries
 - Weather forecasting
@@ -848,7 +865,7 @@ uvicorn app.main:app --reload
 
 ### Database Migrations
 
-Currently using SQLAlchemy with auto-create. For production, consider using Alembic for migrations.
+Currently using MongoDB with PyMongo. For production, consider using MongoDB migration tools or custom migration scripts.
 
 ---
 
@@ -872,7 +889,7 @@ pytest app/
 Ensure all required environment variables are set in production.
 
 ### Database
-Consider using PostgreSQL for production instead of SQLite.
+MongoDB is used for all environments. For production, consider using MongoDB replica sets for high availability.
 
 ### Security
 - Use strong JWT secrets

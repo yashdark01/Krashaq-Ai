@@ -2,106 +2,121 @@
 
 ## Database Schema
 
-### Users Table
-```sql
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    password_hash VARCHAR(255),
-    google_id VARCHAR(255) UNIQUE,
-    phone VARCHAR(20),
-    default_location VARCHAR(100),
-    location_details TEXT,
-    state VARCHAR(100),
-    district VARCHAR(100),
-    tehsil VARCHAR(100),
-    locality VARCHAR(100),
-    pincode VARCHAR(10),
-    two_factor_enabled BOOLEAN DEFAULT FALSE,
-    two_factor_secret VARCHAR(255),
-    phone_verified BOOLEAN DEFAULT FALSE,
-    role VARCHAR(20) DEFAULT 'farmer',  -- admin, farmer, pestisides-supplier
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME
-);
+### Users Collection
+```javascript
+{
+  _id: ObjectId,
+  email: String (unique, required),
+  name: String (required),
+  password_hash: String,
+  google_id: String (unique),
+  phone: String,
+  role: String (default: 'farmer'),  // admin, farmer, pestisides-supplier
+  language: String (default: 'hi'),  // en, hi, hinglish
+  location: {
+    state: String,
+    district: String,
+    tehsil: String,
+    locality: String,
+    pincode: String
+  },
+  is_active: Boolean (default: true),
+  two_factor_enabled: Boolean (default: false),
+  two_factor_secret: String,
+  phone_verified: Boolean (default: false),
+  soil_moisture: Integer,  // Farmer-specific field (0-100)
+  crop: String,  // Farmer-specific field
+  created_at: DateTime,
+  updated_at: DateTime,
+  last_login: DateTime
+}
 ```
 
-### Farmers Table
-```sql
-CREATE TABLE farmers (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) UNIQUE NOT NULL,
-    location VARCHAR(100),
-    soil_moisture INTEGER,  -- Soil moisture percentage (0-100)
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+**Indexes:**
+- Unique index on `email`
+- Unique index on `google_id`
+- Index on `phone`
+- Index on `role`
+
+### Farmers Collection
+
+Farmers are stored in the `users` collection with role 'farmer'. Farmer-specific fields are embedded in the user document:
+- `soil_moisture`: Soil moisture percentage (0-100)
+- `crop`: Current crop being cultivated
+
+No separate farmers collection is maintained. All farmer data is part of the users collection.
+
+### Scheduler Configs Collection
+```javascript
+{
+  _id: ObjectId,
+  job_name: String (unique, required),
+  schedule_type: String (required),  // hourly, daily, interval
+  interval_hours: Integer,
+  interval_minutes: Integer,
+  hour: Integer,  // For daily schedules (0-23)
+  minute: Integer,  // For daily schedules (0-59)
+  enabled: Boolean (default: true),
+  last_run: DateTime,
+  next_run: DateTime,
+  created_at: DateTime,
+  updated_at: DateTime
+}
 ```
 
-### Scheduler Configs Table
-```sql
-CREATE TABLE scheduler_configs (
-    id INTEGER PRIMARY KEY,
-    job_name VARCHAR(100) UNIQUE NOT NULL,
-    schedule_type VARCHAR(20) NOT NULL,  -- hourly, daily, interval
-    interval_hours INTEGER,
-    interval_minutes INTEGER,
-    hour INTEGER,  -- For daily schedules (0-23)
-    minute INTEGER,  -- For daily schedules (0-59)
-    enabled BOOLEAN DEFAULT TRUE,
-    last_run DATETIME,
-    next_run DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+### Messages Collection
+```javascript
+{
+  _id: ObjectId,
+  farmer_id: ObjectId,
+  phone: String,
+  session_id: String,
+  message: String (required),
+  response: String,
+  language: String (default: 'hi'),  // en, hi, hinglish
+  tools_used: String,  // JSON string of tool names
+  llm_provider: String,  // ollama, gemini, openai, claude, grok
+  created_at: DateTime
+}
 ```
 
-### Messages Table
-```sql
-CREATE TABLE messages (
-    id INTEGER PRIMARY KEY,
-    farmer_id INTEGER,
-    phone VARCHAR(20),
-    session_id VARCHAR(50),
-    message TEXT NOT NULL,
-    response TEXT,
-    language VARCHAR(10),  -- en, hi, hinglish
-    tools_used TEXT,  -- JSON array of tool names
-    llm_provider VARCHAR(20),  -- ollama, gemini, openai, claude, grok
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+**Indexes:**
+- Index on `farmer_id`
+- Index on `phone`
+- Index on `session_id`
+- Index on `created_at` (for time-based queries)
+
+### Refresh Tokens Collection
+```javascript
+{
+  _id: ObjectId,
+  user_id: ObjectId (required),
+  token: String (unique, required),
+  expires_at: DateTime (required),
+  created_at: DateTime,
+  revoked: Boolean (default: false)
+}
 ```
 
-### Refresh Tokens Table
-```sql
-CREATE TABLE refresh_tokens (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    token VARCHAR(500) UNIQUE NOT NULL,
-    expires_at DATETIME NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    revoked BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+### Audit Logs Collection
+```javascript
+{
+  _id: ObjectId,
+  admin_user_id: ObjectId (required),
+  action: String (required),  // e.g., "user_role_changed", "user_deactivated", "config_updated"
+  target_type: String (required),  // e.g., "user", "config"
+  target_id: String,
+  details: String,  // JSON string with additional details
+  ip_address: String,
+  created_at: DateTime
+}
 ```
 
-### Audit Logs Table
-```sql
-CREATE TABLE audit_logs (
-    id INTEGER PRIMARY KEY,
-    admin_user_id INTEGER NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    target_type VARCHAR(50) NOT NULL,
-    target_id VARCHAR(100),
-    details TEXT,
-    ip_address VARCHAR(45),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (admin_user_id) REFERENCES users(id)
-);
-```
+**Indexes:**
+- Index on `admin_user_id`
+- Index on `action`
+- Index on `target_type`
+- Index on `created_at` (for time-based queries)
 
 ## Seeded Data
 
@@ -147,7 +162,11 @@ python scripts/seed_database.py
 
 ```bash
 cd backend
-rm krashaq.db
+# Connect to MongoDB and drop the database
+mongosh
+use krashaq
+db.dropDatabase()
+exit
 ```
 
 ## Environment Variables
@@ -155,12 +174,26 @@ rm krashaq.db
 The database is configured in `.env` file:
 
 ```
-DATABASE_URL=sqlite:///./krashaq.db
+MONGODB_URL=mongodb://localhost:27017/krashaq
+```
+
+For production, use MongoDB Atlas or a replica set:
+
+```
+MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/krashaq
 ```
 
 ## Important Notes
 
 - The test phone number **7987386670** is used for both admin and farmer user for testing purposes
 - The scheduler is configured to run every 1 minute for testing
-- All passwords are hashed using SHA-256 in the seed script
-- The database file is `krashaq.db` in the backend directory
+- All passwords are hashed using bcrypt in the seed script
+- The database name is `krashaq`
+- MongoDB is used for all environments (development and production)
+- Motor (async MongoDB driver) is used for async database operations
+- Connection pooling is enabled via Motor
+- Automatic reconnection is configured
+- Farmers are stored in the `users` collection with role 'farmer'
+- Farmer-specific fields (soil_moisture, crop) are embedded in user documents
+- Default language is 'hi' (Hindi) for all users
+- Role options: admin, farmer, pestisides-supplier

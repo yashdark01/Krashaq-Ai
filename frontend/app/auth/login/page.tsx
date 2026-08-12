@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { KrashaqLogo } from '@/modules/common/components/KrashaqLogo';
 
 export default function LoginPage() {
   const { login, emailLogin } = useAuth();
@@ -55,12 +56,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="text-6xl mb-4">🌾</div>
-          <CardTitle className="text-2xl">Welcome to Krashaq</CardTitle>
-          <CardDescription>Smart farming assistant with AI-powered insights</CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md shadow-md animate-fade-in">
+        <CardHeader className="text-center pb-2">
+          <KrashaqLogo size="md" className="mb-2" />
+          <CardTitle className="text-2xl font-display sr-only">Welcome to Krashaq</CardTitle>
+          <CardDescription>Sign in to access weather, irrigation advice, and AI chat</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Login Method Toggle */}
@@ -133,14 +134,17 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign in with Email'}
+              <Button type="submit" className="w-full" loading={isLoading} disabled={isLoading}>
+                Sign in with Email
               </Button>
             </form>
           )}
 
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-md">
+            <div
+              className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg"
+              role="alert"
+            >
               {error}
             </div>
           )}
@@ -152,7 +156,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => (window.location.href = '/auth/signup')}
-                  className="text-blue-600 hover:underline"
+                  className="text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                 >
                   Sign up with Email
                 </button>

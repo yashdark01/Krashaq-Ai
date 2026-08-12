@@ -16,7 +16,7 @@ from datetime import datetime
 
 
 def get_password_hash(password: str) -> str:
-    """Simple password hashing for dummy data."""
+    """Simple password hashing for dummy data (SHA256)."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 

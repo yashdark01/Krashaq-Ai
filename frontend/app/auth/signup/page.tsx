@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { KrashaqLogo } from '@/modules/common/components/KrashaqLogo';
+import { getBrowserApiBaseUrl } from '@/lib/api/base-url';
 
 interface LocationItem {
   id: string;
@@ -43,7 +45,7 @@ export default function SignupPage() {
   const [isLoadingTehsils, setIsLoadingTehsils] = useState(false);
   const [isLoadingLocalities, setIsLoadingLocalities] = useState(false);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  const apiBase = getBrowserApiBaseUrl();
 
   useEffect(() => {
     fetchStates();
@@ -51,7 +53,7 @@ export default function SignupPage() {
 
   const fetchStates = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/locations/states`);
+      const response = await fetch(`${apiBase}/api/locations/states`);
       if (response.ok) {
         const data = await response.json();
         setStates(data.states);
@@ -71,7 +73,7 @@ export default function SignupPage() {
     setIsLoadingDistricts(true);
     try {
       const response = await fetch(
-        `${apiUrl}/api/locations/districts?state=${encodeURIComponent(state)}`
+        `${apiBase}/api/locations/districts?state=${encodeURIComponent(state)}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -92,7 +94,7 @@ export default function SignupPage() {
     setIsLoadingTehsils(true);
     try {
       const response = await fetch(
-        `${apiUrl}/api/locations/tehsils?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}`
+        `${apiBase}/api/locations/tehsils?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -113,7 +115,7 @@ export default function SignupPage() {
     setIsLoadingLocalities(true);
     try {
       const response = await fetch(
-        `${apiUrl}/api/locations/localities?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&tehsil=${encodeURIComponent(tehsil)}`
+        `${apiBase}/api/locations/localities?state=${encodeURIComponent(state)}&district=${encodeURIComponent(district)}&tehsil=${encodeURIComponent(tehsil)}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -205,11 +207,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-4xl">
-        <CardHeader className="text-center">
-          <div className="text-6xl mb-4">🌾</div>
-          <CardTitle className="text-2xl">Create Your Account</CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8">
+      <Card className="w-full max-w-4xl shadow-md animate-fade-in">
+        <CardHeader className="text-center pb-2">
+          <KrashaqLogo size="md" className="mb-2" />
+          <CardTitle className="text-2xl font-display">Create your account</CardTitle>
           <CardDescription>Join Krashaq for AI-powered farming insights</CardDescription>
         </CardHeader>
         <CardContent>
@@ -373,13 +375,16 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-md">
+              <div
+                className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg"
+                role="alert"
+              >
                 {error}
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
+            <Button type="submit" className="w-full" size="lg" loading={isLoading} disabled={isLoading}>
+              Create account
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
@@ -387,7 +392,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => (window.location.href = '/auth/login')}
-                className="text-blue-600 hover:underline"
+                className="text-primary font-medium hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
                 Sign in with Google or Email
               </button>

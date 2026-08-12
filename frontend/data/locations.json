@@ -1,0 +1,134 @@
+{
+  "districts": [
+    {
+      "id": "mp-bhopal",
+      "name": "Bhopal",
+      "state": "Madhya Pradesh",
+      "district_code": "23",
+      "headquarters": "Bhopal",
+      "total_tehsils": 2,
+      "tehsils": [
+        {
+          "id": "mp-huzur",
+          "name": "Huzur",
+          "headquarters": "Bhopal",
+          "primary_pincode": "462001",
+          "localities": [
+            { "name": "Bhopal", "type": "City", "pincode": "462001" },
+            { "name": "Arera Colony", "type": "Colony", "pincode": "462016" },
+            { "name": "Kolar", "type": "Town", "pincode": "462042" }
+          ]
+        },
+        {
+          "id": "mp-berasia",
+          "name": "Berasia",
+          "headquarters": "Berasia",
+          "primary_pincode": "463106",
+          "localities": [
+            { "name": "Berasia", "type": "Town", "pincode": "463106" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mp-indore",
+      "name": "Indore",
+      "state": "Madhya Pradesh",
+      "district_code": "24",
+      "headquarters": "Indore",
+      "total_tehsils": 1,
+      "tehsils": [
+        {
+          "id": "mp-indore-huzur",
+          "name": "Indore",
+          "headquarters": "Indore",
+          "primary_pincode": "452001",
+          "localities": [
+            { "name": "Indore", "type": "City", "pincode": "452001" },
+            { "name": "Vijay Nagar", "type": "Area", "pincode": "452010" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dl-new-delhi",
+      "name": "New Delhi",
+      "state": "Delhi",
+      "district_code": "07",
+      "headquarters": "New Delhi",
+      "total_tehsils": 1,
+      "tehsils": [
+        {
+          "id": "dl-nd",
+          "name": "New Delhi",
+          "headquarters": "New Delhi",
+          "primary_pincode": "110001",
+          "localities": [
+            { "name": "Connaught Place", "type": "Area", "pincode": "110001" },
+            { "name": "Karol Bagh", "type": "Area", "pincode": "110005" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mh-mumbai",
+      "name": "Mumbai",
+      "state": "Maharashtra",
+      "district_code": "27",
+      "headquarters": "Mumbai",
+      "total_tehsils": 1,
+      "tehsils": [
+        {
+          "id": "mh-mumbai-city",
+          "name": "Mumbai City",
+          "headquarters": "Mumbai",
+          "primary_pincode": "400001",
+          "localities": [
+            { "name": "Fort", "type": "Area", "pincode": "400001" },
+            { "name": "Andheri", "type": "Suburb", "pincode": "400053" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "up-lucknow",
+      "name": "Lucknow",
+      "state": "Uttar Pradesh",
+      "district_code": "09",
+      "headquarters": "Lucknow",
+      "total_tehsils": 1,
+      "tehsils": [
+        {
+          "id": "up-lucknow-sadar",
+          "name": "Lucknow",
+          "headquarters": "Lucknow",
+          "primary_pincode": "226001",
+          "localities": [
+            { "name": "Hazratganj", "type": "Area", "pincode": "226001" },
+            { "name": "Gomti Nagar", "type": "Area", "pincode": "226010" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pb-ludhiana",
+      "name": "Ludhiana",
+      "state": "Punjab",
+      "district_code": "03",
+      "headquarters": "Ludhiana",
+      "total_tehsils": 1,
+      "tehsils": [
+        {
+          "id": "pb-ludhiana",
+          "name": "Ludhiana",
+          "headquarters": "Ludhiana",
+          "primary_pincode": "141001",
+          "localities": [
+            { "name": "Ludhiana", "type": "City", "pincode": "141001" },
+            { "name": "Model Town", "type": "Area", "pincode": "141002" }
+          ]
+        }
+      ]
+    }
+  ]
+}
