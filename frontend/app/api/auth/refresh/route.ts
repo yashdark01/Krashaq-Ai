@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { api } from '@/lib/api/client';
+import { refreshAccessToken } from '@/lib/server/services/auth-service';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const response = await api.post<unknown>('/api/auth/refresh', body);
-
-    return NextResponse.json(response.data);
+    const result = await refreshAccessToken(body.refresh_token);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error refreshing token:', error);
     return NextResponse.json(
-      { error: 'Failed to refresh token' },
-      { status: 500 }
+      { detail: error instanceof Error ? error.message : 'Invalid refresh token' },
+      { status: 401 }
     );
   }
 }

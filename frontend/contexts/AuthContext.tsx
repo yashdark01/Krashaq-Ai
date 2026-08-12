@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getBrowserApiBaseUrl } from '@/lib/api/base-url';
 
 interface User {
   id: number;
@@ -64,8 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${apiUrl}/api/auth/me`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -128,8 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (code: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${apiUrl}/api/auth/google/login`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/google/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
@@ -154,8 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const emailLogin = async (email: string, password: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${apiUrl}/api/auth/login/email`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/login/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -190,8 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (data: SignupData) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${apiUrl}/api/auth/signup`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -227,9 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (data: RegisterData) => {
     try {
       const _googleUser = JSON.parse(localStorage.getItem('google_user_info') || '{}');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -274,8 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       if (refreshToken) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-        await fetch(`${apiUrl}/api/auth/logout`, {
+        await fetch(`${getBrowserApiBaseUrl()}/api/auth/logout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: refreshToken }),
@@ -304,8 +298,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(`${apiUrl}/api/auth/refresh`, {
+      const response = await fetch(`${getBrowserApiBaseUrl()}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken }),

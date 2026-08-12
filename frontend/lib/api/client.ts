@@ -1,9 +1,11 @@
 /**
  * Centralized API Client for Krashaq Frontend
- * Handles all HTTP requests with interceptors, token injection, error handling, and retry logic
+ * Browser calls same-origin /api/* routes (Next.js monolith).
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+import { getBrowserApiBaseUrl } from '@/lib/api/base-url';
+
+const API_URL = getBrowserApiBaseUrl();
 
 export interface ApiRequestOptions extends Omit<RequestInit, 'cache'> {
   params?: Record<string, string>;
@@ -80,7 +82,15 @@ class ApiClient {
    * Build URL with query parameters
    */
   private buildUrl(endpoint: string, params?: Record<string, string>): string {
-    const url = new URL(`${this.baseURL}${endpoint}`);
+    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+    if (!this.baseURL) {
+      if (!params) return path;
+      const search = new URLSearchParams(params).toString();
+      return `${path}?${search}`;
+    }
+
+    const url = new URL(`${this.baseURL}${path}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         url.searchParams.append(key, value);
@@ -150,7 +160,10 @@ class ApiClient {
    * Prepare request with authentication and headers
    */
   private prepareRequest(options: ApiRequestOptions): ApiRequestOptions {
-    const headers = { ...this.defaultHeaders, ...options.headers };
+    const headers: Record<string, string> = {
+      ...this.defaultHeaders,
+      ...(options.headers as Record<string, string> | undefined),
+    };
 
     // Add authorization header if not skipped
     if (!options.skipAuth) {

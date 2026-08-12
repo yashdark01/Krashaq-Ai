@@ -1,16 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db.mongodb import connect_to_mongodb, close_mongodb_connection
-from app.routes import webhook, chat, user, auth, locations, admin
-from app.scheduler import start_scheduler, stop_scheduler
-from app.middleware.rate_limit import RateLimitMiddleware
-from app.middleware.validation import ValidationMiddleware
-from app.middleware.security import SecurityMiddleware
-from app.middleware.logging import LoggingMiddleware
-from app.utils.logging import setup_logging, get_logger
-from app.utils.sentry import init_sentry
-from app.config import get_settings
+from app.common.db.mongodb import connect_to_mongodb, close_mongodb_connection
+from app.conversation import routes as conversation_routes
+from app.conversation import routes_webhook as webhook_routes
+from app.farmers import routes as farmers_routes
+from app.auth import routes as auth_routes
+from app.locations import routes as locations_routes
+from app.admin import routes as admin_routes
+from app.scheduler.services.scheduler import start_scheduler, stop_scheduler
+from app.common.middleware.rate_limit import RateLimitMiddleware
+from app.common.middleware.validation import ValidationMiddleware
+from app.common.middleware.security import SecurityMiddleware
+from app.common.middleware.logging import LoggingMiddleware
+from app.common.utils.logging import setup_logging, get_logger
+from app.common.utils.sentry import init_sentry
+from app.common.config import get_settings
 
 # Setup structured logging
 setup_logging()
@@ -63,12 +68,12 @@ app.add_middleware(SecurityMiddleware)
 app.add_middleware(LoggingMiddleware)
 
 # Include routers
-app.include_router(webhook.router, tags=["WhatsApp Webhook"])
-app.include_router(chat.router, prefix="/api", tags=["Chat"])
-app.include_router(user.router, prefix="/api", tags=["Farmers"])
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(locations.router, prefix="/api/locations", tags=["Locations"])
-app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(webhook_routes.router, tags=["WhatsApp Webhook"])
+app.include_router(conversation_routes.router, prefix="/api", tags=["Chat"])
+app.include_router(farmers_routes.router, prefix="/api", tags=["Farmers"])
+app.include_router(auth_routes.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(locations_routes.router, prefix="/api/locations", tags=["Locations"])
+app.include_router(admin_routes.router, prefix="/api/admin", tags=["Admin"])
 
 
 @app.on_event("startup")

@@ -1,21 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { api } from '@/lib/api/client';
+import { NextRequest } from 'next/server';
+import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
-  try {
-    const response = await api.delete<unknown>(
-      `/api/llm/sessions/${params.sessionId}`
-    );
-
-    return NextResponse.json(response.data);
-  } catch (error) {
-    console.error('Error deleting LLM session:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete LLM session' },
-      { status: 500 }
-    );
-  }
+  const { sessionId } = await params;
+  return proxyToLegacyPython(request, `/api/llm/sessions/${sessionId}`);
 }

@@ -1,21 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { api } from '@/lib/api/client';
+import { NextRequest } from 'next/server';
+import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { configId: string } }
+  { params }: { params: Promise<{ configId: string }> }
 ) {
-  try {
-    const response = await api.post<unknown>(
-      `/api/admin/scheduler/configs/${params.configId}/trigger`
-    );
-
-    return NextResponse.json(response.data);
-  } catch (error) {
-    console.error('Error triggering scheduler job:', error);
-    return NextResponse.json(
-      { error: 'Failed to trigger scheduler job' },
-      { status: 500 }
-    );
-  }
+  const { configId } = await params;
+  return proxyToLegacyPython(request, `/api/admin/scheduler/configs/${configId}/trigger`);
 }

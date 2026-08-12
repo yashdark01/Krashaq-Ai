@@ -1,17 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { api } from '@/lib/api/client';
+import { NextRequest } from 'next/server';
+import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
 
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const response = await api.put<unknown>('/api/auth/me/password', body);
-
-    return NextResponse.json(response.data);
-  } catch (error) {
-    console.error('Error updating password:', error);
-    return NextResponse.json(
-      { error: 'Failed to update password' },
-      { status: 500 }
-    );
-  }
+export async function GET(request: NextRequest) {
+  return proxyToLegacyPython(request, '/api/auth/me/password');
 }

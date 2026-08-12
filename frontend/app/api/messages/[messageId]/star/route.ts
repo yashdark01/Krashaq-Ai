@@ -1,21 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { api } from '@/lib/api/client';
+import { NextRequest } from 'next/server';
+import { proxyToLegacyPython } from '@/lib/server/proxy/legacy-python';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { messageId: string } }
+  { params }: { params: Promise<{ messageId: string }> }
 ) {
-  try {
-    const response = await api.post<unknown>(
-      `/api/messages/${params.messageId}/star`
-    );
-
-    return NextResponse.json(response.data);
-  } catch (error) {
-    console.error('Error starring message:', error);
-    return NextResponse.json(
-      { error: 'Failed to star message' },
-      { status: 500 }
-    );
-  }
+  const { messageId } = await params;
+  return proxyToLegacyPython(request, `/api/messages/${messageId}/star`);
 }
