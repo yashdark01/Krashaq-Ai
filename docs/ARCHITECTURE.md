@@ -46,12 +46,12 @@ flowchart TB
 
 ## Monolith vs legacy backend
 
-| Layer                                   | Status            | Location                           |
-| --------------------------------------- | ----------------- | ---------------------------------- |
-| UI (dashboard, chat, auth pages)        | ✅ Production     | `src/app/`                         |
-| Chat, weather, auth, farmers API        | ✅ Native Next.js | `src/app/api/` + `src/lib/server/` |
-| Multi-provider LLM                      | ✅ Native         | `src/lib/server/llm/`              |
-| Admin, suppliers, subscriptions, alerts | ✅ Native         | `src/app/api/`                     |
+| Layer                                   | Status            | Location                                                                         |
+| --------------------------------------- | ----------------- | -------------------------------------------------------------------------------- |
+| UI (dashboard, chat, auth pages)        | ✅ Production     | `src/app/`                                                                       |
+| Chat, weather, auth, farmers API        | ✅ Native Next.js | `src/app/api/` + `src/lib/server/`                                               |
+| Multi-provider LLM                      | ✅ Native         | `src/lib/server/llm/`                                                            |
+| Admin, suppliers, subscriptions, alerts | ✅ Native         | `src/app/api/`                                                                   |
 | WhatsApp webhooks                       | ❌ Not ported     | See [archive/PYTHON-BACKEND-REFERENCE.md](./archive/PYTHON-BACKEND-REFERENCE.md) |
 
 The **production path** is the Next.js monolith on Vercel. Legacy Python was removed; recover from git tag `legacy/python-backend-v1` if needed.
