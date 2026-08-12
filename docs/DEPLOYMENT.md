@@ -1,112 +1,158 @@
-# Deployment Guide — Vercel Production
+# Deployment Guide — Manual (Vercel)
 
-Deploy the **Krashaq Next.js monolith** from the **repository root** (`src/` layout).
+Deploy Krashaq **manually** from the repo root. No GitHub Actions auto-deploy required.
 
-## Prerequisites
+**Prerequisites:** [Vercel](https://vercel.com) account · [MongoDB Atlas](https://www.mongodb.com/atlas) · Groq API key
 
-- GitHub repo: `yashdark01/Krashaq-Ai`
-- [Vercel](https://vercel.com) account
-- [MongoDB Atlas](https://www.mongodb.com/atlas) cluster
-- API keys: Groq (required), WeatherAPI (recommended)
+---
 
-## 1. MongoDB Atlas
+## Option 1 — Vercel Dashboard (easiest)
 
-1. Create a free M0 cluster (region: Mumbai / AWS ap-south-1).
-2. Database Access → create user with read/write.
-3. Network Access → allow `0.0.0.0/0` (or Vercel IP ranges).
+### Step 1 · MongoDB Atlas
+
+1. Create M0 cluster (Mumbai / `ap-south-1`).
+2. **Database Access** → user with read/write.
+3. **Network Access** → allow `0.0.0.0/0`.
 4. Copy connection string:
    ```
-   mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/krashaq_ai
+   mongodb+srv://USER:PASSWORD@cluster.mongodb.net/krashaq_ai
    ```
 
-## 2. Vercel project setup
+### Step 2 · Import project
 
-### Option A — Vercel Dashboard (recommended)
+1. Open [vercel.com/new](https://vercel.com/new).
+2. Import **`yashdark01/Krashaq-Ai`** from GitHub.
+3. Settings:
+   - **Root Directory:** leave **empty** (repo root)
+   - **Framework:** Next.js
+   - **Build Command:** `npm run build`
+   - **Install Command:** `npm ci`
+4. Add **Environment Variables** (Production) — see [table below](#required-env-vars).
+5. Click **Deploy**.
 
-1. [Import project](https://vercel.com/new) from GitHub `Krashaq-Ai`.
-2. **Root Directory:** `.` (leave empty — repo root)
-3. **Framework Preset:** Next.js
-4. Add environment variables (see [ENVIRONMENT.md](./ENVIRONMENT.md)).
-5. Deploy.
+### Step 3 · After first deploy
 
-### Option B — Vercel CLI
+1. Copy your URL (e.g. `https://krashaq-agritech.vercel.app`).
+2. Update in Vercel env:
+   - `NEXT_PUBLIC_GOOGLE_REDIRECT_URI` → `https://YOUR-URL/auth/callback`
+3. **Redeploy** (Deployments → ⋯ → Redeploy).
+
+---
+
+## Option 2 — Vercel CLI (manual from terminal)
+
+Run these from the **repo root** (where `package.json` is):
 
 ```bash
+npm install
+npm run build          # verify build locally first
 npx vercel login
-npx vercel link
-npx vercel env pull .env.vercel.local
+npx vercel link        # link to existing project or create new
+```
+
+Add production secrets (repeat for each variable):
+
+```bash
+npx vercel env add MONGODB_URL production
+npx vercel env add JWT_SECRET_KEY production
+npx vercel env add GROQ_API_KEY production
+# ... see ENVIRONMENT.md for full list
+```
+
+Deploy:
+
+```bash
 npx vercel --prod
 ```
 
-## 3. Required environment variables
+---
 
-Set in **Project → Settings → Environment Variables** (Production):
+## Option 3 · Self-host (Node server)
 
-| Variable                          | Required    | Notes                                       |
-| --------------------------------- | ----------- | ------------------------------------------- |
-| `MONGODB_URL`                     | ✅          | Atlas connection string                     |
-| `MONGODB_DB`                      | ✅          | e.g. `krashaq_ai`                           |
-| `JWT_SECRET_KEY`                  | ✅          | `openssl rand -hex 32`                      |
-| `GROQ_API_KEY`                    | ✅          | Default LLM                                 |
-| `LLM_PROVIDER`                    | ✅          | `groq`                                      |
-| `WEATHER_API_KEY`                 | Recommended | WeatherAPI.com                              |
-| `CRON_SECRET`                     | Recommended | Auth for `/api/cron/alerts`                 |
-| `USE_LANGGRAPH_AGENT`             | Optional    | `true` for LangGraph agent                  |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | For OAuth   | Google Cloud Console                        |
-| `NEXT_PUBLIC_GOOGLE_REDIRECT_URI` | For OAuth   | `https://your-app.vercel.app/auth/callback` |
+From repo root:
 
-**Do not set** `NEXT_PUBLIC_API_URL` — the app uses same-origin `/api/*`.
+```bash
+npm ci
+cp .env.example .env.local   # fill production values
+npm run build
+npm start                    # listens on :3000
+```
 
-## 4. Google OAuth (production)
+Use PM2, Docker, or a VPS reverse proxy (nginx) in front of port 3000.
+
+---
+
+## Required env vars
+
+| Variable                          | Required    | Example / notes                                   |
+| --------------------------------- | ----------- | ------------------------------------------------- |
+| `MONGODB_URL`                     | ✅          | Atlas connection string                           |
+| `MONGODB_DB`                      | ✅          | `krashaq_ai`                                      |
+| `JWT_SECRET_KEY`                  | ✅          | `openssl rand -hex 32`                            |
+| `GROQ_API_KEY`                    | ✅          | From [console.groq.com](https://console.groq.com) |
+| `LLM_PROVIDER`                    | ✅          | `groq`                                            |
+| `WEATHER_API_KEY`                 | Recommended | [weatherapi.com](https://www.weatherapi.com/)     |
+| `CRON_SECRET`                     | Recommended | Random string for `/api/cron/alerts`              |
+| `USE_LANGGRAPH_AGENT`             | Optional    | `true`                                            |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`    | OAuth       | Google Cloud Console                              |
+| `NEXT_PUBLIC_GOOGLE_REDIRECT_URI` | OAuth       | `https://your-app.vercel.app/auth/callback`       |
+
+Full list: [ENVIRONMENT.md](./ENVIRONMENT.md)
+
+**Do not set** `NEXT_PUBLIC_API_URL` — app uses same-origin `/api/*`.
+
+---
+
+## Google OAuth (production)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → OAuth 2.0 Client.
-2. Authorized JavaScript origins: `https://your-app.vercel.app`
-3. Authorized redirect URIs: `https://your-app.vercel.app/auth/callback`
-4. Set env vars in Vercel.
+2. **Authorized JavaScript origins:** `https://your-app.vercel.app`
+3. **Authorized redirect URIs:** `https://your-app.vercel.app/auth/callback`
+4. Set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and redirect URI in Vercel env → Redeploy.
 
-## 5. CI/CD — GitHub Actions
+---
 
-Repository secrets:
+## Cron (alert delivery)
 
-| Secret              | Source                     |
-| ------------------- | -------------------------- |
-| `VERCEL_TOKEN`      | Vercel → Settings → Tokens |
-| `VERCEL_ORG_ID`     | Project Settings → General |
-| `VERCEL_PROJECT_ID` | Project Settings → General |
+`vercel.json` registers hourly cron → `POST /api/cron/alerts`.
 
-Push to `main` triggers `.github/workflows/deploy-vercel.yml`.
+1. Set `CRON_SECRET` in Vercel env.
+2. After deploy, check **Vercel → Project → Cron Jobs** for successful runs.
 
-## 6. Post-deploy checklist
+---
+
+## Post-deploy checklist
 
 - [ ] Homepage loads
-- [ ] Sign up / login (MongoDB connected)
-- [ ] Chat streams AI response (Groq key valid)
-- [ ] Weather card loads
-- [ ] Admin `/admin/suppliers` accessible
-- [ ] Cron: `/api/cron/alerts` runs hourly (check Vercel cron logs)
-- [ ] JWT secret is unique (not dev default)
+- [ ] Sign up / login works
+- [ ] Chat returns AI response
+- [ ] Weather loads on dashboard
+- [ ] Admin `/admin/suppliers` works
+- [ ] Cron runs (Vercel cron logs)
+- [ ] `JWT_SECRET_KEY` is not the dev default
 
-## 7. Custom domain
-
-Vercel → Project → Domains → add your domain.
-
-Update `NEXT_PUBLIC_GOOGLE_REDIRECT_URI` and Google OAuth authorized URLs.
-
-## 8. Optional: Redis (Upstash)
-
-1. Create [Upstash Redis](https://upstash.com/) database.
-2. Set `REDIS_URL` in Vercel env.
-3. Improves weather caching across serverless instances.
+---
 
 ## Troubleshooting
 
-| Issue                         | Fix                                               |
-| ----------------------------- | ------------------------------------------------- |
-| Chat returns "not configured" | Check `GROQ_API_KEY`, redeploy                    |
-| Auth 500 errors               | Verify `MONGODB_URL`, Atlas IP whitelist          |
-| Build fails                   | Root directory must be repo root (not `frontend`) |
-| Function timeout on chat      | `vercel.json` sets 60s for chat route             |
-| Cron 401                      | Set `CRON_SECRET` in Vercel env                   |
+| Issue                 | Fix                                               |
+| --------------------- | ------------------------------------------------- |
+| Build fails           | Root directory must be repo root (not `frontend`) |
+| Auth 500              | Check `MONGODB_URL`, Atlas IP whitelist           |
+| Chat "not configured" | Set `GROQ_API_KEY`, redeploy                      |
+| Cron 401              | Set `CRON_SECRET`                                 |
+| Chat timeout          | `vercel.json` allows 60s for chat route           |
+
+---
+
+## Optional · GitHub Actions deploy
+
+Auto-deploy is **off by default**. To deploy from GitHub Actions manually:
+
+1. Add secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+2. GitHub → **Actions** → **Deploy to Vercel** → **Run workflow**
+
+---
 
 ## Live URLs
 

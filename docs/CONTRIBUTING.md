@@ -6,7 +6,6 @@ Thank you for contributing. This project follows standard open-source practices.
 
 ```bash
 git clone git@github.com:yashdark01/Krashaq-Ai.git
-cd Krashaq-Ai
 cp .env.example .env.local
 # Fill in MONGODB_URL, GROQ_API_KEY, JWT_SECRET_KEY, WEATHER_API_KEY
 npm install
