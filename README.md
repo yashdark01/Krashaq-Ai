@@ -1,6 +1,6 @@
 # Krashaq
 
-**AI-powered smart farming assistant for Indian farmers** — weather, irrigation advice, multilingual chat, and farmer management.
+**AI-powered smart farming platform for Indian farmers** — multilingual chat with RAG, weather, irrigation, supplier licensing, and farmer subscriptions.
 
 [![CI](https://github.com/yashdark01/Krashaq-Ai/actions/workflows/ci.yml/badge.svg)](https://github.com/yashdark01/Krashaq-Ai/actions/workflows/ci.yml)
 [![Deploy](https://github.com/yashdark01/Krashaq-Ai/actions/workflows/deploy-vercel.yml/badge.svg)](https://github.com/yashdark01/Krashaq-Ai/actions/workflows/deploy-vercel.yml)
@@ -8,104 +8,91 @@
 
 ---
 
-## Features
+## What it does
 
-- **Multilingual AI chat** — Hindi, English, Hinglish (Groq, OpenAI, Claude, Gemini, and more)
-- **Live weather & irrigation advice** — WeatherAPI.com + rule-based recommendations
-- **Farmer dashboard** — location-aware insights and chat
-- **Email authentication** — JWT with refresh tokens
-- **Admin dashboard** — users, analytics, audit logs (legacy bridge or full port)
-- **Model picker** — switch LLM provider/model from the chat UI
+| Role         | Capabilities                                                           |
+| ------------ | ---------------------------------------------------------------------- |
+| **Farmer**   | AI chat (Hindi/English/Hinglish), weather, notifications, subscription |
+| **Supplier** | Manage farmers, issue subscriptions, alerts, usage analytics           |
+| **Admin**    | Onboard suppliers, licenses, LLM analytics, scheduler, audit           |
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|------------|
-| App | Next.js 16, TypeScript, Tailwind CSS, shadcn/ui |
-| API | Next.js Route Handlers (monolith) |
-| Database | MongoDB Atlas |
-| Cache | Redis / Upstash (optional) |
-| LLM | LangChain — Groq, OpenAI, Anthropic, Gemini, xAI, DeepSeek, Mistral, Ollama |
-| Deploy | Vercel (Mumbai region) |
-| CI/CD | GitHub Actions |
-| Legacy | Archived FastAPI at `archive/backend/` (reference only) |
+Next.js 16 · TypeScript · MongoDB · LangGraph · Tailwind · shadcn/ui · Vercel (Mumbai)
 
 ## Quick start
 
 ```bash
 git clone git@github.com:yashdark01/Krashaq-Ai.git
-cd Krashaq-Ai/frontend
+cd Krashaq-Ai
 cp .env.example .env.local
 # Edit .env.local — see docs/ENVIRONMENT.md
 npm install
+npm run db:reset    # optional: demo users + KB corpus
 npm run dev
 ```
 
 Open **http://localhost:3000**
 
-> Requires MongoDB running locally or a MongoDB Atlas connection string.
+**Demo logins** (after `db:reset`):
 
-## Production deploy (Vercel)
-
-1. Import repo on [Vercel](https://vercel.com/new) — **root directory: `frontend`**
-2. Add env vars from [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)
-3. Deploy
-
-Full guide: **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)**
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Architecture](./docs/ARCHITECTURE.md) | System design, monolith vs legacy |
-| [Deployment](./docs/DEPLOYMENT.md) | Vercel, MongoDB Atlas, CI/CD secrets |
-| [Environment](./docs/ENVIRONMENT.md) | All env variables |
-| [API Reference](./docs/API.md) | REST endpoints |
-| [Contributing](./docs/CONTRIBUTING.md) | Dev workflow, PR checklist |
-| [Monolith notes](./frontend/MONOLITH.md) | Migration status |
+| Role     | Email                | Password       |
+| -------- | -------------------- | -------------- |
+| Admin    | admin@krashaq.dev    | Admin@12345    |
+| Supplier | supplier@krashaq.dev | Supplier@12345 |
+| Farmer   | farmer@krashaq.dev   | Farmer@12345   |
 
 ## Project structure
 
 ```
 Krashaq-Ai/
-├── frontend/          # ← Production app (Next.js monolith)
-│   ├── app/           # Pages + API routes
-│   ├── lib/server/    # MongoDB, JWT, LLM, services
-│   └── modules/       # Feature UI components
-├── archive/
-│   └── backend/       # Legacy FastAPI (reference only, not deployed)
-├── docs/              # Documentation
-└── .github/workflows/ # CI + Vercel deploy
+├── src/
+│   ├── app/              # Pages + API routes (App Router)
+│   ├── lib/server/       # MongoDB, JWT, LLM, RAG, agents
+│   ├── modules/          # Feature UI (admin, chat, supplier…)
+│   ├── components/       # shadcn/ui primitives
+│   ├── contexts/         # React contexts
+│   └── types/
+├── content/kb/           # RAG markdown corpus
+├── scripts/              # db:reset, kb:ingest, QA, alerts
+├── __tests__/            # Jest unit tests
+└── docs/                 # Documentation
 ```
 
-## API overview
-
-| Endpoint | Description |
-|----------|-------------|
-| `POST /api/chat` | AI chat with weather/irrigation tools |
-| `GET /api/weather?city=` | Current weather |
-| `POST /api/auth/signup` | Register |
-| `POST /api/auth/login/email` | Login |
-| `GET /api/llm/providers` | Available LLM providers/models |
-| `GET/POST /api/farmers` | Farmer CRUD |
-
-See [docs/API.md](./docs/API.md) for full reference.
-
-## Scripts (frontend)
+## Scripts
 
 ```bash
-npm run dev          # Development server
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # ESLint
-npm run test:ci      # Jest unit tests
+npm run dev            # Dev server (localhost:3000)
+npm run build          # Production build
+npm run test           # Jest tests
+npm run db:reset       # Seed demo data
+npm run kb:ingest      # Ingest content/kb → MongoDB
+npm run alerts:run     # Run alert delivery locally
+npm run qa:roles       # Role audit (server must be running)
+npm run qa:suppliers   # Supplier E2E audit
 ```
+
+## Deploy
+
+1. Import repo on [Vercel](https://vercel.com/new)
+2. **Root directory:** `.` (repo root — not a subfolder)
+3. Add env vars from [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)
+4. Deploy
+
+Full guide: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+
+## Documentation
+
+| Doc                                            | Description         |
+| ---------------------------------------------- | ------------------- |
+| [docs/README.md](./docs/README.md)             | Documentation index |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System design       |
+| [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)     | Vercel + CI/CD      |
+| [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)   | Env variables       |
+| [docs/API.md](./docs/API.md)                   | REST API reference  |
+| [docs/PHASE.md](./docs/PHASE.md)               | Feature tracker     |
+| [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Dev workflow        |
 
 ## License
 
 MIT © [Yash Patidar](https://github.com/yashdark01)
-
-## Links
-
-- **Live:** https://krashaq-agritech.vercel.app
-- **GitHub:** https://github.com/yashdark01/Krashaq-Ai

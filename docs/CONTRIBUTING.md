@@ -6,7 +6,7 @@ Thank you for contributing. This project follows standard open-source practices.
 
 ```bash
 git clone git@github.com:yashdark01/Krashaq-Ai.git
-cd Krashaq-Ai/frontend
+cd Krashaq-Ai
 cp .env.example .env.local
 # Fill in MONGODB_URL, GROQ_API_KEY, JWT_SECRET_KEY, WEATHER_API_KEY
 npm install
@@ -17,17 +17,16 @@ Open http://localhost:3000
 
 ## Branch strategy
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Production-ready; auto-deploys to Vercel |
-| `develop` | Integration branch |
-| `feat/*` | New features |
-| `fix/*` | Bug fixes |
+| Branch    | Purpose                                  |
+| --------- | ---------------------------------------- |
+| `main`    | Production-ready; auto-deploys to Vercel |
+| `develop` | Integration branch                       |
+| `feat/*`  | New features                             |
+| `fix/*`   | Bug fixes                                |
 
 ## Before opening a PR
 
 ```bash
-cd frontend
 npm run lint
 npm run format:fix    # if format check fails
 npm run test:ci
@@ -38,7 +37,7 @@ npm run build
 
 - TypeScript strict mode
 - ESLint + Prettier (run `npm run lint:fix` and `npm run format:fix`)
-- Server logic in `lib/server/` — never import from client components
+- Server logic in `src/lib/server/` — never import from client components
 - API routes stay thin; business logic in services
 
 ## Commit messages
@@ -54,10 +53,10 @@ ci: add production deploy workflow
 
 ## Project layout for new features
 
-1. **API route** → `frontend/app/api/<feature>/route.ts`
-2. **Service** → `frontend/lib/server/services/<feature>.ts`
-3. **UI** → `frontend/modules/<domain>/components/`
-4. **Types** → `frontend/types/`
+1. **API route** → `src/app/api/<feature>/route.ts`
+2. **Service** → `src/lib/server/services/<feature>.ts`
+3. **UI** → `src/modules/<domain>/components/`
+4. **Types** → `src/types/`
 
 ## Security
 

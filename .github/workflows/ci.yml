@@ -14,12 +14,9 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  frontend:
-    name: Frontend — lint, test, build
+  app:
+    name: App — lint, test, build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +26,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -48,7 +45,6 @@ jobs:
 
       - name: Production build
         env:
-          # Stub secrets so build/type-check succeeds in CI (not used at runtime)
           GROQ_API_KEY: ci-stub-key
           MONGODB_URL: mongodb://127.0.0.1:27017
           MONGODB_DB: krashaq_ci
@@ -59,9 +55,6 @@ jobs:
   security:
     name: Dependency audit
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +63,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - run: npm ci
 

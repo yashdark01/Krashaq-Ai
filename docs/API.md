@@ -3,7 +3,9 @@
 Base URL (production): `https://krashaq-agritech.vercel.app`  
 Base URL (local): `http://localhost:3000`
 
-All routes are same-origin in the Next.js monolith unless `LEGACY_PYTHON_URL` is configured.
+All routes are same-origin in the Next.js monolith at `src/app/api/`.
+
+**Auth:** Most routes require `Authorization: Bearer <access_token>`.
 
 ---
 
@@ -11,34 +13,22 @@ All routes are same-origin in the Next.js monolith unless `LEGACY_PYTHON_URL` is
 
 ### `POST /api/chat`
 
-AI farming assistant with optional weather/irrigation context.
+Non-streaming AI farming assistant.
 
-**Request body:**
+### `POST /api/chat/stream`
+
+SSE streaming chat with tool events, citations, and tokens.
+
+**Request body (both):**
 
 ```json
 {
   "message": "Delhi ka mausam kaisa hai?",
   "location": "Delhi",
   "session_id": "optional-uuid",
-  "phone": "+919876543210",
   "language": "hi",
   "provider": "groq",
   "model": "llama-3.3-70b-versatile"
-}
-```
-
-**Response:**
-
-```json
-{
-  "reply": "...",
-  "session_id": "uuid",
-  "language": "hi",
-  "tools_used": ["fetch_weather"],
-  "detected_crop": null,
-  "llm_provider": "groq",
-  "llm_model": "llama-3.3-70b-versatile",
-  "weather": { "city": "Delhi", "temp": 32, "success": true }
 }
 ```
 
@@ -48,43 +38,74 @@ AI farming assistant with optional weather/irrigation context.
 
 ### `GET /api/weather?city=Delhi`
 
-Returns current weather from WeatherAPI.com (cached ~20 min).
+Current weather via WeatherAPI.com (cached).
 
 ---
 
-## Authentication
+## Auth
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/signup` | Register with email/password |
-| POST | `/api/auth/login/email` | Email login |
-| POST | `/api/auth/register` | Complete Google OAuth registration |
-| GET | `/api/auth/me` | Current user (Bearer token) |
-| POST | `/api/auth/refresh` | Refresh access token |
-| POST | `/api/auth/logout` | Revoke refresh token |
+| Method | Path                    | Description          |
+| ------ | ----------------------- | -------------------- |
+| POST   | `/api/auth/signup`      | Register             |
+| POST   | `/api/auth/login/email` | Email login          |
+| POST   | `/api/auth/refresh`     | Refresh access token |
+| GET    | `/api/auth/me`          | Current user         |
+| POST   | `/api/auth/logout`      | Logout               |
 
-**Login response:**
-
-```json
-{
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "user": { "id": "...", "email": "...", "role": "farmer" }
-}
-```
+MFA routes under `/api/auth/mfa/*`.
 
 ---
 
 ## Farmers
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/farmers?skip=0&limit=50` | List farmers |
-| POST | `/api/farmers` | Create farmer |
-| GET | `/api/farmers/{id}` | Get by ID |
-| PUT | `/api/farmers/{id}` | Update |
-| DELETE | `/api/farmers/{id}` | Delete |
-| GET | `/api/farmers/phone/{phone}` | Lookup by phone |
+| Method           | Path                | Description           |
+| ---------------- | ------------------- | --------------------- |
+| GET/POST         | `/api/farmers`      | List / create farmers |
+| GET/PATCH/DELETE | `/api/farmers/[id]` | CRUD                  |
+
+Supplier-scoped when logged in as supplier.
+
+---
+
+## Admin
+
+| Method    | Path                        | Description             |
+| --------- | --------------------------- | ----------------------- |
+| GET       | `/api/admin/dashboard`      | Live stats              |
+| GET/POST  | `/api/admin/suppliers`      | Supplier list / onboard |
+| GET/PATCH | `/api/admin/suppliers/[id]` | Detail, suspend, renew  |
+| GET       | `/api/admin/analytics/llm`  | LangSmith KPIs          |
+| GET       | `/api/admin/config`         | Env config status       |
+| POST      | `/api/admin/alerts/run`     | Manual alert run        |
+
+---
+
+## Supplier
+
+| Method   | Path                                      | Description         |
+| -------- | ----------------------------------------- | ------------------- |
+| GET      | `/api/supplier/dashboard`                 | Supplier hub stats  |
+| GET/POST | `/api/supplier/alerts`                    | Farmer alerts CRUD  |
+| POST     | `/api/supplier/alerts/[id]/run`           | Run single alert    |
+| GET      | `/api/supplier/analytics`                 | Farmer usage        |
+| GET/POST | `/api/supplier/farmers/[id]/subscription` | Farmer subscription |
+
+---
+
+## Farmer
+
+| Method | Path                        | Description          |
+| ------ | --------------------------- | -------------------- |
+| GET    | `/api/farmer/subscription`  | Own subscription     |
+| GET    | `/api/farmer/notifications` | In-app notifications |
+
+---
+
+## Cron
+
+### `POST /api/cron/alerts`
+
+Hourly alert delivery (Vercel cron). Requires `Authorization: Bearer $CRON_SECRET`.
 
 ---
 
@@ -92,18 +113,7 @@ Returns current weather from WeatherAPI.com (cached ~20 min).
 
 ### `GET /api/llm/providers`
 
-Lists all supported providers, models, and which are configured (have API keys).
-
----
-
-## Admin / legacy (requires `LEGACY_PYTHON_URL`)
-
-Returns **501** without legacy backend configured:
-
-- `/api/admin/*` — dashboard, users, audit, config, scheduler
-- `/api/messages/*` — message history
-- `/api/locations/*` — state/district/tehsil hierarchy
-- `/api/auth/2fa/*`, verify-email, forgot-password, etc.
+Lists supported providers, models, and configured status.
 
 ---
 

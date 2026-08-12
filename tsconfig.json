@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/ErrorBoundary": ["./src/modules/common/components/ErrorBoundary"],
+      "@/components/FarmerForm": ["./src/modules/farmers/components/FarmerForm"],
+      "@/components/admin/*": ["./src/modules/admin/components/*"],
+      "@/components/auth/*": ["./src/modules/auth/components/*"],
+      "@/components/chat/*": ["./src/modules/conversation/components/*"],
+      "@/components/dashboard/*": ["./src/modules/common/components/dashboard/*"],
+      "@/components/layout/*": ["./src/modules/common/components/layout/*"],
+      "@/components/theme/*": ["./src/modules/common/components/theme/*"]
+    },
+    "target": "ES2017"
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}

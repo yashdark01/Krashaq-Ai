@@ -40,31 +40,43 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=
 NEXT_PUBLIC_GOOGLE_REDIRECT_URI=https://your-app.vercel.app/auth/callback
 ```
 
-### Optional
+### Optional — Agent & RAG
 
 ```env
-REDIS_URL=redis://...                  # Upstash for production cache
-CRON_SECRET=...                        # Vercel cron auth for alert delivery
+USE_LANGGRAPH_AGENT=true
+AGENT_RUNTIME=langgraph
+AGENT_MAX_ITERATIONS=4
+EMBEDDING_API_KEY=                   # or OPENAI_API_KEY for vector search
+EMBEDDING_MODEL=text-embedding-3-small
+LANGSMITH_API_KEY=
+LANGSMITH_TRACING=true
+LANGSMITH_PROJECT=krashaq
+TAVILY_API_KEY=                      # web search in chat
+REDIS_URL=redis://...                # Upstash for production cache
+CRON_SECRET=...                      # Vercel cron auth for alert delivery
 ```
 
 ## Variable details
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LLM_PROVIDER` | `groq` | Primary LLM provider id |
-| `LLM_FALLBACK_CHAIN` | `gemini,openai,anthropic` | Comma-separated fallback order |
-| `MONGODB_URL` | `mongodb://localhost:27017` | MongoDB connection string |
-| `MONGODB_DB` | `krashaq` | Database name |
-| `JWT_SECRET_KEY` | dev placeholder | **Must change in production** |
-| `WEATHER_API_KEY` | — | [WeatherAPI.com](https://www.weatherapi.com/) |
+| Variable              | Default                     | Description                                   |
+| --------------------- | --------------------------- | --------------------------------------------- |
+| `LLM_PROVIDER`        | `groq`                      | Primary LLM provider id                       |
+| `LLM_FALLBACK_CHAIN`  | `gemini,openai,anthropic`   | Comma-separated fallback order                |
+| `MONGODB_URL`         | `mongodb://localhost:27017` | MongoDB connection string                     |
+| `MONGODB_DB`          | `krashaq`                   | Database name                                 |
+| `JWT_SECRET_KEY`      | dev placeholder             | **Must change in production**                 |
+| `WEATHER_API_KEY`     | —                           | [WeatherAPI.com](https://www.weatherapi.com/) |
+| `CRON_SECRET`         | —                           | Vercel cron auth for `/api/cron/alerts`       |
+| `USE_LANGGRAPH_AGENT` | `true` in `.env.example`    | Enable LangGraph agent                        |
+| `REDIS_URL`           | —                           | Upstash for production cache                  |
 
 ## Files
 
-| File | Purpose | Committed? |
-|------|---------|------------|
-| `frontend/.env.example` | Template | ✅ Yes |
-| `frontend/.env.local` | Local dev secrets | ❌ No |
-| Vercel dashboard | Production secrets | ❌ No |
+| File             | Purpose            | Committed? |
+| ---------------- | ------------------ | ---------- |
+| `.env.example`   | Template           | ✅ Yes     |
+| `.env.local`     | Local dev secrets  | ❌ No      |
+| Vercel dashboard | Production secrets | ❌ No      |
 
 ## Generating secrets
 

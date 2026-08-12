@@ -1,16 +1,23 @@
-# Python backend reference (archived)
+# Archived Python backend (removed)
 
-The FastAPI backend now lives at **`archive/backend/`** (formerly `backend/`).
+The legacy FastAPI backend was **removed from the repo** in Aug 2026. The Next.js monolith in `src/` is the only runtime.
 
-## What was only in Python (not yet in monolith)
+## Recover old Python code (if needed)
 
-| Feature | Python path | Monolith status |
-|---------|-------------|-----------------|
-| WhatsApp webhooks | `app/conversation/routes_webhook.py` | Not ported |
-| Pinecone vector RAG | `app/common/db/pinecone_client.py` | Mongo KB + keyword search in TS |
-| Full multi-agent orchestrator | `app/conversation/services/orchestrator_agent.py` | Partial LangGraph in `frontend/lib/server/agents/` |
-| Docker observability stack | `docker-compose.yml`, Loki/Promtail | Not used |
+```bash
+git checkout legacy/python-backend-v1 -- archive/backend
+# or browse the tag on GitHub
+```
 
-## Production path
+Tag: **`legacy/python-backend-v1`** — last commit before archive/remove.
 
-Use **`frontend/`** only. See [ARCHITECTURE.md](../ARCHITECTURE.md) and [PHASE.md](../PHASE.md).
+## What was in Python (not yet in monolith)
+
+| Feature | Python location | Monolith status |
+|---------|-----------------|-----------------|
+| WhatsApp webhooks | `conversation/routes_webhook.py` | ❌ Not ported |
+| Pinecone RAG | `common/db/pinecone_client.py` | 🟡 MongoDB hybrid RAG in `src/lib/server/rag/` |
+| Full multi-agent orchestrator | `conversation/services/orchestrator_agent.py` | 🟡 Partial LangGraph in `src/lib/server/agents/` |
+| STT / audio | `conversation/services/stt_service.py` | ❌ Not ported |
+
+Use **`src/`** only for production. See [ARCHITECTURE.md](../ARCHITECTURE.md) and [PHASE.md](../PHASE.md).
