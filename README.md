@@ -24,9 +24,7 @@ Next.js 16 · TypeScript · MongoDB · LangGraph · Tailwind · shadcn/ui · Ver
 
 ```bash
 git clone git@github.com:yashdark01/Krashaq-Ai.git
-cd Krashaq-Ai
 cp .env.example .env.local
-# Edit .env.local — see docs/ENVIRONMENT.md
 npm install
 npm run db:reset    # optional: demo users + KB corpus
 npm run dev
@@ -72,12 +70,11 @@ npm run qa:roles       # Role audit (server must be running)
 npm run qa:suppliers   # Supplier E2E audit
 ```
 
-## Deploy
+## Deploy (manual)
 
-1. Import repo on [Vercel](https://vercel.com/new)
-2. **Root directory:** `.` (repo root — not a subfolder)
-3. Add env vars from [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)
-4. Deploy
+1. [Vercel Dashboard](https://vercel.com/new) → import repo → **Root Directory: empty**
+2. Add env vars from [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)
+3. Click **Deploy**
 
 Full guide: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
 
