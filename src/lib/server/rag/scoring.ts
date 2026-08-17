@@ -61,6 +61,14 @@ export function keywordScore(query: string, title: string, content: string, tags
   return score / qTokens.length;
 }
 
+export function l2Normalize(vec: number[]): number[] {
+  let norm = 0;
+  for (const v of vec) norm += v * v;
+  norm = Math.sqrt(norm);
+  if (!norm) return vec;
+  return vec.map((v) => v / norm);
+}
+
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length || !a.length) return 0;
   let dot = 0;

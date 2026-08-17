@@ -80,11 +80,11 @@ export const LLM_PROVIDERS: LLMProviderDefinition[] = [
     label: 'Google Gemini',
     description: 'Gemini Flash & Pro via Google AI',
     envKey: 'googleApiKey',
-    defaultModel: 'gemini-1.5-flash',
+    defaultModel: 'gemini-3.6-flash',
     models: [
-      { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', description: 'Latest fast model' },
-      { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Default — fast' },
-      { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'Higher quality' },
+      { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash', description: 'Default — fast & latest' },
+      { id: 'gemini-flash-latest', label: 'Gemini Flash (latest)', description: 'Always current flash' },
+      { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash Preview', description: 'Preview tier' },
     ],
   },
   {

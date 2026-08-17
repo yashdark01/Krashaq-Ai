@@ -1,14 +1,25 @@
 'use client';
 
+import { memo } from 'react';
 import { Sprout, User } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Bubble, BubbleContent } from '@/components/ui/bubble';
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+  MessageFooter,
+  MessageHeader,
+} from '@/components/ui/message';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/modules/conversation/types/message';
 import { MarkdownContent } from './MarkdownContent';
 import { ChatMessageActions } from './ChatMessageActions';
 import { ToolCallList } from './ToolCallChip';
 import { CitationList } from './CitationList';
+import { friendlyErrorContent, looksLikeTechnicalError } from '@/modules/conversation/utils/chat-errors';
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -17,7 +28,7 @@ interface ChatMessageBubbleProps {
   onRetry?: () => void;
 }
 
-export function ChatMessageBubble({
+export const ChatMessageBubble = memo(function ChatMessageBubble({
   message,
   onRegenerate,
   onFeedback,
@@ -26,32 +37,44 @@ export function ChatMessageBubble({
   const isUser = message.role === 'user';
   const isStreaming = message.status === 'streaming';
   const isError = message.status === 'error';
+  const technicalError = !isUser && looksLikeTechnicalError(message.content);
+  const showError = isError || technicalError;
+  const displayContent = technicalError ? friendlyErrorContent(message.content) : message.content;
 
   if (isUser) {
     return (
-      <div className="group flex justify-end gap-3 px-4 py-2">
-        <div className="max-w-[85%] md:max-w-[70%] space-y-1">
-          <div className="rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-primary-foreground text-sm">
-            <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-          </div>
-        </div>
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-          <User className="h-3.5 w-3.5" aria-hidden />
-        </div>
-      </div>
+      <Message align="end">
+        <MessageContent className="w-full">
+          <Bubble variant="default" align="end">
+            <BubbleContent className="whitespace-pre-wrap">{message.content}</BubbleContent>
+          </Bubble>
+        </MessageContent>
+        <MessageAvatar>
+          <Avatar className="h-7 w-7">
+            <AvatarFallback className="bg-primary/15 text-primary text-[10px]">
+              <User className="h-3.5 w-3.5" aria-hidden />
+            </AvatarFallback>
+          </Avatar>
+        </MessageAvatar>
+      </Message>
     );
   }
 
   return (
-    <div className="group flex gap-3 px-4 py-3">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-primary">
-        <Sprout className="h-3.5 w-3.5" aria-hidden />
-      </div>
-      <div className="min-w-0 flex-1 space-y-1.5 max-w-3xl">
-        <div className="flex flex-wrap items-center gap-1.5">
+    <Message align="start">
+      <MessageAvatar>
+        <Avatar className="h-7 w-7">
+          <AvatarFallback className="bg-accent text-primary">
+            <Sprout className="h-3.5 w-3.5" aria-hidden />
+          </AvatarFallback>
+        </Avatar>
+      </MessageAvatar>
+
+      <MessageContent className="w-full">
+        <MessageHeader>
           <span className="text-xs font-semibold text-foreground">Krashaq</span>
           {message.language && (
-            <Badge variant="outline" className="text-[10px] h-5 px-1.5">
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
               {message.language}
             </Badge>
           )}
@@ -61,43 +84,47 @@ export function ChatMessageBubble({
                 !(message.tool_calls ?? []).some((c) => c.tool === tool && c.status === 'done')
             )
             .map((tool) => (
-              <Badge key={tool} variant="weather" className="text-[10px] h-5 px-1.5">
+              <Badge key={tool} variant="weather" className="h-5 px-1.5 text-[10px]">
                 {tool.replace(/_/g, ' ')}
               </Badge>
             ))}
           {message.llm_provider && message.llm_provider !== 'none' && (
-            <Badge variant="ai" className="text-[10px] h-5 px-1.5">
+            <Badge variant="ai" className="h-5 px-1.5 text-[10px]">
               {message.llm_provider}
               {message.llm_model ? ` · ${message.llm_model.split('-').slice(0, 2).join('-')}` : ''}
             </Badge>
           )}
-        </div>
+        </MessageHeader>
 
         {message.tool_calls && message.tool_calls.length > 0 && (
           <ToolCallList calls={message.tool_calls} />
         )}
 
-        <div
-          className={cn(
-            'text-sm text-foreground',
-            isError && 'border-l-2 border-destructive pl-3 text-destructive'
-          )}
+        <Bubble
+          variant={showError ? 'outline' : 'ghost'}
+          className={cn(showError && 'border-destructive/40')}
         >
-          {isError && !message.content ? (
-            <p>{message.error?.message ?? 'Something went wrong.'}</p>
-          ) : (
-            <MarkdownContent
-              content={message.content || (isStreaming ? ' ' : '')}
-              streaming={isStreaming}
-            />
-          )}
-        </div>
+          <BubbleContent
+            className={cn('px-0 py-0', showError && 'border-l-2 border-destructive pl-3 text-destructive')}
+          >
+            {showError && !displayContent ? (
+              <p>{message.error?.message ?? 'Something went wrong.'}</p>
+            ) : showError ? (
+              <p>{displayContent}</p>
+            ) : (
+              <MarkdownContent
+                content={message.content || (isStreaming ? ' ' : '')}
+                streaming={isStreaming}
+              />
+            )}
+          </BubbleContent>
+        </Bubble>
 
         {message.citations && message.citations.length > 0 && (
           <CitationList citations={message.citations} />
         )}
 
-        <div className="flex items-center gap-2 min-h-[28px]">
+        <MessageFooter>
           {message.status === 'complete' && message.content && (
             <ChatMessageActions
               content={message.content}
@@ -106,7 +133,7 @@ export function ChatMessageBubble({
               onFeedback={onFeedback}
             />
           )}
-          {isError && message.error?.retryable && onRetry && (
+          {showError && (message.error?.retryable ?? technicalError) && onRetry && (
             <Button
               type="button"
               variant="ghost"
@@ -117,8 +144,8 @@ export function ChatMessageBubble({
               Try again
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </MessageFooter>
+      </MessageContent>
+    </Message>
   );
-}
+});

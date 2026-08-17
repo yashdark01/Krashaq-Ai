@@ -206,7 +206,12 @@ export function listProvidersForApi() {
       label: p.label,
       description: p.description,
       configured: providerIsConfigured(p.id),
-      default_model: p.defaultModel,
+      default_model:
+        p.id === 'gemini'
+          ? config.geminiModel
+          : p.id === 'groq'
+            ? config.groqModel
+            : p.defaultModel,
       models: p.models,
     })),
   };

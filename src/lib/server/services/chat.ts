@@ -20,6 +20,7 @@ import {
 import { shouldUseWebSearch } from '@/lib/server/services/web-search-query';
 import { getConfig } from '@/lib/server/config';
 import { runKrashaqAgent, useAgentRuntime } from '@/lib/server/agents/graph';
+import { friendlyLlmErrorMessage, isTechnicalLlmError } from '@/lib/server/agents/llm-errors';
 import { AgentEventQueue } from '@/lib/server/agents/event-queue';
 import type { StreamEvent } from '@/modules/conversation/types/message';
 
@@ -376,7 +377,21 @@ export async function* processChatStream(
       yield event;
     }
 
-    const agentResult = await agentTask;
+    let agentResult;
+    try {
+      agentResult = await agentTask;
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : 'Agent request failed';
+      console.warn('Agent stream failed:', error);
+      yield {
+        type: 'error',
+        code: 'AGENT_FAILED',
+        message: friendlyLlmErrorMessage(raw),
+        retryable: true,
+      };
+      return;
+    }
+
     fullContent = agentResult.content || fullContent;
     detectedCrop = agentResult.detected_crop ?? detectedCrop;
     for (const tool of agentResult.tools_used) {
@@ -430,6 +445,16 @@ export async function* processChatStream(
     fullContent =
       'Krashaq AI is not configured. Add GROQ_API_KEY (default) or another provider key in environment variables.';
     yield { type: 'token', delta: fullContent };
+  }
+
+  if (isTechnicalLlmError(fullContent)) {
+    yield {
+      type: 'error',
+      code: 'LLM_ERROR',
+      message: friendlyLlmErrorMessage(fullContent),
+      retryable: true,
+    };
+    return;
   }
 
   const messageId = await appendConversation(

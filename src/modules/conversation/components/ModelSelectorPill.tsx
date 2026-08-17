@@ -60,6 +60,11 @@ export function ModelSelectorPill({
 
   const configured = selected?.configured ?? true;
 
+  // Avoid duplicate names in display (e.g., "Google Gemini Gemini 3.6 Flash")
+  const displayName = modelLabel.includes(selected?.label || '')
+    ? modelLabel
+    : `${selected?.label ?? provider} · ${modelLabel}`;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -73,7 +78,7 @@ export function ModelSelectorPill({
           <span
             className={cn('h-1.5 w-1.5 rounded-full', configured ? 'bg-primary' : 'bg-brand-clay')}
           />
-          {selected?.label ?? provider} · {modelLabel}
+          {displayName}
           <ChevronDown className="h-3 w-3 opacity-60" />
         </Button>
       </DropdownMenuTrigger>

@@ -7,6 +7,21 @@ import type { ChatSessionSummary } from '@/modules/conversation/types/message';
 
 const LLM_STORAGE_KEY = 'krashaq_llm';
 
+const DEPRECATED_GEMINI_MODELS = new Set([
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+]);
+
+function normalizeStoredLlmPrefs(provider: string, model: string) {
+  if (provider === 'gemini' && DEPRECATED_GEMINI_MODELS.has(model)) {
+    return { provider, model: 'gemini-3.6-flash' };
+  }
+  return { provider, model };
+}
+
 interface ChatSessionsContextType {
   sessionId: string | null;
   setSessionId: (id: string | null) => void;
@@ -32,16 +47,23 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
-  const [provider, setProviderState] = useState('groq');
-  const [model, setModelState] = useState('llama-3.3-70b-versatile');
+  const [provider, setProviderState] = useState('gemini');
+  const [model, setModelState] = useState('gemini-3.6-flash');
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LLM_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed.provider) setProviderState(parsed.provider);
-        if (parsed.model) setModelState(parsed.model);
+        const normalized = normalizeStoredLlmPrefs(
+          parsed.provider ?? 'gemini',
+          parsed.model ?? 'gemini-3.6-flash'
+        );
+        setProviderState(normalized.provider);
+        setModelState(normalized.model);
+        if (normalized.provider !== parsed.provider || normalized.model !== parsed.model) {
+          localStorage.setItem(LLM_STORAGE_KEY, JSON.stringify(normalized));
+        }
       }
     } catch {
       /* ignore */

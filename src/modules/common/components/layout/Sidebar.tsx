@@ -43,44 +43,7 @@ export function Sidebar({ className }: SidebarProps) {
             <Sprout className="h-4 w-4" />
           </div>
         )}
-        {isExpanded && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
-                onClick={toggle}
-                aria-label="Collapse sidebar"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Collapse sidebar (⌘B)</TooltipContent>
-          </Tooltip>
-        )}
       </div>
-
-      {!isExpanded && (
-        <div className="flex justify-center py-2 border-b">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={toggle}
-                aria-label="Expand sidebar"
-              >
-                <PanelLeftOpen className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar (⌘B)</TooltipContent>
-          </Tooltip>
-        </div>
-      )}
 
       <SidebarNav expanded={isExpanded} />
     </aside>

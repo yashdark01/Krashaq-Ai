@@ -86,7 +86,7 @@ export function buildKrashaqTools(ctx: ToolContext) {
     {
       name: 'search_knowledge_base',
       description:
-        'Search Krashaq verified agritech knowledge base for crops, pests, and farming practices.',
+        'Search Krashaq verified agritech knowledge base for crops, pests, and farming practices. Only use if KB context is not already in the conversation.',
       schema: z.object({ query: z.string() }),
     }
   );

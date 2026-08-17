@@ -2,7 +2,12 @@
 
 import { useCallback, useRef, useState } from 'react';
 import type { ChatMessage, StreamEvent } from '@/modules/conversation/types/message';
+import { friendlyErrorContent, looksLikeTechnicalError } from '@/modules/conversation/utils/chat-errors';
 import { authenticatedFetch } from '@/lib/api/authenticated-fetch';
+
+function friendlyLlmErrorMessage(raw: string): string {
+  return friendlyErrorContent(raw);
+}
 
 interface UseChatStreamOptions {
   sessionId: string | null;
@@ -67,6 +72,7 @@ export function useChatStream({
       abortRef.current = controller;
 
       let activeSessionId = sessionId;
+      let streamStatus: ChatMessage['status'] = 'complete';
 
       try {
         const res = await authenticatedFetch('/api/chat/stream', {
@@ -179,12 +185,28 @@ export function useChatStream({
               } else if (event.type === 'token') {
                 appendDelta(assistantId, event.delta);
               } else if (event.type === 'done') {
+                const content = looksLikeTechnicalError(event.full_content)
+                  ? friendlyLlmErrorMessage(event.full_content)
+                  : event.full_content;
+                if (looksLikeTechnicalError(event.full_content)) {
+                  streamStatus = 'error';
+                }
                 updateMessage(assistantId, {
                   id: event.message_id,
-                  content: event.full_content,
-                  status: 'complete',
+                  content,
+                  status: streamStatus === 'error' ? 'error' : 'complete',
+                  ...(streamStatus === 'error'
+                    ? {
+                        error: {
+                          code: 'LLM_ERROR',
+                          message: content,
+                          retryable: true,
+                        },
+                      }
+                    : {}),
                 });
               } else if (event.type === 'error') {
+                streamStatus = 'error';
                 updateMessage(assistantId, {
                   status: 'error',
                   content: event.message,
@@ -201,17 +223,22 @@ export function useChatStream({
           }
         }
 
-        updateMessage(assistantId, { status: 'complete' });
+        if (streamStatus !== 'error') {
+          updateMessage(assistantId, (current) =>
+            current.status === 'error' ? {} : { status: 'complete' }
+          );
+        }
       } catch (err) {
         if (controller.signal.aborted) {
           updateMessage(assistantId, { status: 'cancelled' });
         } else {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
           updateMessage(assistantId, {
             status: 'error',
-            content: "Sorry, I couldn't process your request. Please try again.",
+            content: friendlyLlmErrorMessage(errorMessage),
             error: {
               code: 'NETWORK',
-              message: err instanceof Error ? err.message : 'Unknown error',
+              message: errorMessage,
               retryable: true,
             },
           });

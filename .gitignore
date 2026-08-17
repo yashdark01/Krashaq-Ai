@@ -4,10 +4,6 @@
 .idea/
 *.log
 
-# Python (local artifacts)
-.pytest_cache/
-__pycache__/
-
 # Node / Next.js
 node_modules/
 .next/

@@ -72,14 +72,14 @@ export function KrashaqChat({
     if (!text) return;
     setInput('');
     await send(text);
-  }, [input, send]);
+  }, [input, send, setInput]);
 
   const handleSelectPrompt = useCallback(
     async (prompt: string) => {
       setInput('');
       await send(prompt);
     },
-    [send]
+    [send, setInput]
   );
 
   useEffect(() => {
@@ -131,7 +131,7 @@ export function KrashaqChat({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background w-full">
       <ChatMessageList
         messages={messages}
         loading={loading && !!sessionId}

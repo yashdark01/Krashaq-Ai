@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Settings, FileText, Shield, Building2, KeyRound, Sprout } from 'lucide-react';
+import { Users, Settings, FileText, Shield, Building2, KeyRound, Sprout, BookOpen } from 'lucide-react';
 
 interface DashboardStats {
   users?: {
@@ -38,6 +38,7 @@ export default function AdminDashboard() {
       description: `${stats?.licenses?.active ?? 0} active licenses`,
       icon: Building2,
       href: '/admin/suppliers',
+      color: 'text-blue-500',
     },
     {
       title: 'Farmers',
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
       description: 'Across all suppliers',
       icon: Sprout,
       href: '/admin/suppliers',
+      color: 'text-green-500',
     },
     {
       title: 'Users & admins',
@@ -52,6 +54,15 @@ export default function AdminDashboard() {
       description: 'Non-supplier accounts',
       icon: Users,
       href: '/admin/users',
+      color: 'text-purple-500',
+    },
+    {
+      title: 'Knowledge base',
+      value: 'Manage',
+      description: 'RAG documents & embeddings',
+      icon: BookOpen,
+      href: '/admin/kb',
+      color: 'text-amber-500',
     },
     {
       title: 'Analytics',
@@ -59,6 +70,7 @@ export default function AdminDashboard() {
       description: 'LLM usage & platform stats',
       icon: FileText,
       href: '/admin/analytics',
+      color: 'text-cyan-500',
     },
     {
       title: 'System config',
@@ -66,6 +78,7 @@ export default function AdminDashboard() {
       description: 'LLM, email, weather keys',
       icon: Settings,
       href: '/admin/config',
+      color: 'text-slate-500',
     },
     {
       title: 'Suspended',
@@ -73,6 +86,7 @@ export default function AdminDashboard() {
       description: 'Suppliers blocked',
       icon: KeyRound,
       href: '/admin/suppliers',
+      color: 'text-red-500',
     },
   ];
 
@@ -86,10 +100,10 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {cards.map((stat) => (
           <Link key={stat.title} href={stat.href}>
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer h-full border-border/50 hover:border-primary/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
@@ -100,10 +114,10 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <Card>
+      <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
+            <Shield className="h-5 w-5 text-primary" />
             Platform responsibilities
           </CardTitle>
           <CardDescription>

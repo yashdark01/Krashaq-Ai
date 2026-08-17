@@ -2,6 +2,7 @@
 title: Wheat Cultivation — Madhya Pradesh
 category: crop
 tags: wheat, rabi, mp, madhya pradesh, buai
+search_aliases: gehu, गेहू, buai, बुआई, MP mein gehu, gehu ki buai kab, sowing window, October November, keede rog, rust, yellow rust
 ---
 
 Wheat is a major rabi crop in Madhya Pradesh. Timely sowing and nitrogen management are critical for yield.
