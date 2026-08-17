@@ -1,25 +1,12 @@
-import { OpenAIEmbeddings } from '@langchain/openai';
-import { getConfig } from '@/lib/server/config';
+import {
+  getEmbedder,
+  isEmbeddingConfigured,
+  embeddingSetupHint,
+  resolveEmbeddingProvider,
+  defaultEmbeddingModel,
+} from '@/lib/server/rag/embedding-providers';
 
-let embedder: OpenAIEmbeddings | null = null;
-
-export function isEmbeddingConfigured() {
-  return Boolean(getConfig().openaiApiKey || process.env.EMBEDDING_API_KEY);
-}
-
-function getEmbedder() {
-  const cfg = getConfig();
-  const apiKey = process.env.EMBEDDING_API_KEY ?? cfg.openaiApiKey;
-  if (!apiKey) return null;
-
-  if (!embedder) {
-    embedder = new OpenAIEmbeddings({
-      apiKey,
-      model: process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small',
-    });
-  }
-  return embedder;
-}
+export { isEmbeddingConfigured, embeddingSetupHint, resolveEmbeddingProvider, defaultEmbeddingModel };
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   const client = getEmbedder();

@@ -2,6 +2,7 @@
 title: Soybean Pest Management — MP
 category: pest
 tags: soybean, pest, semilooper, girdle beetle, whitefly, mp
+search_aliases: soybean keede, semilooper prabandhan, whitefly, girdle beetle, IPM, soya fasal
 ---
 
 Common soybean pests in Madhya Pradesh require regular scouting after 30 days after sowing (DAS).

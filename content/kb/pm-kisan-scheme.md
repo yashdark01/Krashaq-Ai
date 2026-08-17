@@ -2,6 +2,7 @@
 title: PM-KISAN Scheme Overview
 category: scheme
 tags: pm-kisan, subsidy, scheme, government, kisan
+search_aliases: PM KISAN yojana, kisan samman nidhi, kisan yojana, पीएम किसान, योजना, kisan ko kitna paisa milta hai, 6000 rupaye saal, eligible kisan, patrata
 ---
 
 PM-KISAN (Pradhan Mantri Kisan Samman Nidhi) provides income support to eligible landholding farmer families.

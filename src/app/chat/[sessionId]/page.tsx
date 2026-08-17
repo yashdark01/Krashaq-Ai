@@ -11,7 +11,7 @@ export default function ChatSessionPage({ params }: { params: Promise<{ sessionI
   return (
     <ProtectedRoute>
       <MainLayout fullHeight>
-        <div className="flex h-full min-h-[calc(100dvh-var(--header-height)-var(--bottom-nav-height))] md:min-h-[calc(100dvh-var(--header-height))] flex-col">
+        <div className="flex h-full min-h-[calc(100dvh-var(--header-height)-var(--bottom-nav-height))] md:min-h-[calc(100dvh-var(--header-height))] flex-col w-full max-w-none">
           <KrashaqChat sessionId={sessionId} />
         </div>
       </MainLayout>

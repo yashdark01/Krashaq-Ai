@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "provider": "ollama",
+  "model": "nomic-embed-text",
+  "dimension": 768,
+  "chunk_count": 8,
+  "built_at": "2026-08-17T15:11:58.387Z"
+}

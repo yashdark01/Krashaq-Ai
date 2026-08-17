@@ -35,7 +35,7 @@ export function ChatMessageActions({
   return (
     <div
       className={cn(
-        'flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity',
+        'flex items-center gap-0.5 opacity-0 group-hover/message:opacity-100 group-focus-within/message:opacity-100 transition-opacity',
         className
       )}
     >

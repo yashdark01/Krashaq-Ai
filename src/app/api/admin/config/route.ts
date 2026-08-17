@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
     llm_fallback_chain: cfg.llmFallbackChain,
     langsmith_tracing: cfg.langsmithTracing,
     langsmith_project: cfg.langsmithProject,
-    agent_runtime: process.env.AGENT_RUNTIME ?? 'langgraph',
+    agent_runtime:
+      process.env.USE_DEEPAGENTS === 'true' || process.env.AGENT_RUNTIME === 'deepagents'
+        ? 'deepagents'
+        : (process.env.AGENT_RUNTIME ?? 'langgraph'),
     services: {
       mongodb: Boolean(cfg.mongodbUrl),
       redis: Boolean(cfg.redisUrl),

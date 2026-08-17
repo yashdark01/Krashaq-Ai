@@ -1,4 +1,4 @@
-import { ChatGroq } from '@langchain/groq';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
   AIMessage,
   HumanMessage,
@@ -9,32 +9,27 @@ import {
 import { END, START, StateGraph } from '@langchain/langgraph';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import type { ChatRequest } from '@/lib/server/services/chat';
-import { getConfig } from '@/lib/server/config';
 import { buildKrashaqTools } from '@/lib/server/agents/tools';
 import { classifyRoute, shouldRetrieveKb } from '@/lib/server/agents/router';
+import {
+  kbToolKey,
+  retrievalPromptFromKb,
+  runKbRetrieval,
+} from '@/lib/server/agents/kb-retrieval';
 import { loadSkillSnippet } from '@/lib/server/skills/loader';
-import { seedKbDocumentsIfEmpty, retrieveKbContext } from '@/lib/server/services/rag-service';
+import { seedKbDocumentsIfEmpty, clearRagRequestCache } from '@/lib/server/services/rag-service';
 import { detectCrop, detectLanguage } from '@/lib/server/services/irrigation';
+import { createLLM, resolveLLM, type LLMInstance } from '@/lib/server/llm/factory';
 import {
   KrashaqStateAnnotation,
   type AgentRunCallbacks,
   type KrashaqState,
 } from '@/lib/server/agents/state';
-
+import { buildSystemPrompt } from '@/lib/server/agents/prompts';
 const DEFAULT_MAX_ITERATIONS = Number(process.env.AGENT_MAX_ITERATIONS ?? 4);
 
 function getCallbacks(config?: RunnableConfig): AgentRunCallbacks {
   return (config?.configurable?.callbacks as AgentRunCallbacks | undefined) ?? {};
-}
-
-function buildSystemPrompt(language: string) {
-  return `You are Krashaq, a multilingual AI farming assistant for Indian farmers.
-Respond in ${language === 'hi' ? 'Hindi' : language === 'hinglish' ? 'Hinglish' : 'English'}.
-Be practical, concise, and actionable. Use emojis sparingly.
-Use tools when you need live weather, irrigation, fertilizer, or web search.
-If verified knowledge base context is already in the conversation, use it — do NOT call search_knowledge_base again for the same topic.
-Cite knowledge base sources as [KB1], [KB2] when provided.
-Never invent government schemes, prices, or helpline numbers. If unsure, say so.`;
 }
 
 function lastUserText(state: KrashaqState): string {
@@ -54,39 +49,23 @@ function toolCallKey(name: string, args: unknown): string {
   return `${name}:${JSON.stringify(args ?? {})}`;
 }
 
-async function emitKbRetrieval(
-  query: string,
+async function streamLlmReply(
+  messages: BaseMessage[],
+  llm: BaseChatModel,
   callbacks: AgentRunCallbacks,
-  state: KrashaqState
-): Promise<{ output: string; citationsEmitted: boolean }> {
-  const started = Date.now();
-  const retrieval = await retrieveKbContext(query, 5);
-
-  if (!state.kb_events_emitted) {
-    callbacks.onToolStart?.('search_knowledge_base', { query });
-    for (let i = 0; i < retrieval.citations.length; i++) {
-      const cite = retrieval.citations[i];
-      callbacks.onCitation?.({
-        index: i + 1,
-        title: cite.title,
-        snippet: cite.snippet,
-        doc_id: cite.doc_id,
-        source: 'kb',
-      });
+  fallback: string
+): Promise<string> {
+  let content = '';
+  const stream = await llm.stream(messages);
+  for await (const chunk of stream) {
+    const delta = typeof chunk.content === 'string' ? chunk.content : '';
+    if (delta) {
+      content += delta;
+      callbacks.onToken?.(delta);
     }
-    const output = retrieval.hasRelevant
-      ? retrieval.context
-      : 'No matching verified documents in knowledge base.';
-    callbacks.onToolEnd?.('search_knowledge_base', output.slice(0, 800), Date.now() - started);
-    return { output, citationsEmitted: true };
   }
 
-  return {
-    output: retrieval.hasRelevant
-      ? retrieval.context
-      : 'No matching verified documents in knowledge base.',
-    citationsEmitted: false,
-  };
+  return content || fallback;
 }
 
 function createToolNode(tools: ReturnType<typeof buildKrashaqTools>) {
@@ -118,13 +97,29 @@ function createToolNode(tools: ReturnType<typeof buildKrashaqTools>) {
 
       const tool = toolMap[call.name];
       let output = 'Tool not found';
-      let kbEventsEmitted = state.kb_events_emitted;
 
       if (call.name === 'search_knowledge_base') {
         const query = String(args.query ?? lastUserText(state));
-        const result = await emitKbRetrieval(query, callbacks, state);
-        output = result.output;
-        if (result.citationsEmitted) kbEventsEmitted = true;
+        const kbKey = kbToolKey(query);
+
+        if (
+          state.rag_relevant &&
+          state.rag_context &&
+          state.rag_query &&
+          kbToolKey(state.rag_query) === kbKey
+        ) {
+          output = state.rag_context;
+        } else if (state.executed_tool_keys.includes(kbKey)) {
+          output = state.rag_relevant
+            ? state.rag_context
+            : 'No matching verified documents in knowledge base.';
+        } else {
+          const retrieval = await runKbRetrieval(query, 5, callbacks, !state.kb_events_emitted);
+          output = retrieval.rag_relevant
+            ? retrieval.rag_context
+            : 'No matching verified documents in knowledge base.';
+        }
+
         toolsUsed.push(call.name);
         toolMessages.push(
           new ToolMessage({ content: output, tool_call_id: call.id ?? call.name }) as BaseMessage
@@ -157,22 +152,20 @@ function createToolNode(tools: ReturnType<typeof buildKrashaqTools>) {
       tools_used: toolsUsed,
       executed_tool_keys: executedKeys,
       iteration: state.iteration + 1,
-      kb_events_emitted: state.kb_events_emitted || toolsUsed.includes('search_knowledge_base'),
     };
   };
 }
 
 function compileGraph(params: {
   tools: ReturnType<typeof buildKrashaqTools>;
-  model: string;
-  apiKey: string;
+  llm: LLMInstance;
   maxIterations: number;
 }) {
-  const llm = new ChatGroq({
-    apiKey: params.apiKey,
-    model: params.model,
-    temperature: 0.3,
-  }).bindTools(params.tools);
+  const baseLlm = params.llm.llm;
+  if (!('bindTools' in baseLlm) || typeof baseLlm.bindTools !== 'function') {
+    throw new Error(`Provider ${params.llm.provider} does not support tool calling`);
+  }
+  const llm = baseLlm.bindTools(params.tools);
 
   const toolNode = createToolNode(params.tools);
 
@@ -180,95 +173,108 @@ function compileGraph(params: {
     await seedKbDocumentsIfEmpty();
     const message = lastUserText(state) || state.messages.at(-1)?.content?.toString() || '';
     const route = classifyRoute(message);
-    const detected_crop = detectCrop(message);
-    let kb_ready = false;
-
-    if (shouldRetrieveKb(message)) {
-      await retrieveKbContext(message, 5);
-      kb_ready = true;
-    }
 
     return {
       route,
-      detected_crop,
+      detected_crop: detectCrop(message),
       iteration: 0,
       tools_used: [],
-      kb_ready,
+      kb_ready: false,
       kb_events_emitted: false,
       executed_tool_keys: [],
+      rag_query: '',
+      rag_chunks: [],
+      rag_citations: [],
+      rag_score: 0,
+      rag_relevant: false,
+      rag_context: '',
     };
   };
 
-  const injectKbNode = async (state: KrashaqState) => {
-    if (!state.kb_ready || state.route !== 'tools') return {};
-
+  const retrieveNode = async (state: KrashaqState, config?: RunnableConfig) => {
+    const callbacks = getCallbacks(config);
     const query = lastUserText(state);
-    const retrieval = await retrieveKbContext(query, 5);
-    if (!retrieval.hasRelevant) return {};
+    const emitEvents = state.route === 'rag' || !state.kb_events_emitted;
+    const retrieval = await runKbRetrieval(query, 5, callbacks, emitEvents);
 
+    return {
+      ...retrieval,
+      executed_tool_keys: retrieval.rag_relevant ? [kbToolKey(query)] : [],
+    };
+  };
+
+  const gradeNode = async (state: KrashaqState) => ({
+    rag_relevant: state.rag_relevant,
+    rag_score: state.rag_score,
+  });
+
+  const injectKbNode = async (state: KrashaqState) => {
+    if (state.route !== 'tools' || !state.rag_relevant || !state.rag_context) {
+      return {};
+    }
+
+    const query = state.rag_query || lastUserText(state);
     return {
       messages: [
         new SystemMessage(
-          `Verified knowledge base (already retrieved — do NOT call search_knowledge_base again):\n${retrieval.context}\n\nCite as [KB1], [KB2], etc.`
+          `Verified knowledge base (already retrieved — do NOT call search_knowledge_base again):\n${state.rag_context}\n\nCite as [KB1], [KB2], etc.`
         ),
       ],
-      executed_tool_keys: [toolCallKey('search_knowledge_base', { query })],
+      executed_tool_keys: [kbToolKey(query)],
+      kb_ready: true,
     };
   };
 
   const fastNode = async (state: KrashaqState, config?: RunnableConfig) => {
     const callbacks = getCallbacks(config);
-    const llmPlain = new ChatGroq({
-      apiKey: params.apiKey,
-      model: params.model,
-      temperature: 0.4,
-    });
+    const content = await streamLlmReply(
+      state.messages,
+      createLLM(params.llm.provider, params.llm.model).llm,
+      callbacks,
+      'Hello! How can I help with your farm today?'
+    );
 
-    let content = '';
-    const stream = await llmPlain.stream(state.messages);
-    for await (const chunk of stream) {
-      const delta = typeof chunk.content === 'string' ? chunk.content : '';
-      if (delta) {
-        content += delta;
-        callbacks.onToken?.(delta);
-      }
-    }
-
-    return { messages: [new AIMessage(content || 'Hello! How can I help with your farm today?')] };
+    return { messages: [new AIMessage(content)] };
   };
 
-  const ragNode = async (state: KrashaqState, config?: RunnableConfig) => {
+  const synthesizeNode = async (state: KrashaqState, config?: RunnableConfig) => {
     const callbacks = getCallbacks(config);
-    const query = lastUserText(state);
-
-    const { output: kbOutput } = await emitKbRetrieval(query, callbacks, state);
-
     const ragMessages: BaseMessage[] = [
       ...state.messages.slice(0, -1),
-      new SystemMessage(retrievalPromptFromKb(kbOutput)),
+      new SystemMessage(retrievalPromptFromKb(state.rag_context)),
       state.messages[state.messages.length - 1],
     ];
 
-    let content = '';
-    const llmPlain = new ChatGroq({
-      apiKey: params.apiKey,
-      model: params.model,
-      temperature: 0.3,
-    });
-    const stream = await llmPlain.stream(ragMessages);
-    for await (const chunk of stream) {
-      const delta = typeof chunk.content === 'string' ? chunk.content : '';
-      if (delta) {
-        content += delta;
-        callbacks.onToken?.(delta);
-      }
-    }
+    const content = await streamLlmReply(
+      ragMessages,
+      createLLM(params.llm.provider, params.llm.model).llm,
+      callbacks,
+      'I could not generate a response from the knowledge base. Please try again.'
+    );
 
     return {
       messages: [new AIMessage(content)],
       tools_used: ['search_knowledge_base'],
       kb_events_emitted: true,
     };
+  };
+
+  const noKbNode = async (state: KrashaqState, config?: RunnableConfig) => {
+    const callbacks = getCallbacks(config);
+    const ragMessages: BaseMessage[] = [
+      ...state.messages.slice(0, -1),
+      new SystemMessage(retrievalPromptFromKb('')),
+      state.messages[state.messages.length - 1],
+    ];
+
+    const content = await streamLlmReply(
+      ragMessages,
+      createLLM(params.llm.provider, params.llm.model).llm,
+      callbacks,
+      'I do not have verified information on this in our knowledge base. Please check the official government portal or your local Krishi Vigyan Kendra.'
+    );
+
+    return { messages: [new AIMessage(content)] };
   };
 
   const agentNode = async (state: KrashaqState, config?: RunnableConfig) => {
@@ -288,15 +294,23 @@ function compileGraph(params: {
       }
     }
 
-    return {
-      messages: [response],
-    };
+    return { messages: [response] };
   };
 
   const routeAfterPrepare = (state: KrashaqState) => {
     if (state.route === 'fast') return 'fast';
-    if (state.route === 'rag') return 'rag';
-    return 'injectKb';
+    if (state.route === 'rag') return 'retrieve';
+    if (shouldRetrieveKb(lastUserText(state))) return 'retrieve';
+    return 'agent';
+  };
+
+  const routeAfterRetrieve = (state: KrashaqState) => {
+    if (state.route === 'tools') return 'injectKb';
+    return 'grade';
+  };
+
+  const routeAfterGrade = (state: KrashaqState) => {
+    return state.rag_relevant ? 'synthesize' : 'noKb';
   };
 
   const shouldContinue = (state: KrashaqState) => {
@@ -310,18 +324,30 @@ function compileGraph(params: {
   return new StateGraph(KrashaqStateAnnotation)
     .addNode('prepare', prepareNode)
     .addNode('fast', fastNode)
-    .addNode('rag', ragNode)
+    .addNode('retrieve', retrieveNode)
+    .addNode('grade', gradeNode)
+    .addNode('synthesize', synthesizeNode)
+    .addNode('noKb', noKbNode)
     .addNode('injectKb', injectKbNode)
     .addNode('agent', agentNode)
     .addNode('tools', toolNode)
     .addEdge(START, 'prepare')
     .addConditionalEdges('prepare', routeAfterPrepare, {
       fast: 'fast',
-      rag: 'rag',
+      retrieve: 'retrieve',
+      agent: 'agent',
+    })
+    .addConditionalEdges('retrieve', routeAfterRetrieve, {
       injectKb: 'injectKb',
+      grade: 'grade',
+    })
+    .addConditionalEdges('grade', routeAfterGrade, {
+      synthesize: 'synthesize',
+      noKb: 'noKb',
     })
     .addEdge('fast', END)
-    .addEdge('rag', END)
+    .addEdge('synthesize', END)
+    .addEdge('noKb', END)
     .addEdge('injectKb', 'agent')
     .addConditionalEdges('agent', shouldContinue, {
       tools: 'tools',
@@ -329,13 +355,6 @@ function compileGraph(params: {
     })
     .addEdge('tools', 'agent')
     .compile();
-}
-
-function retrievalPromptFromKb(kbOutput: string) {
-  if (kbOutput && !kbOutput.startsWith('No matching') && !kbOutput.startsWith('No verified')) {
-    return `Verified knowledge base context:\n${kbOutput}\n\nAnswer using only the sources above. Cite as [KB1], [KB2], etc. If information is insufficient, say you cannot verify and suggest consulting the local KVK.`;
-  }
-  return `No verified knowledge base documents matched this query. Do not invent scheme details, amounts, or helpline numbers. Tell the farmer to verify with the official government portal or Krishi Vigyan Kendra.`;
 }
 
 export async function runKrashaqAgent(params: {
@@ -349,22 +368,30 @@ export async function runKrashaqAgent(params: {
   route: string;
   detected_crop: string | null;
 }> {
-  const { clearRagRequestCache } = await import('@/lib/server/services/rag-service');
+  if (useDeepAgentsRuntime()) {
+    const { runDeepKrashaqAgent } = await import('@/lib/server/agents/deep-agent');
+    return runDeepKrashaqAgent(params);
+  }
+
   clearRagRequestCache();
 
   await seedKbDocumentsIfEmpty();
-  const cfg = getConfig();
 
-  if (!cfg.groqApiKey) {
+  const llmInstance = resolveLLM({
+    provider: params.request.provider,
+    model: params.request.model,
+  });
+
+  if (!llmInstance) {
     return {
-      content: 'Krashaq AI agent requires GROQ_API_KEY. Configure it in environment variables.',
+      content:
+        'Krashaq AI is not configured. Add GOOGLE_API_KEY, GROQ_API_KEY, or another provider key in environment variables.',
       tools_used: [],
       route: 'tools',
       detected_crop: null,
     };
   }
 
-  const model = params.request.model ?? cfg.groqModel;
   const location = params.request.location ?? 'Delhi';
   const language = params.request.language ?? detectLanguage(params.request.message);
   const skill = loadSkillSnippet(params.request.message);
@@ -379,8 +406,7 @@ export async function runKrashaqAgent(params: {
 
   const graph = compileGraph({
     tools,
-    model,
-    apiKey: cfg.groqApiKey,
+    llm: llmInstance,
     maxIterations: DEFAULT_MAX_ITERATIONS,
   });
 
@@ -430,4 +456,8 @@ export async function runKrashaqAgent(params: {
 
 export function useAgentRuntime() {
   return process.env.AGENT_RUNTIME === 'langgraph' || process.env.USE_LANGGRAPH_AGENT === 'true';
+}
+
+export function useDeepAgentsRuntime() {
+  return process.env.USE_DEEPAGENTS === 'true' || process.env.AGENT_RUNTIME === 'deepagents';
 }

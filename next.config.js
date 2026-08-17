@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   // Required for MongoDB driver on Vercel serverless
-  serverExternalPackages: ['mongodb', 'ioredis'],
+  serverExternalPackages: ['mongodb', 'ioredis', 'faiss-node'],
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '**.vercel.app' }],
   },

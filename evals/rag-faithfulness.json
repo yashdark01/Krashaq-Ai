@@ -1,0 +1,121 @@
+[
+  {
+    "id": "pm-kisan-eligibility",
+    "query": "What is PM-KISAN eligibility?",
+    "expected_doc_ids": ["kb-pm-kisan-scheme"],
+    "must_be_relevant": true,
+    "min_score": 0.7,
+    "must_contain": ["eligible", "landholding"]
+  },
+  {
+    "id": "pm-kisan-benefit",
+    "query": "How much money does PM-KISAN give per year?",
+    "expected_doc_ids": ["kb-pm-kisan-scheme"],
+    "must_be_relevant": true,
+    "min_score": 0.68,
+    "must_contain": ["6,000", "6000"]
+  },
+  {
+    "id": "pm-kisan-hindi",
+    "query": "PM KISAN yojana kya hai aur kaun eligible hai?",
+    "expected_doc_ids": ["kb-pm-kisan-scheme"],
+    "must_be_relevant": true,
+    "min_score": 0.65
+  },
+  {
+    "id": "drip-when",
+    "query": "When should I use drip irrigation on my farm?",
+    "expected_doc_ids": ["kb-drip-irrigation-basics"],
+    "must_be_relevant": true,
+    "min_score": 0.68,
+    "must_contain": ["drip", "root"]
+  },
+  {
+    "id": "drip-maintenance",
+    "query": "How do I maintain a drip irrigation system?",
+    "expected_doc_ids": ["kb-drip-irrigation-basics"],
+    "must_be_relevant": true,
+    "min_score": 0.65,
+    "must_contain": ["filter", "emitter"]
+  },
+  {
+    "id": "drip-timing",
+    "query": "Best time of day for drip irrigation in hot season",
+    "expected_doc_ids": ["kb-drip-irrigation-basics"],
+    "must_be_relevant": true,
+    "min_score": 0.6,
+    "must_contain": ["morning", "evening"]
+  },
+  {
+    "id": "wheat-sowing-mp",
+    "query": "When is wheat sowing window in Madhya Pradesh?",
+    "expected_doc_ids": ["kb-wheat-mp-rabi"],
+    "must_be_relevant": true,
+    "min_score": 0.65,
+    "must_contain": ["October", "November"]
+  },
+  {
+    "id": "wheat-pests",
+    "query": "What pests and diseases affect wheat in MP?",
+    "expected_doc_ids": ["kb-wheat-mp-rabi"],
+    "must_be_relevant": true,
+    "min_score": 0.6,
+    "must_contain": ["rust"]
+  },
+  {
+    "id": "wheat-hindi",
+    "query": "MP mein gehu ki buai kab karni chahiye?",
+    "expected_doc_ids": ["kb-wheat-mp-rabi"],
+    "must_be_relevant": true,
+    "min_score": 0.6
+  },
+  {
+    "id": "soybean-semilooper",
+    "query": "How to manage semilooper in soybean?",
+    "expected_doc_ids": ["kb-soybean-pests-mp"],
+    "must_be_relevant": true,
+    "min_score": 0.65,
+    "must_contain": ["Semilooper", "semilooper"]
+  },
+  {
+    "id": "soybean-ipm",
+    "query": "Integrated pest management for soybean in Madhya Pradesh",
+    "expected_doc_ids": ["kb-soybean-pests-mp"],
+    "must_be_relevant": true,
+    "min_score": 0.62,
+    "must_contain": ["IPM", "Integrated"]
+  },
+  {
+    "id": "soybean-whitefly",
+    "query": "Whitefly management in soybean crop",
+    "expected_doc_ids": ["kb-soybean-pests-mp"],
+    "must_be_relevant": true,
+    "min_score": 0.6,
+    "must_contain": ["Whitefly", "whitefly"]
+  },
+  {
+    "id": "negative-weather",
+    "query": "What is the weather in Mumbai today?",
+    "must_be_relevant": false
+  },
+  {
+    "id": "negative-pizza",
+    "query": "Best pizza recipe for dinner",
+    "must_be_relevant": false
+  },
+  {
+    "id": "negative-stocks",
+    "query": "How to invest in stock market for beginners",
+    "must_be_relevant": false
+  },
+  {
+    "id": "negative-cricket",
+    "query": "Who won the cricket match yesterday?",
+    "must_be_relevant": false
+  },
+  {
+    "id": "negative-greeting",
+    "query": "Hello, how are you?",
+    "must_be_relevant": false
+  }
+]

@@ -43,26 +43,28 @@ export function RoleDashboard() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Suppliers', value: stats.suppliers, icon: Building2, href: '/admin/suppliers' },
+          { label: 'Suppliers', value: stats.suppliers, icon: Building2, href: '/admin/suppliers', color: 'text-blue-500' },
           {
             label: 'Active licenses',
             value: stats.licenses,
             icon: Shield,
             href: '/admin/suppliers',
+            color: 'text-purple-500',
           },
-          { label: 'Farmers', value: stats.farmers, icon: Sprout, href: '/admin/suppliers' },
+          { label: 'Farmers', value: stats.farmers, icon: Sprout, href: '/admin/suppliers', color: 'text-green-500' },
           {
             label: 'Sessions',
             value: stats.sessions,
             icon: MessageSquare,
             href: '/admin/analytics',
+            color: 'text-cyan-500',
           },
-        ].map(({ label, value, icon: Icon, href }) => (
+        ].map(({ label, value, icon: Icon, href, color }) => (
           <Link key={label} href={href}>
-            <Card className="hover:bg-accent/50 transition-colors">
+            <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-border/50 hover:border-primary/50">
               <CardHeader className="pb-2 pt-4 px-4">
                 <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                  <Icon className="h-3.5 w-3.5" /> {label}
+                  <Icon className={`h-3.5 w-3.5 ${color}`} /> {label}
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
@@ -79,7 +81,7 @@ export function RoleDashboard() {
     return (
       <div className="grid grid-cols-2 gap-3">
         <Link href="/supplier">
-          <Card className="hover:bg-accent/50 transition-colors">
+          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-border/50 hover:border-primary/50">
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground">
                 Supplier hub
@@ -91,10 +93,10 @@ export function RoleDashboard() {
           </Card>
         </Link>
         <Link href="/farmers">
-          <Card className="hover:bg-accent/50 transition-colors">
+          <Card className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-border/50 hover:border-primary/50">
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-3.5 w-3.5" /> My farmers
+                <Users className="h-3.5 w-3.5 text-green-500" /> My farmers
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
@@ -111,7 +113,7 @@ export function RoleDashboard() {
 
   if (isFarmer()) {
     return (
-      <Card>
+      <Card className="border-border/50">
         <CardContent className="pt-4 pb-4 px-4 text-sm text-muted-foreground">
           Welcome back, {user?.name}. Check weather below or ask Krashaq about crops, irrigation,
           and schemes.

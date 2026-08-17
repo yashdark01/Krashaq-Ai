@@ -1,12 +1,8 @@
-import { getCollection } from '@/lib/server/db/mongodb';
-import {
-  hybridSearchKb,
-  formatKbContextForPrompt,
-  type KbCitation,
-} from '@/lib/server/rag/hybrid-search';
+import { semanticSearchKb, formatSemanticContext } from '@/lib/server/rag/retriever';
 import { ragRequestCache, type CachedKbResult } from '@/lib/server/rag/request-cache';
+import { getCollection } from '@/lib/server/db/mongodb';
 
-export type { KbCitation };
+export type { KbCitation } from '@/lib/server/rag/types';
 
 export interface KbDocument {
   id: string;
@@ -25,10 +21,10 @@ async function fetchAndCacheKb(query: string, limit: number): Promise<CachedKbRe
   const cached = ragRequestCache.get(query);
   if (cached) return cached;
 
-  const result = await hybridSearchKb(query, limit);
+  const result = await semanticSearchKb(query, limit);
   const full: CachedKbResult = {
     ...result,
-    context: formatKbContextForPrompt(result.chunks, result.citations),
+    context: formatSemanticContext(result),
   };
   ragRequestCache.set(query, full);
   return full;
@@ -54,7 +50,7 @@ export async function retrieveKbContext(query: string, limit = 5) {
   return fetchAndCacheKb(query, limit);
 }
 
-/** Legacy seed — prefer `npm run kb:ingest` for full corpus */
+/** Legacy seed — prefer `npm run kb:ingest` for full corpus + FAISS index */
 export async function seedKbDocumentsIfEmpty() {
   const kb = await getCollection('kb_documents');
   const chunks = await getCollection('kb_chunks');

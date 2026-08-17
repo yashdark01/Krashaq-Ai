@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "provider": "ollama",
+  "model": "nomic-embed-text",
+  "dimension": 768,
+  "built_at": "2026-08-17T15:11:58.387Z",
+  "entries": [
+    {
+      "faiss_id": 0,
+      "chunk_id": "kb-drip-irrigation-basics-ch0"
+    },
+    {
+      "faiss_id": 1,
+      "chunk_id": "kb-drip-irrigation-basics-ch1"
+    },
+    {
+      "faiss_id": 2,
+      "chunk_id": "kb-pm-kisan-scheme-ch0"
+    },
+    {
+      "faiss_id": 3,
+      "chunk_id": "kb-pm-kisan-scheme-ch1"
+    },
+    {
+      "faiss_id": 4,
+      "chunk_id": "kb-soybean-pests-mp-ch0"
+    },
+    {
+      "faiss_id": 5,
+      "chunk_id": "kb-soybean-pests-mp-ch1"
+    },
+    {
+      "faiss_id": 6,
+      "chunk_id": "kb-wheat-mp-rabi-ch0"
+    },
+    {
+      "faiss_id": 7,
+      "chunk_id": "kb-wheat-mp-rabi-ch1"
+    }
+  ]
+}

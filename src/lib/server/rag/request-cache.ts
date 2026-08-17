@@ -1,4 +1,4 @@
-import type { KbCitation } from '@/lib/server/rag/hybrid-search';
+import type { KbCitation } from '@/lib/server/rag/types';
 
 export interface CachedKbResult {
   chunks: Array<{
@@ -12,6 +12,7 @@ export interface CachedKbResult {
   }>;
   citations: KbCitation[];
   hasRelevant: boolean;
+  topScore: number;
   context: string;
 }
 

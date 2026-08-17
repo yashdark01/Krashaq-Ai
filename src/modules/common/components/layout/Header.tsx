@@ -86,14 +86,9 @@ export function Header() {
             >
               <PanelLeft className="h-4 w-4" />
             </Button>
-            <div className="min-w-0 flex items-center gap-2">
-              <div className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Sprout className="h-4 w-4" aria-hidden />
-              </div>
-              {pageTitle && (
-                <span className="font-display text-sm font-semibold truncate">{pageTitle}</span>
-              )}
-            </div>
+            {pageTitle && (
+              <span className="font-display text-sm font-semibold truncate">{pageTitle}</span>
+            )}
           </div>
 
           {locationLabel && (

@@ -2,6 +2,7 @@
 title: Drip Irrigation Basics for Indian Farms
 category: irrigation
 tags: drip, irrigation, paani, sinchai, water saving
+search_aliases: drip sinchai, paani bachat, emitter filter, subah sham sinchai, morning evening irrigation
 ---
 
 Drip irrigation delivers water directly to the root zone, reducing evaporation loss compared to flood irrigation.

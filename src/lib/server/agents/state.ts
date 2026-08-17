@@ -1,6 +1,7 @@
 import { Annotation, messagesStateReducer } from '@langchain/langgraph';
 import type { BaseMessage } from '@langchain/core/messages';
 import type { AgentRoute } from '@/lib/server/agents/router';
+import type { KbCitation, KbChunkRecord } from '@/lib/server/rag/types';
 
 export const KrashaqStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
@@ -50,6 +51,30 @@ export const KrashaqStateAnnotation = Annotation.Root({
   executed_tool_keys: Annotation<string[]>({
     reducer: (left, right) => left.concat(Array.isArray(right) ? right : [right]),
     default: () => [],
+  }),
+  rag_query: Annotation<string>({
+    reducer: (_left, right) => right,
+    default: () => '',
+  }),
+  rag_chunks: Annotation<KbChunkRecord[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  rag_citations: Annotation<KbCitation[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  rag_score: Annotation<number>({
+    reducer: (_left, right) => right,
+    default: () => 0,
+  }),
+  rag_relevant: Annotation<boolean>({
+    reducer: (_left, right) => right,
+    default: () => false,
+  }),
+  rag_context: Annotation<string>({
+    reducer: (_left, right) => right,
+    default: () => '',
   }),
 });
 
